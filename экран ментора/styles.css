@@ -1,0 +1,213 @@
+﻿:root {
+  --bg-0: #00061f;
+  --bg-1: #00113f;
+  --bg-2: #00206e;
+  --card: rgba(8, 22, 64, 0.72);
+  --stroke: rgba(170, 205, 255, 0.28);
+  --text: #f5f8ff;
+  --muted: rgba(214, 226, 255, 0.72);
+  --accent: #4facfe;
+  --accent-2: #6ec8ff;
+  --accent-deep: #2f8dff;
+  --radius: 16px;
+  --shadow: 0 24px 80px rgba(0, 10, 40, 0.45);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Inter, system-ui, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(900px 500px at 18% 18%, rgba(46, 120, 255, 0.28), transparent 60%),
+    radial-gradient(700px 420px at 78% 42%, rgba(79, 172, 254, 0.18), transparent 62%),
+    linear-gradient(160deg, var(--bg-0) 0%, var(--bg-1) 42%, var(--bg-2) 100%);
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  max-width: 1180px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 28px 24px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0;
+}
+
+.btn-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  color: var(--text);
+  text-decoration: none;
+  background: rgba(18, 42, 92, 0.7);
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-home:hover {
+  background: rgba(28, 62, 132, 0.85);
+  border-color: rgba(170, 205, 255, 0.5);
+}
+
+.profile {
+  max-width: 800px;
+  width: 100%;
+  margin: 40px auto;
+  padding: 0 24px;
+  flex: 1;
+}
+
+.profile-card {
+  position: relative;
+  padding: 36px;
+  border-radius: 24px;
+  border: 1px solid var(--stroke);
+  background: linear-gradient(180deg, rgba(12, 32, 78, 0.82), rgba(6, 18, 52, 0.88));
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(20px);
+}
+
+.profile-top {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--stroke);
+}
+
+.avatar {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid rgba(170, 205, 255, 0.35);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.avatar-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-initials {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  font-weight: 800;
+  color: #fff;
+  background: rgba(0, 15, 50, 0.4);
+}
+
+.profile-intro .eyebrow {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: var(--accent-2);
+  font-weight: 600;
+}
+
+.profile-intro h2 {
+  margin: 0 0 6px;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.role-line {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.info-list {
+  margin: 28px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.info-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: rgba(6, 16, 44, 0.55);
+  border: 1px solid rgba(170, 205, 255, 0.15);
+}
+
+.info-row dt {
+  font-size: 14px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.info-row dd {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  text-align: right;
+}
+
+.telegram-link {
+  color: var(--accent-2);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.telegram-link:hover {
+  text-decoration: underline;
+}
+
+.subjects {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.subjects li {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(79, 172, 254, 0.16);
+  border: 1px solid rgba(170, 205, 255, 0.3);
+  font-size: 12px;
+  color: #d7ecff;
+}
+
+.footer {
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 16px 24px 32px;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(196, 214, 255, 0.5);
+}

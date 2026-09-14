@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Digital Mentor — Профиль пользователя</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-glow"></div>
+    <div class="page-glow page-glow--right"></div>
+
+    <header class="header">
+      <div class="logo">
+        <div class="logo-mark" aria-hidden="true">D</div>
+        <div class="logo-text">
+          <strong>Digital Mentor</strong>
+          <span>Школьники-волонтёры со всего города помогают ученикам</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="status-pill">
+          <span class="status-dot"></span>
+          Астана — личный кабинет
+        </div>
+        <a class="btn-nav" href="../главный экран 2/index.html">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          На главный экран
+        </a>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <section class="profile-plane">
+        <div class="profile-header-card">
+          <div class="avatar-block">
+            <div class="avatar-circle">
+              <span class="avatar-initials" id="avatar-initials">АК</span>
+            </div>
+          </div>
+          <div class="profile-title-block">
+            <div class="profile-heading-row">
+              <h2 id="profile-display-name">Алина Касымова</h2>
+              <span class="role-badge" id="profile-display-role">Ученик</span>
+            </div>
+            <p class="profile-subtitle">Личный профиль участника проекта Digital Mentor · Астана</p>
+          </div>
+        </div>
+
+        <div class="plane-body">
+          <div class="plane-title-bar">
+            <h3>Личные данные и настройки</h3>
+            <p class="plane-hint">Вы можете изменить любую строку, нажав «Редактировать»</p>
+          </div>
+
+          <div class="profile-rows-list">
+            <!-- Графа 1: Имя пользователя -->
+            <div class="profile-row" id="row-name">
+              <div class="row-meta">
+                <span class="row-label">Имя пользователя</span>
+                <span class="row-caption">Ваше официальное имя в платформе</span>
+              </div>
+              <div class="row-content">
+                <div class="row-view" id="view-name">
+                  <span class="row-value" id="val-name">Алина Касымова</span>
+                </div>
+                <div class="row-edit" id="edit-name" hidden>
+                  <input type="text" class="row-input" id="input-name" placeholder="Введите имя пользователя" />
+                </div>
+              </div>
+              <div class="row-action">
+                <button class="btn-row-action" id="btn-name" type="button" data-field="name">
+                  <svg class="action-icon edit-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                  <span class="action-text">Редактировать</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Графа 2: Класс (если ученик) -->
+            <div class="profile-row" id="row-grade">
+              <div class="row-meta">
+                <span class="row-label">Класс (если ученик)</span>
+                <span class="row-caption">Текущий класс обучения в школе</span>
+              </div>
+              <div class="row-content">
+                <div class="row-view" id="view-grade">
+                  <span class="row-value badge-val" id="val-grade">10 класс</span>
+                </div>
+                <div class="row-edit" id="edit-grade" hidden>
+                  <div class="select-wrapper">
+                    <select class="row-select" id="select-grade">
+                      <option value="9 класс">9 класс</option>
+                      <option value="10 класс">10 класс</option>
+                      <option value="11 класс">11 класс</option>
+                      <option value="Не применимо (ментор)">Не применимо (ментор)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="row-action">
+                <button class="btn-row-action" id="btn-grade" type="button" data-field="grade">
+                  <svg class="action-icon edit-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                  <span class="action-text">Редактировать</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Графа 3: Предмет -->
+            <div class="profile-row" id="row-subject">
+              <div class="row-meta">
+                <span class="row-label">Предмет</span>
+                <span class="row-caption">Основной предмет или направление занятий</span>
+              </div>
+              <div class="row-content">
+                <div class="row-view" id="view-subject">
+                  <span class="row-value" id="val-subject">Информатика</span>
+                </div>
+                <div class="row-edit" id="edit-subject" hidden>
+                  <div class="select-wrapper">
+                    <select class="row-select" id="select-subject">
+                      <option value="Алгебра">Алгебра</option>
+                      <option value="Английский язык">Английский язык</option>
+                      <option value="Информатика">Информатика</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="row-action">
+                <button class="btn-row-action" id="btn-subject" type="button" data-field="subject">
+                  <svg class="action-icon edit-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                  <span class="action-text">Редактировать</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Графа 4: Выбор ментор/ученик -->
+            <div class="profile-row" id="row-role">
+              <div class="row-meta">
+                <span class="row-label">Выбор ментор / ученик</span>
+                <span class="row-caption">Ваша роль в образовательной программе</span>
+              </div>
+              <div class="row-content">
+                <div class="row-view" id="view-role">
+                  <span class="row-value badge-role" id="val-role">Ученик</span>
+                </div>
+                <div class="row-edit" id="edit-role" hidden>
+                  <div class="role-selector-toggle">
+                    <label class="role-option">
+                      <input type="radio" name="input-role" value="Ученик" checked />
+                      <span>Ученик</span>
+                    </label>
+                    <label class="role-option">
+                      <input type="radio" name="input-role" value="Ментор" />
+                      <span>Ментор</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="row-action">
+                <button class="btn-row-action" id="btn-role" type="button" data-field="role">
+                  <svg class="action-icon edit-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                  <span class="action-text">Редактировать</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Графа 5: Выход из аккаунта (в красной палитре) -->
+            <div class="profile-row profile-row-danger" id="row-logout">
+              <div class="row-meta">
+                <span class="row-label row-label-danger">Выйти из аккаунта</span>
+                <span class="row-caption row-caption-danger">Завершить сессию и вернуться к авторизации</span>
+              </div>
+              <div class="row-content">
+                <div class="row-view" id="view-logout">
+                  <span class="badge-danger-status">
+                    <span class="danger-dot-pulse"></span>
+                    Активная сессия
+                  </span>
+                </div>
+                <div class="row-logout-warning" id="confirm-logout-view" hidden>
+                  <svg class="warning-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                  </svg>
+                  <span>Вы уверены, что хотите выйти?</span>
+                </div>
+              </div>
+              <div class="row-action">
+                <button class="btn-row-action btn-logout-action" id="btn-logout-init" type="button">
+                  <svg class="action-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                  </svg>
+                  <span class="action-text">Выйти</span>
+                </button>
+                <div class="logout-confirm-group" id="logout-confirm-group" hidden>
+                  <button class="btn-logout-cancel" id="btn-logout-cancel" type="button">Отмена</button>
+                  <button class="btn-row-action btn-danger-confirm" id="btn-logout-confirm" type="button">
+                    <svg class="action-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span class="action-text">Подтвердить</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="status-toast" id="status-toast" hidden>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span id="toast-text">Данные успешно сохранены</span>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      © Digital Mentor, Астана. Социальный пилотный проект. Школьники-волонтёры со всего города помогают ученикам Казахстана.
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

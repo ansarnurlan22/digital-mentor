@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Digital Mentor — школьники-волонтёры помогают ученикам</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabaseClient.js"></script>
+  </head>
+  <body>
+    <div class="page-glow"></div>
+    <div class="page-glow page-glow--right"></div>
+
+    <header class="header">
+      <div class="logo">
+        <div class="logo-mark" aria-hidden="true">D</div>
+        <div class="logo-text">
+          <strong>Digital Mentor</strong>
+          <span>Школьники-волонтёры со всего города помогают ученикам</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="status-pill">
+          <span class="status-dot"></span>
+          Астана — пилотный запуск
+        </div>
+        <button class="btn-start btn-header-google" id="header-login-btn" type="button">
+          <svg class="google-icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.24v3.15C3.26 21.36 7.33 24 12 24z"/>
+            <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.24C.45 8.15 0 9.92 0 12s.45 3.85 1.24 5.42l4.04-3.15z"/>
+            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.24 6.58l4.04 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+          </svg>
+          Войти через Google
+        </button>
+      </div>
+    </header>
+
+    <main class="hero">
+      <section class="hero-copy">
+        <p class="eyebrow">Социальный EdTech-проект — поддержка без репетиторов</p>
+        <h1>Школьники-волонтёры со всего города помогают ученикам Астаны.</h1>
+        <p class="lead">
+          Платформа, где школьники-волонтёры со всего города бесплатно помогают
+          другим ученикам подтянуть предметы, подготовиться к контрольным и поступлению.
+        </p>
+        <p class="mission">
+          Digital Mentor — некоммерческая инициатива. Мы соединяем мотивированных учеников и сильных наставников.
+        </p>
+      </section>
+
+      <section class="form-card auth-card" id="auth-section">
+        <div class="free-badge">
+          <span>100%</span>
+          <span>бесплатно</span>
+          <span>пилот Астана</span>
+        </div>
+        <h2>Вход в платформу</h2>
+        <p class="form-lead">
+          Авторизуйтесь через Google, чтобы получить доступ к менторам и учебным материалам.
+        </p>
+
+        <div class="auth-action">
+          <button class="btn-google" id="google-login-btn" type="button">
+            <svg class="google-icon" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+              <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.24v3.15C3.26 21.36 7.33 24 12 24z"/>
+              <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.24C.45 8.15 0 9.92 0 12s.45 3.85 1.24 5.42l4.04-3.15z"/>
+              <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.24 6.58l4.04 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+            </svg>
+            <span>Войти через Google</span>
+          </button>
+          <p class="form-status" id="auth-status" hidden></p>
+        </div>
+
+        <div class="auth-features">
+          <div class="auth-feature-item">
+            <div class="auth-feature-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </div>
+            <div class="auth-feature-text">
+              <strong>Вход в 1 клик</strong>
+              <span>Без заполнения бланков и долгого ожидания</span>
+            </div>
+          </div>
+          <div class="auth-feature-item">
+            <div class="auth-feature-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </div>
+            <div class="auth-feature-text">
+              <strong>Для менторов и учеников</strong>
+              <span>Бесплатные занятия по предметам школ Астаны</span>
+            </div>
+          </div>
+          <div class="auth-feature-item">
+            <div class="auth-feature-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </div>
+            <div class="auth-feature-text">
+              <strong>Безопасная авторизация</strong>
+              <span>Вход через школьный или персональный аккаунт Google</span>
+            </div>
+          </div>
+        </div>
+
+        <p class="disclaimer">
+          Авторизуясь через Google, вы получаете доступ к личному кабинету платформы Digital Mentor.
+        </p>
+      </section>
+    </main>
+
+    <footer class="footer">
+      © Digital Mentor, Астана. Социальный пилотный проект. Школьники-волонтёры со всего города помогают ученикам Казахстана.
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Digital Mentor — Активные курсы</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabaseClient.js"></script>
+  </head>
+  <body>
+    <div class="page-glow"></div>
+    <div class="page-glow page-glow--right"></div>
+
+    <header class="header">
+      <div class="logo">
+        <div class="logo-mark" aria-hidden="true">D</div>
+        <div class="logo-text">
+          <strong>Digital Mentor</strong>
+          <span>Школьники-волонтёры со всего города помогают ученикам</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="status-pill">
+          <span class="status-dot"></span>
+          Астана — учебный портал
+        </div>
+        <div class="role-pill" id="role-pill">
+          <span class="role-pill-dot"></span>
+          <span id="role-pill-text">Роль: Ученик</span>
+        </div>
+        <a class="btn-nav btn-profile" href="../профиль/index.html">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          Профиль
+        </a>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <section class="courses-plane">
+        <div class="plane-header">
+          <div class="plane-title-block">
+            <div class="plane-heading-row">
+              <h2>Активные курсы</h2>
+              <span class="badge-count" id="courses-count">0 курсов</span>
+            </div>
+            <p class="plane-subtitle">
+              Список ваших текущих дисциплин и учебных программ с менторами
+            </p>
+          </div>
+
+          <!-- Кнопка добавления курса (видна только ментору) -->
+          <button class="btn-add-course" id="open-modal-btn" type="button" aria-label="Добавить курс" title="Добавить курс">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>Добавить курс</span>
+          </button>
+
+          <!-- Бейдж только просмотра (виден только ученику) -->
+          <div class="view-only-badge" id="view-only-badge" hidden>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <span>Режим ученика · Только просмотр</span>
+          </div>
+        </div>
+
+        <div class="courses-grid" id="courses-grid">
+          <!-- Карточки курсов генерируются динамически через script.js -->
+        </div>
+
+        <div class="empty-state" id="empty-state" hidden>
+          <div class="empty-icon">📚</div>
+          <h3>Нет активных курсов</h3>
+          <p>Нажмите на кнопку «+ Добавить курс» в правом верхнем углу, чтобы выбрать дисциплину.</p>
+        </div>
+      </section>
+
+      <!-- 2 плоскости: Лучший ментор месяца и Лучший ученик месяца -->
+      <section class="spotlight-section">
+        <!-- 1 плоскость: Лучший ментор месяца -->
+        <article class="spotlight-plane spotlight-plane--mentor">
+          <div class="spotlight-plane-header">
+            <div class="spotlight-title-group">
+              <div class="spotlight-badge spotlight-badge--neutral">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span>Рейтинг месяца</span>
+              </div>
+              <h3>Лучший ментор месяца</h3>
+            </div>
+            <span class="spotlight-month">Сентябрь 2026</span>
+          </div>
+
+          <div class="spotlight-person-card">
+            <div class="spotlight-avatar-wrap">
+              <div class="spotlight-avatar spotlight-avatar--clean">
+                <span>—</span>
+              </div>
+            </div>
+            <div class="spotlight-info">
+              <div class="spotlight-name-row">
+                <h4 class="spotlight-name">Кандидат определяется</h4>
+                <span class="spotlight-role-pill">Ментор</span>
+              </div>
+              <p class="spotlight-desc">Итоги формируются по оценкам и проведённым урокам</p>
+            </div>
+          </div>
+
+          <div class="spotlight-stats">
+            <div class="stat-item">
+              <span class="stat-value">0 ч.</span>
+              <span class="stat-label">Проведено занятий</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">★ —</span>
+              <span class="stat-label">Рейтинг (0 отзывов)</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">Учеников обучено</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- 2 плоскость: Лучший ученик месяца -->
+        <article class="spotlight-plane spotlight-plane--student">
+          <div class="spotlight-plane-header">
+            <div class="spotlight-title-group">
+              <div class="spotlight-badge spotlight-badge--neutral">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span>Рейтинг месяца</span>
+              </div>
+              <h3>Лучший ученик месяца</h3>
+            </div>
+            <span class="spotlight-month">Сентябрь 2026</span>
+          </div>
+
+          <div class="spotlight-person-card">
+            <div class="spotlight-avatar-wrap">
+              <div class="spotlight-avatar spotlight-avatar--clean">
+                <span>—</span>
+              </div>
+            </div>
+            <div class="spotlight-info">
+              <div class="spotlight-name-row">
+                <h4 class="spotlight-name">Кандидат определяется</h4>
+                <span class="spotlight-role-pill spotlight-role-pill--student">Ученик</span>
+              </div>
+              <p class="spotlight-desc">Итоги формируются по посещаемости и заданиям</p>
+            </div>
+          </div>
+
+          <div class="spotlight-stats">
+            <div class="stat-item">
+              <span class="stat-value">0%</span>
+              <span class="stat-label">Посещаемость</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">Баллов прогресса</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">0</span>
+              <span class="stat-label">Сданных заданий</span>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <!-- Секция: Расписание и календарь занятий -->
+      <section class="schedule-plane" id="schedule-section">
+        <div class="schedule-plane-header">
+          <div class="plane-title-block">
+            <div class="plane-heading-row">
+              <div class="schedule-badge">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                <span>Учебный календарь</span>
+              </div>
+              <h3>Расписание и календарь занятий</h3>
+              <span class="badge-count" id="schedule-lessons-count">3 занятия</span>
+            </div>
+            <p class="plane-subtitle">
+              Ближайшие онлайн-уроки, ссылки на видеовстречи и график занятий на неделю
+            </p>
+          </div>
+
+          <div class="calendar-controls">
+            <span class="calendar-month-tag">Сентябрь 2026</span>
+            <button class="btn-calendar-filter is-active" id="filter-all-days" type="button">Вся неделя</button>
+            <button class="btn-schedule-lesson" id="open-schedule-modal-btn" type="button" title="Запланировать урок (доступно ментору)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>Запланировать урок</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Интерактивная полоса недели -->
+        <div class="week-strip" id="week-strip">
+          <button class="day-chip" type="button" data-day="all">
+            <span class="day-name">Все</span>
+            <span class="day-num">3</span>
+            <span class="day-dots"><span class="dot-lesson"></span></span>
+          </button>
+          <button class="day-chip" type="button" data-day="mon">
+            <span class="day-name">Пн</span>
+            <span class="day-num">14</span>
+            <span class="day-dots"></span>
+          </button>
+          <button class="day-chip is-selected is-today" type="button" data-day="tue">
+            <span class="day-badge-today">Сегодня</span>
+            <span class="day-name">Вт</span>
+            <span class="day-num">15</span>
+            <span class="day-dots"><span class="dot-lesson dot-live"></span></span>
+          </button>
+          <button class="day-chip" type="button" data-day="wed">
+            <span class="day-name">Ср</span>
+            <span class="day-num">16</span>
+            <span class="day-dots"><span class="dot-lesson"></span></span>
+          </button>
+          <button class="day-chip" type="button" data-day="thu">
+            <span class="day-name">Чт</span>
+            <span class="day-num">17</span>
+            <span class="day-dots"></span>
+          </button>
+          <button class="day-chip" type="button" data-day="fri">
+            <span class="day-name">Пт</span>
+            <span class="day-num">18</span>
+            <span class="day-dots"><span class="dot-lesson"></span></span>
+          </button>
+          <button class="day-chip" type="button" data-day="sat">
+            <span class="day-name">Сб</span>
+            <span class="day-num">19</span>
+            <span class="day-dots"></span>
+          </button>
+          <button class="day-chip" type="button" data-day="sun">
+            <span class="day-name">Вс</span>
+            <span class="day-num">20</span>
+            <span class="day-dots"></span>
+          </button>
+        </div>
+
+        <!-- Карточки занятий -->
+        <div class="schedule-cards-list" id="schedule-cards-list">
+          <!-- Занятие 1: Идёт сейчас -->
+          <div class="schedule-card is-live" data-day="tue">
+            <div class="schedule-card-time">
+              <span class="time-main">16:30 – 17:30</span>
+              <span class="live-pill">
+                <span class="live-pulse-dot"></span>
+                Урок идёт сейчас
+              </span>
+            </div>
+            <div class="schedule-card-body">
+              <div class="schedule-subject-row">
+                <span class="subject-badge subject-it">Информатика</span>
+                <span class="grade-badge">10 класс</span>
+                <span class="room-badge">Группа А-2</span>
+              </div>
+              <h4 class="schedule-lesson-title">Алгоритмы поиска и структуры данных на Python</h4>
+              <div class="schedule-mentor-meta">
+                <div class="mentor-mini-avatar">ДН</div>
+                <div class="mentor-meta-text">
+                  <span class="mentor-role-label">Ментор урока:</span>
+                  <strong>Данияр Нургалиев</strong>
+                </div>
+              </div>
+            </div>
+            <div class="schedule-card-action">
+              <a class="btn-join-meet" href="https://meet.google.com" target="_blank" rel="noopener noreferrer">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                  <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                </svg>
+                <span>Подключиться к уроку</span>
+              </a>
+              <button class="btn-lesson-materials" type="button">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <span>Материалы</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Занятие 2: Среда -->
+          <div class="schedule-card" data-day="wed">
+            <div class="schedule-card-time">
+              <span class="time-main">15:00 – 16:15</span>
+              <span class="upcoming-pill">Среда, 16 сентября</span>
+            </div>
+            <div class="schedule-card-body">
+              <div class="schedule-subject-row">
+                <span class="subject-badge subject-math">Алгебра</span>
+                <span class="grade-badge">10 класс</span>
+                <span class="room-badge">Группа М-1</span>
+              </div>
+              <h4 class="schedule-lesson-title">Тригонометрические формулы и решение уравнений</h4>
+              <div class="schedule-mentor-meta">
+                <div class="mentor-mini-avatar mentor-avatar-purple">АС</div>
+                <div class="mentor-meta-text">
+                  <span class="mentor-role-label">Ментор урока:</span>
+                  <strong>Алия Сарсенова</strong>
+                </div>
+              </div>
+            </div>
+            <div class="schedule-card-action">
+              <button class="btn-schedule-reminder" type="button">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                <span>Напомнить в Telegram</span>
+              </button>
+              <button class="btn-lesson-materials" type="button">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <span>Презентация</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Занятие 3: Пятница -->
+          <div class="schedule-card" data-day="fri">
+            <div class="schedule-card-time">
+              <span class="time-main">17:00 – 18:00</span>
+              <span class="upcoming-pill">Пятница, 18 сентября</span>
+            </div>
+            <div class="schedule-card-body">
+              <div class="schedule-subject-row">
+                <span class="subject-badge subject-eng">Английский язык</span>
+                <span class="grade-badge">11 класс</span>
+                <span class="room-badge">IELTS Club</span>
+              </div>
+              <h4 class="schedule-lesson-title">IELTS Speaking Part 2 & 3: Стратегии высоких баллов</h4>
+              <div class="schedule-mentor-meta">
+                <div class="mentor-mini-avatar mentor-avatar-emerald">МС</div>
+                <div class="mentor-meta-text">
+                  <span class="mentor-role-label">Ментор урока:</span>
+                  <strong>Малика Серикова</strong>
+                </div>
+              </div>
+            </div>
+            <div class="schedule-card-action">
+              <button class="btn-schedule-reminder" type="button">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                <span>Напомнить в Telegram</span>
+              </button>
+              <button class="btn-lesson-materials" type="button">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <span>Лексика темы</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Секция: Достижения и награды -->
+      <section class="gamification-plane" id="gamification-section">
+        <div class="plane-header">
+          <div class="plane-title-block">
+            <div class="plane-heading-row">
+              <div class="gamification-badge">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="8" r="7"></circle>
+                  <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+                </svg>
+                <span>Личные достижения</span>
+              </div>
+              <h3>Достижения и награды</h3>
+            </div>
+            <p class="plane-subtitle">
+              Система знаков отличия, учёт волонтёрских часов и личный прогресс наставников
+            </p>
+          </div>
+        </div>
+
+        <div class="gamification-grid">
+          <!-- Левая колонка: Прогресс часов волонтёрства -->
+          <div class="volunteer-passport-card">
+            <div class="passport-header">
+              <div class="passport-title-group">
+                <span class="passport-label">Учёт наставничества</span>
+                <h4 class="passport-name">Личный прогресс</h4>
+                <div class="passport-rank-badge">
+                  <span>Старт волонтёрской практики</span>
+                </div>
+              </div>
+              <div class="passport-emblem">
+                <span>🇰🇿</span>
+              </div>
+            </div>
+
+            <div class="volunteer-hours-block">
+              <div class="hours-header-row">
+                <span class="hours-caption">Подтверждённые часы волонтёрства:</span>
+                <span class="hours-count" id="volunteer-hours-display"><strong>0</strong> / 50 ч.</span>
+              </div>
+              <div class="progress-bar-track">
+                <div class="progress-bar-fill" id="volunteer-progress-fill" style="width: 0%;">
+                  <span class="progress-glow"></span>
+                </div>
+              </div>
+              <div class="hours-target-note">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4facfe" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <span>Проведите первое занятие, чтобы начать учёт подтверждённых часов</span>
+              </div>
+            </div>
+
+            <div class="passport-stats-row">
+              <div class="passport-stat-item">
+                <span class="pstat-val" id="stat-lessons-count">0</span>
+                <span class="pstat-lbl">Проведено уроков</span>
+              </div>
+              <div class="passport-stat-item">
+                <span class="pstat-val" id="stat-students-count">0</span>
+                <span class="pstat-lbl">Учеников обучено</span>
+              </div>
+              <div class="passport-stat-item">
+                <span class="pstat-val" id="stat-rating-display">★ —</span>
+                <span class="pstat-lbl">Средний рейтинг</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Правая колонка: Коллекция наград и бейджей -->
+          <div class="achievements-card">
+            <div class="achievements-header">
+              <h4>Достижения и знаки отличия</h4>
+              <span class="achievements-progress-pill" id="achievements-unlocked-pill">0 из 6 получено</span>
+            </div>
+
+            <div class="badges-grid">
+              <!-- Ачивка 1 -->
+              <div class="badge-card is-in-progress">
+                <div class="badge-icon-wrap icon-gold">
+                  <span>🥇</span>
+                </div>
+                <div class="badge-content">
+                  <div class="badge-title-row">
+                    <h5>Первый наставник</h5>
+                    <span class="badge-status-tag status-progress">0 / 1</span>
+                  </div>
+                  <p>Успешно провести своё первое занятие в платформе</p>
+                </div>
+              </div>
+
+              <!-- Ачивка 2 -->
+              <div class="badge-card is-in-progress">
+                <div class="badge-icon-wrap icon-blue">
+                  <span>💻</span>
+                </div>
+                <div class="badge-content">
+                  <div class="badge-title-row">
+                    <h5>Мастер кода</h5>
+                    <span class="badge-status-tag status-progress">0 / 10</span>
+                  </div>
+                  <p>Провести 10 практических уроков по направлению Информатика</p>
+                  <div class="mini-progress-track">
+                    <div class="mini-progress-fill" style="width: 0%;"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Ачивка 3 -->
+              <div class="badge-card is-in-progress">
+                <div class="badge-icon-wrap icon-purple">
+                  <span>🌟</span>
+                </div>
+                <div class="badge-content">
+                  <div class="badge-title-row">
+                    <h5>Звезда доверия</h5>
+                    <span class="badge-status-tag status-progress">0 / 10</span>
+                  </div>
+                  <p>Собрать рейтинг 5.0 от более чем 10 различных учеников</p>
+                </div>
+              </div>
+
+              <!-- Ачивка 4 -->
+              <div class="badge-card is-in-progress">
+                <div class="badge-icon-wrap icon-emerald">
+                  <span>⏱️</span>
+                </div>
+                <div class="badge-content">
+                  <div class="badge-title-row">
+                    <h5>Марафонец знаний</h5>
+                    <span class="badge-status-tag status-progress">0 / 40 ч.</span>
+                  </div>
+                  <p>Набрать 40 подтверждённых волонтёрских часов</p>
+                </div>
+              </div>
+
+              <!-- Ачивка 5 -->
+              <div class="badge-card is-in-progress">
+                <div class="badge-icon-wrap icon-cyan">
+                  <span>🛡️</span>
+                </div>
+                <div class="badge-content">
+                  <div class="badge-title-row">
+                    <h5>Надёжное плечо</h5>
+                    <span class="badge-status-tag status-progress">0%</span>
+                  </div>
+                  <p>100% дисциплины: 0 отменённых или перенесённых уроков</p>
+                </div>
+              </div>
+
+              <!-- Ачивка 6 -->
+              <div class="badge-card is-in-progress">
+                <div class="badge-icon-wrap icon-amber">
+                  <span>🎯</span>
+                </div>
+                <div class="badge-content">
+                  <div class="badge-title-row">
+                    <h5>Олимпиец</h5>
+                    <span class="badge-status-tag status-progress">0 / 2</span>
+                  </div>
+                  <p>Подготовить учеников к городской школьной олимпиаде</p>
+                  <div class="mini-progress-track">
+                    <div class="mini-progress-fill" style="width: 0%;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Модальное окно добавления курса -->
+    <div class="modal-overlay is-hidden" id="modal-overlay" hidden>
+      <div class="modal-window" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-header">
+          <h3 id="modal-title">Добавить курс</h3>
+          <button class="modal-close" id="close-modal-btn" type="button" aria-label="Закрыть окно">&times;</button>
+        </div>
+
+        <form id="add-course-form">
+          <div class="modal-body">
+            <label class="modal-field">
+              <span class="field-label">Название курса</span>
+              <div class="select-wrapper">
+                <select id="course-name-select" required>
+                  <option value="" disabled selected>Выберите предмет из списка</option>
+                  <option value="Алгебра">Алгебра</option>
+                  <option value="Английский язык">Английский язык</option>
+                  <option value="Информатика">Информатика</option>
+                </select>
+              </div>
+            </label>
+
+            <label class="modal-field">
+              <span class="field-label">Класс</span>
+              <div class="select-wrapper">
+                <select id="course-grade-select" required>
+                  <option value="" disabled selected>Выберите класс из списка</option>
+                  <option value="9">9 класс</option>
+                  <option value="10">10 класс</option>
+                  <option value="11">11 класс</option>
+                </select>
+              </div>
+            </label>
+
+            <label class="modal-field">
+              <span class="field-label">Макс. количество учеников (2 – 5)</span>
+              <div class="select-wrapper">
+                <select id="course-max-students" required>
+                  <option value="" disabled selected>Выберите количество мест</option>
+                  <option value="2">2 ученика</option>
+                  <option value="3" selected>3 ученика</option>
+                  <option value="4">4 ученика</option>
+                  <option value="5">5 учеников</option>
+                </select>
+              </div>
+            </label>
+
+            <label class="modal-field">
+              <span class="field-label">Дата начала курса</span>
+              <input type="date" class="modal-date-input" id="course-start-date" required />
+            </label>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn-cancel" id="cancel-modal-btn" type="button">Отмена</button>
+            <button class="btn-submit" type="submit" id="submit-course-btn">
+              <span>Добавить</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Модальное окно: Запланировать урок (только ментор) -->
+    <div class="modal-overlay is-hidden" id="schedule-modal-overlay" hidden>
+      <div class="modal-window" role="dialog" aria-modal="true" aria-labelledby="schedule-modal-title">
+        <div class="modal-header">
+          <h3 id="schedule-modal-title">Запланировать онлайн-урок</h3>
+          <button class="modal-close" id="close-schedule-modal-btn" type="button" aria-label="Закрыть окно">&times;</button>
+        </div>
+
+        <form id="add-lesson-form">
+          <div class="modal-body">
+            <label class="modal-field">
+              <span class="field-label">Предмет</span>
+              <div class="select-wrapper">
+                <select id="lesson-subject-select" required>
+                  <option value="" disabled selected>Выберите предмет</option>
+                  <option value="Информатика">Информатика</option>
+                  <option value="Алгебра">Алгебра</option>
+                  <option value="Английский язык">Английский язык</option>
+                </select>
+              </div>
+            </label>
+
+            <label class="modal-field">
+              <span class="field-label">Класс</span>
+              <div class="select-wrapper">
+                <select id="lesson-grade-select" required>
+                  <option value="" disabled selected>Выберите класс</option>
+                  <option value="9 класс">9 класс</option>
+                  <option value="10 класс">10 класс</option>
+                  <option value="11 класс">11 класс</option>
+                </select>
+              </div>
+            </label>
+
+            <label class="modal-field">
+              <span class="field-label">Тема занятия</span>
+              <input type="text" class="modal-date-input" id="lesson-title-input" placeholder="Например: Введение в структуры данных Python" required />
+            </label>
+
+            <div class="modal-row-fields" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+              <label class="modal-field">
+                <span class="field-label">Дата урока</span>
+                <input type="date" class="modal-date-input" id="lesson-date-input" required />
+              </label>
+
+              <label class="modal-field">
+                <span class="field-label">Длительность</span>
+                <div class="select-wrapper">
+                  <select id="lesson-duration-select" required>
+                    <option value="1.0" selected>1 час (+1 ч. ментору)</option>
+                    <option value="1.5">1.5 часа (+1.5 ч.)</option>
+                    <option value="2.0">2 часа (+2 ч.)</option>
+                  </select>
+                </div>
+              </label>
+            </div>
+
+            <div class="modal-row-fields" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+              <label class="modal-field">
+                <span class="field-label">Время начала</span>
+                <input type="time" class="modal-date-input" id="lesson-start-time" value="16:00" required />
+              </label>
+              <label class="modal-field">
+                <span class="field-label">Время окончания</span>
+                <input type="time" class="modal-date-input" id="lesson-end-time" value="17:00" required />
+              </label>
+            </div>
+
+            <label class="modal-field">
+              <span class="field-label">Ссылка на видеовстречу (Google Meet)</span>
+              <input type="url" class="modal-date-input" id="lesson-meet-input" value="https://meet.google.com" placeholder="https://meet.google.com/xyz" required />
+            </label>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn-cancel" id="cancel-schedule-modal-btn" type="button">Отмена</button>
+            <button class="btn-submit" type="submit" id="submit-lesson-btn">
+              <span>Запланировать</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <footer class="footer">
+      © Digital Mentor, Астана. Социальный пилотный проект. Школьники-волонтёры со всего города помогают ученикам Казахстана.
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
