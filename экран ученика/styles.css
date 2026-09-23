@@ -128,6 +128,19 @@ body {
   transform: translateY(-1px);
 }
 
+.btn-logout {
+  cursor: pointer;
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+}
+
+.btn-logout:hover {
+  background: rgba(239, 68, 68, 0.28);
+  border-color: rgba(239, 68, 68, 0.6);
+  color: #ffffff;
+}
+
 .role-pill {
   display: inline-flex;
   align-items: center;
@@ -813,6 +826,7 @@ body {
   color: var(--muted);
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 4px 10px;
   border-radius: 8px;
   white-space: nowrap;
 }
@@ -2148,3 +2162,277 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* ============================================================
+   Кнопка удаления предстоящих уроков ментором
+   ============================================================ */
+.btn-delete-lesson {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-delete-lesson:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.65);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
+}
+
+.btn-delete-lesson:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-complete-lesson {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(79, 172, 254, 0.35);
+  background: rgba(79, 172, 254, 0.15);
+  color: #93c5fd;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-complete-lesson:hover {
+  background: rgba(79, 172, 254, 0.28);
+  border-color: rgba(79, 172, 254, 0.65);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(79, 172, 254, 0.25);
+}
+
+.btn-complete-lesson:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ============================================================
+   Модальное окно онбординга (первичная регистрация)
+   ============================================================ */
+.onboarding-window {
+  max-width: 520px;
+  border: 1px solid rgba(110, 200, 255, 0.4);
+  box-shadow: 0 30px 100px rgba(0, 10, 45, 0.85), 0 0 40px rgba(79, 172, 254, 0.15);
+}
+
+.onboarding-banner {
+  padding: 26px 28px 18px;
+  background: linear-gradient(180deg, rgba(14, 45, 110, 0.7), rgba(8, 24, 70, 0.5));
+  border-bottom: 1px solid rgba(170, 205, 255, 0.2);
+  text-align: left;
+}
+
+.onboarding-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(79, 172, 254, 0.18);
+  border: 1px solid rgba(79, 172, 254, 0.45);
+  color: #93c5fd;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.onboarding-banner h3 {
+  margin: 0 0 6px 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+
+.onboarding-subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.onboarding-body {
+  padding: 22px 28px;
+  gap: 16px;
+}
+
+/* Сетка выбора роли (Ученик / Ментор) */
+.onboarding-role-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.onboarding-role-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 14px 14px;
+  border-radius: 14px;
+  background: rgba(8, 24, 68, 0.6);
+  border: 2px solid rgba(170, 205, 255, 0.2);
+  cursor: pointer;
+  text-align: left;
+  position: relative;
+  transition: all 0.22s ease;
+  color: inherit;
+  font: inherit;
+}
+
+.onboarding-role-card:hover {
+  background: rgba(14, 38, 98, 0.7);
+  border-color: rgba(170, 205, 255, 0.45);
+  transform: translateY(-2px);
+}
+
+.onboarding-role-card.is-active {
+  background: linear-gradient(135deg, rgba(14, 45, 115, 0.85), rgba(8, 30, 85, 0.95));
+  border-color: #4facfe;
+  box-shadow: 0 0 20px rgba(79, 172, 254, 0.28);
+}
+
+.role-card-icon {
+  font-size: 26px;
+  margin-bottom: 8px;
+}
+
+.role-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.role-card-info strong {
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.role-card-info span {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.role-check-mark {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: transparent;
+  transition: all 0.2s ease;
+}
+
+.onboarding-role-card.is-active .role-check-mark {
+  background: #4facfe;
+  border-color: #6ec8ff;
+  color: #041434;
+  box-shadow: 0 0 10px rgba(79, 172, 254, 0.6);
+}
+
+.onboarding-footer {
+  padding: 16px 28px 24px;
+  background: rgba(6, 16, 44, 0.4);
+}
+
+.onboarding-submit-btn {
+  width: 100%;
+  justify-content: center;
+  height: 48px;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 14px;
+}
+
+
+
+/* Toast Notifications */
+.custom-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: #ff4757;
+  color: white;
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-weight: 500;
+  box-shadow: 0 10px 30px rgba(255, 71, 87, 0.4);
+  z-index: 10000;
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  pointer-events: none;
+}
+.custom-toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+.custom-toast.toast-error {
+  background: #ff4757;
+  box-shadow: 0 10px 30px rgba(255, 71, 87, 0.4);
+}
+
+
+
+/* Toast Notifications */
+.custom-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: #ff4757;
+  color: white;
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-weight: 500;
+  box-shadow: 0 10px 30px rgba(255, 71, 87, 0.4);
+  z-index: 10000;
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  pointer-events: none;
+}
+.custom-toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+.custom-toast.toast-error {
+  background: #ff4757;
+  box-shadow: 0 10px 30px rgba(255, 71, 87, 0.4);
+}
+

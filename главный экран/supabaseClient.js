@@ -11,6 +11,7 @@ let supabaseClient = null;
 try {
   if (window.supabase && typeof window.supabase.createClient === "function") {
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    window.supabaseClient = supabaseClient;
     console.log("✅ Supabase успешно инициализирован:", SUPABASE_URL);
   } else {
     console.warn("Библиотека Supabase не найдена на странице, fallback на локальный режим.");
@@ -20,50 +21,7 @@ try {
 }
 
 // Начальные демо-уроки на случай первого запуска с пустой базой
-const INITIAL_DEMO_LESSONS = [
-  {
-    subject: "Информатика",
-    grade: "10 класс",
-    title: "Алгоритмы поиска и структуры данных на Python",
-    mentor_name: "Данияр Нургалиев",
-    mentor_id: "default_mentor",
-    day_key: "tue",
-    lesson_date: "2026-09-15",
-    start_time: "16:30",
-    end_time: "17:30",
-    duration_hours: 1.0,
-    meet_url: "https://meet.google.com",
-    status: "live",
-  },
-  {
-    subject: "Алгебра",
-    grade: "10 класс",
-    title: "Тригонометрические формулы и решение уравнений",
-    mentor_name: "Алия Сарсенова",
-    mentor_id: "default_mentor",
-    day_key: "wed",
-    lesson_date: "2026-09-16",
-    start_time: "15:00",
-    end_time: "16:15",
-    duration_hours: 1.25,
-    meet_url: "https://meet.google.com",
-    status: "scheduled",
-  },
-  {
-    subject: "Английский язык",
-    grade: "11 класс",
-    title: "IELTS Speaking Part 2 & 3: Стратегии высоких баллов",
-    mentor_name: "Малика Серикова",
-    mentor_id: "default_mentor",
-    day_key: "fri",
-    lesson_date: "2026-09-18",
-    start_time: "17:00",
-    end_time: "18:00",
-    duration_hours: 1.0,
-    meet_url: "https://meet.google.com",
-    status: "scheduled",
-  },
-];
+const INITIAL_DEMO_LESSONS = [];
 
 window.SupabaseService = {
   client: supabaseClient,
@@ -80,13 +38,7 @@ window.SupabaseService = {
 
       if (error) throw error;
 
-      // Если база ещё пустая — заполним начальными демо-уроками
-      if (!data || data.length === 0) {
-        await this.seedInitialLessons();
-        return this.getLessons();
-      }
-
-      return data;
+      return data || [];
     } catch (err) {
       console.error("Ошибка получения уроков из Supabase:", err);
       return this.getLocalLessons();
@@ -126,9 +78,39 @@ window.SupabaseService = {
     return data && data[0] ? data[0] : lessonData;
   },
 
-  // 3. Завершить урок и АВТОМАТИЧЕСКИ начислить часы ментору
-  async completeLesson(lessonId, durationHours = 1.0) {
+  // 2.1. Удалить предстоящий урок (доступно менторам)
+  async deleteLesson(lessonId) {
+    // Удаляем из локального кэша
+    const local = this.getLocalLessons();
+    const updated = local.filter((l) => String(l.id) !== String(lessonId));
+    localStorage.setItem("dm_cloud_lessons_cache", JSON.stringify(updated));
+
+    if (!supabaseClient) {
+      return true;
+    }
+
+    try {
+      const { error } = await supabaseClient
+        .from("lessons")
+        .delete()
+        .eq("id", lessonId);
+
+      if (error) {
+        console.error("Ошибка удаления урока из Supabase:", error);
+        throw error;
+      }
+      return true;
+    } catch (err) {
+      console.error("Ошибка в deleteLesson:", err);
+      throw err;
+    }
+  },
+
+  // 3. Завершить урок и АВТОМАТИЧЕСКИ начислить часы конкретному ментору
+  async completeLesson(lessonId, durationHours = 1.0, targetMentorId = null) {
     const duration = parseFloat(durationHours) || 1.0;
+    const currentUserId = await this.getCurrentUserId();
+    const mentorId = targetMentorId || currentUserId;
 
     // А) Обновляем статус урока на 'completed'
     if (supabaseClient) {
@@ -139,55 +121,130 @@ window.SupabaseService = {
 
       if (lessonErr) console.error("Ошибка обновления статуса урока:", lessonErr);
 
-      // Б) Получаем текущие часы и прибавляем duration
+      // Б) Получаем статистику именно этого ментора (по его Google ID / mentorId)
       const { data: statsData, error: statsErr } = await supabaseClient
         .from("mentor_stats")
         .select("*")
-        .eq("id", "default_mentor")
-        .single();
+        .eq("id", mentorId)
+        .maybeSingle();
 
       const currentHours = statsData ? parseFloat(statsData.volunteer_hours) || 0 : 0;
       const currentCompleted = statsData ? parseInt(statsData.lessons_completed, 10) || 0 : 0;
       const newHours = Math.round((currentHours + duration) * 10) / 10;
       const newCompleted = currentCompleted + 1;
 
-      const { error: updateErr } = await supabaseClient
-        .from("mentor_stats")
-        .update({
-          volunteer_hours: newHours,
-          lessons_completed: newCompleted,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", "default_mentor");
+      let mentorName = "Волонтёр-наставник";
+      try {
+        const user = await this.getCurrentUser();
+        if (user) {
+          mentorName =
+            user.user_metadata?.full_name ||
+            user.user_metadata?.name ||
+            user.email.split("@")[0];
+        }
+      } catch (e) {}
 
-      if (updateErr) console.error("Ошибка начисления часов ментора:", updateErr);
+      if (statsData) {
+        const { error: updateErr } = await supabaseClient
+          .from("mentor_stats")
+          .update({
+            volunteer_hours: newHours,
+            lessons_completed: newCompleted,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", mentorId);
 
-      return { volunteer_hours: newHours, lessons_completed: newCompleted };
+        if (updateErr) console.error("Ошибка обновления часов ментора:", updateErr);
+      } else {
+        const { error: insertErr } = await supabaseClient
+          .from("mentor_stats")
+          .insert([
+            {
+              id: mentorId,
+              mentor_name: mentorName,
+              volunteer_hours: newHours,
+              lessons_completed: newCompleted,
+              students_count: 0,
+              rating: 5.0,
+              updated_at: new Date().toISOString(),
+            },
+          ]);
+
+        if (insertErr) console.error("Ошибка создания статистики ментора:", insertErr);
+      }
+
+      const result = {
+        volunteer_hours: newHours,
+        lessons_completed: newCompleted,
+        students_count: 0,
+        rating: 5.0,
+      };
+      this.setLocalStats(mentorId, result);
+      return result;
     } else {
-      // Fallback на локальный кэш
-      const localStats = this.getLocalStats();
-      localStats.volunteer_hours = (parseFloat(localStats.volunteer_hours) || 0) + duration;
-      localStats.lessons_completed = (parseInt(localStats.lessons_completed, 10) || 0) + 1;
-      localStorage.setItem("dm_cloud_stats_cache", JSON.stringify(localStats));
+      // Fallback на локальный кэш пользователя
+      const localStats = this.getLocalStats(mentorId);
+      localStats.volunteer_hours =
+        Math.round(((parseFloat(localStats.volunteer_hours) || 0) + duration) * 10) / 10;
+      localStats.lessons_completed =
+        (parseInt(localStats.lessons_completed, 10) || 0) + 1;
+      this.setLocalStats(mentorId, localStats);
       return localStats;
     }
   },
 
-  // 4. Получить статистику волонтёрских часов ментора
-  async getMentorStats() {
-    if (!supabaseClient) return this.getLocalStats();
+  // 4. Получить статистику волонтёрских часов конкретного ментора
+  async getMentorStats(customUserId = null) {
+    const userId = customUserId || (await this.getCurrentUserId());
+    if (!supabaseClient) return this.getLocalStats(userId);
+
     try {
       const { data, error } = await supabaseClient
         .from("mentor_stats")
         .select("*")
-        .eq("id", "default_mentor")
-        .single();
+        .eq("id", userId)
+        .maybeSingle();
 
       if (error) throw error;
-      return data || { volunteer_hours: 0, lessons_completed: 0, students_count: 0, rating: 5.0 };
+
+      if (!data) {
+        // Если для данного Google-аккаунта ещё нет записи в базе — создаём чистую запись с 0 часов
+        let mentorName = "Волонтёр-наставник";
+        try {
+          const user = await this.getCurrentUser();
+          if (user) {
+            mentorName =
+              user.user_metadata?.full_name ||
+              user.user_metadata?.name ||
+              user.email.split("@")[0];
+          }
+        } catch (e) {}
+
+        const initialStats = {
+          id: userId,
+          mentor_name: mentorName,
+          volunteer_hours: 0,
+          lessons_completed: 0,
+          students_count: 0,
+          rating: 5.0,
+          updated_at: new Date().toISOString(),
+        };
+
+        try {
+          await supabaseClient.from("mentor_stats").insert([initialStats]);
+        } catch (err) {
+          console.warn("Авто-инициализация mentor_stats:", err);
+        }
+
+        this.setLocalStats(userId, initialStats);
+        return initialStats;
+      }
+
+      this.setLocalStats(userId, data);
+      return data;
     } catch (err) {
-      console.warn("Ошибка чтения mentor_stats, используем кэш:", err);
-      return this.getLocalStats();
+      console.warn(`Ошибка чтения mentor_stats для пользователя ${userId}:`, err);
+      return this.getLocalStats(userId);
     }
   },
 
@@ -230,7 +287,20 @@ window.SupabaseService = {
     }
   },
 
-  // Локальные методы fallback
+  // Получить ID текущего пользователя (Google Auth UUID или локальный гостевой ID)
+  async getCurrentUserId() {
+    const user = await this.getCurrentUser();
+    if (user && user.id) return user.id;
+
+    let guestId = localStorage.getItem("dm_local_user_id");
+    if (!guestId) {
+      guestId = "guest_" + Math.random().toString(36).substring(2, 10);
+      localStorage.setItem("dm_local_user_id", guestId);
+    }
+    return guestId;
+  },
+
+  // Локальные методы fallback с привязкой к ID аккаунта
   getLocalLessons() {
     try {
       const cached = localStorage.getItem("dm_cloud_lessons_cache");
@@ -240,15 +310,19 @@ window.SupabaseService = {
     }
   },
 
-  getLocalStats() {
+  getLocalStats(userId = "default") {
     try {
-      const cached = localStorage.getItem("dm_cloud_stats_cache");
-      return cached
-        ? JSON.parse(cached)
-        : { volunteer_hours: 0, lessons_completed: 0, students_count: 0, rating: 5.0 };
-    } catch (e) {
-      return { volunteer_hours: 0, lessons_completed: 0, students_count: 0, rating: 5.0 };
-    }
+      const key = `dm_cloud_stats_${userId}`;
+      const cached = localStorage.getItem(key);
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return { volunteer_hours: 0, lessons_completed: 0, students_count: 0, rating: 5.0 };
+  },
+
+  setLocalStats(userId = "default", stats) {
+    try {
+      localStorage.setItem(`dm_cloud_stats_${userId}`, JSON.stringify(stats));
+    } catch (e) {}
   },
 
   // Авторизация через Google OAuth
@@ -266,12 +340,9 @@ window.SupabaseService = {
 
     let targetUrl = customRedirect;
     if (!targetUrl) {
-      const current = window.location.href;
-      if (current.includes("главный%20экран/index.html") || current.includes("главный экран/index.html")) {
-        targetUrl = current.replace(/главный(%20| )экран\/index\.html/, "главный$1экран 2/index.html");
-      } else {
-        targetUrl = window.location.origin + window.location.pathname;
-      }
+      // Всегда направляем в основной интерфейс приложения
+      const origin = window.location.origin;
+      targetUrl = origin + "/главный%20экран%202/index.html";
     }
 
     const { data, error } = await supabaseClient.auth.signInWithOAuth({
@@ -282,6 +353,9 @@ window.SupabaseService = {
     });
 
     if (error) throw error;
+    if (data && data.url) {
+      window.location.href = data.url;
+    }
     return data;
   },
 
@@ -313,11 +387,14 @@ window.SupabaseService = {
 
   // Выход из аккаунта
   async signOut() {
-    if (!supabaseClient) return;
-    try {
-      await supabaseClient.auth.signOut();
-    } catch (e) {
-      console.error("Ошибка signOut:", e);
+    if (supabaseClient) {
+      try {
+        await supabaseClient.auth.signOut();
+      } catch (e) {
+        console.error("Ошибка signOut:", e);
+      }
     }
+    sessionStorage.removeItem("mentorProfile");
+    window.location.href = "../главный%20экран/index.html";
   },
 };

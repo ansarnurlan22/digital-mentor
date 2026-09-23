@@ -1,40 +1,36 @@
 // Начальные демонстрационные курсы
-const DEFAULT_COURSES = [
-  {
-    id: 1,
-    name: "Алгебра",
-    grade: "10",
-    maxStudents: 4,
-    startDate: "2026-09-15",
-    mentor: "Школьник-волонтёр · Ментор назначен",
-  },
-  {
-    id: 2,
-    name: "Английский язык",
-    grade: "11",
-    maxStudents: 5,
-    startDate: "2026-09-18",
-    mentor: "Школьник-волонтёр · Ментор назначен",
-  },
-  {
-    id: 3,
-    name: "Информатика",
-    grade: "9",
-    maxStudents: 3,
-    startDate: "2026-09-20",
-    mentor: "Школьник-волонтёр · Ментор назначен",
-  },
-];
+const DEFAULT_COURSES = [];
 
 const STORAGE_KEY = "digitalMentor_activeCourses";
 const USER_PROFILE_KEY = "digitalMentor_userProfile";
 
+// Очистка старых данных для абсолютно нового сайта
+localStorage.removeItem(STORAGE_KEY);
+localStorage.removeItem("dm_cloud_lessons_cache");
+
+// Получить ключ профиля для текущего аккаунта
+function getAccountProfileKey(userId = null) {
+  const uid = userId || (window.currentAuthUser ? window.currentAuthUser.id : null);
+  return uid ? `digitalMentor_profile_${uid}` : USER_PROFILE_KEY;
+}
+
 // Получить текущую роль пользователя (Ментор или Ученик)
 function getUserRole() {
   try {
+    const accountKey = getAccountProfileKey();
+    const accountData = localStorage.getItem(accountKey);
+    if (accountData) {
+      const parsed = JSON.parse(accountData);
+      if (parsed && parsed.role) return parsed.role;
+    }
+
     const profileData = localStorage.getItem(USER_PROFILE_KEY);
     if (profileData) {
       const parsed = JSON.parse(profileData);
+      // Если авторизован пользователь Google, проверяем совпадение email
+      if (window.currentAuthUser && parsed.email && parsed.email !== window.currentAuthUser.email) {
+        return "Ученик";
+      }
       if (parsed && parsed.role) {
         return parsed.role;
       }
@@ -307,7 +303,7 @@ const courseStartDateInput = document.getElementById("course-start-date");
 
 function openModal() {
   if (getUserRole() !== "Ментор") {
-    alert("Добавлять активные курсы может только ментор. В профиле переключите роль на «Ментор», чтобы управлять курсами.");
+    showToast("Ученики не могут добавлять курсы. Только менторы.", "error");
     return;
   }
   modalOverlay.hidden = false;
@@ -531,10 +527,22 @@ if (addLessonForm) {
 
     const day_key = getDayKeyFromDate(lesson_date);
 
-    // Получаем имя текущего ментора из профиля
-    let mentorName = "Данияр Нургалиев";
+    // Получаем ID и имя текущего ментора из Google-аккаунта / локального профиля
+    let currentUserId = "default_mentor";
+    let mentorName = "Волонтёр-наставник";
     try {
-      const p = localStorage.getItem(USER_PROFILE_KEY);
+      if (window.currentAuthUser && window.currentAuthUser.id) {
+        currentUserId = window.currentAuthUser.id;
+        mentorName =
+          window.currentAuthUser.user_metadata?.full_name ||
+          window.currentAuthUser.user_metadata?.name ||
+          window.currentAuthUser.email.split("@")[0];
+      } else if (window.SupabaseService && window.SupabaseService.getCurrentUserId) {
+        currentUserId = await window.SupabaseService.getCurrentUserId();
+      }
+
+      const accountKey = getAccountProfileKey(currentUserId);
+      const p = localStorage.getItem(accountKey) || localStorage.getItem(USER_PROFILE_KEY);
       if (p) {
         const parsed = JSON.parse(p);
         if (parsed.name) mentorName = parsed.name;
@@ -546,7 +554,7 @@ if (addLessonForm) {
       grade,
       title,
       mentor_name: mentorName,
-      mentor_id: "default_mentor",
+      mentor_id: currentUserId,
       day_key,
       lesson_date,
       start_time,
@@ -576,8 +584,8 @@ if (addLessonForm) {
   });
 }
 
-// Завершение урока ментором и начисление часов (без всплывающих окон)
-window.handleCompleteLesson = async function (event, lessonId, durationHours) {
+// Завершение урока ментором и начисление часов (привязано к ID ментора урока)
+window.handleCompleteLesson = async function (event, lessonId, durationHours, lessonMentorId) {
   if (event) {
     if (typeof event.stopPropagation === "function") event.stopPropagation();
     if (typeof event.preventDefault === "function") event.preventDefault();
@@ -596,7 +604,7 @@ window.handleCompleteLesson = async function (event, lessonId, durationHours) {
 
   try {
     if (window.SupabaseService) {
-      await window.SupabaseService.completeLesson(lessonId, duration);
+      await window.SupabaseService.completeLesson(lessonId, duration, lessonMentorId);
     }
     // Бесшовное мгновенное обновление расписания и волонтёрских часов
     await loadAndRenderAllScheduleAndStats();
@@ -609,6 +617,53 @@ window.handleCompleteLesson = async function (event, lessonId, durationHours) {
           <polyline points="20 6 9 17 4 12"></polyline>
         </svg>
         Завершить урок
+      `;
+    }
+  }
+};
+
+// Удаление предстоящего урока ментором
+window.handleDeleteLesson = async function (event, lessonId) {
+  if (event) {
+    if (typeof event.stopPropagation === "function") event.stopPropagation();
+    if (typeof event.preventDefault === "function") event.preventDefault();
+  }
+
+  if (getUserRole() !== "Ментор") {
+    alert("Удаление занятий доступно только менторам.");
+    return;
+  }
+
+  const confirmed = confirm("Вы действительно хотите отменить и удалить этот урок из расписания?");
+  if (!confirmed) return;
+
+  const clickedBtn = event && event.currentTarget ? event.currentTarget : null;
+  if (clickedBtn) {
+    clickedBtn.disabled = true;
+    clickedBtn.textContent = "Удаление...";
+  }
+
+  try {
+    if (window.SupabaseService) {
+      await window.SupabaseService.deleteLesson(lessonId);
+    }
+    // Мгновенное удаление из локального списка на экране
+    currentLessonsData = currentLessonsData.filter((l) => String(l.id) !== String(lessonId));
+    renderScheduleLessons(currentLessonsData);
+
+  } catch (err) {
+    console.error("Ошибка при удалении урока:", err);
+    alert("Не удалось удалить урок: " + (err.message || err));
+    if (clickedBtn) {
+      clickedBtn.disabled = false;
+      clickedBtn.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          <line x1="10" y1="11" x2="10" y2="17"></line>
+          <line x1="14" y1="11" x2="14" y2="17"></line>
+        </svg>
+        <span>Удалить</span>
       `;
     }
   }
@@ -636,6 +691,31 @@ function renderScheduleLessons(lessons) {
     else if (c >= 2 && c <= 4) word = "занятия";
     countEl.textContent = `${c} ${word}`;
   }
+
+  // Обновление количества на кнопке "Вся неделя"
+  const allChipNum = document.querySelector('.day-chip[data-day="all"] .day-num');
+  if (allChipNum) {
+    allChipNum.textContent = lessons.length;
+  }
+
+  // Обновление точек на днях недели
+  const dayChips = document.querySelectorAll('.day-chip[data-day]:not([data-day="all"])');
+  dayChips.forEach(chip => {
+    const day = chip.getAttribute('data-day');
+    const dotsContainer = chip.querySelector('.day-dots');
+    if (dotsContainer) {
+      dotsContainer.innerHTML = '';
+      const dayLessons = lessons.filter(l => l.day_key === day);
+      if (dayLessons.length > 0) {
+        dayLessons.slice(0, 3).forEach(l => {
+          const dot = document.createElement('span');
+          dot.className = 'dot-lesson';
+          if (l.status === 'live') dot.classList.add('dot-live');
+          dotsContainer.appendChild(dot);
+        });
+      }
+    }
+  });
 
   if (visibleLessons.length === 0) {
     container.innerHTML = `
@@ -692,11 +772,25 @@ function renderScheduleLessons(lessons) {
       } else {
         const completeBtnHtml = isMentor
           ? `
-            <button class="btn-complete-lesson" onclick="handleCompleteLesson(event, '${lesson.id}', ${lesson.duration_hours || 1.0})" type="button" title="Отметить проведение и получить волонтёрские часы">
+            <button class="btn-complete-lesson" onclick="handleCompleteLesson(event, '${lesson.id}', ${lesson.duration_hours || 1.0}, '${lesson.mentor_id || ''}')" type="button" title="Отметить проведение и получить волонтёрские часы">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
               <span>Завершить урок</span>
+            </button>
+          `
+          : "";
+
+        const deleteBtnHtml = isMentor
+          ? `
+            <button class="btn-delete-lesson" onclick="handleDeleteLesson(event, '${lesson.id}')" type="button" title="Отменить и удалить предстоящий урок">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+              </svg>
+              <span>Удалить</span>
             </button>
           `
           : "";
@@ -710,6 +804,7 @@ function renderScheduleLessons(lessons) {
             <span>Подключиться</span>
           </a>
           ${completeBtnHtml}
+          ${deleteBtnHtml}
           <button class="btn-lesson-materials" type="button">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -762,12 +857,44 @@ function updateVolunteerStatsUI(stats) {
   const hours = parseFloat(stats.volunteer_hours) || 0;
   const completedCount = parseInt(stats.lessons_completed, 10) || 0;
   const rating = parseFloat(stats.rating) || 5.0;
+  const studentsCount = parseInt(stats.students_count, 10) || (completedCount > 0 ? 1 : 0);
 
   const hoursDisplay = document.getElementById("volunteer-hours-display");
   const progressFill = document.getElementById("volunteer-progress-fill");
   const lessonsCount = document.getElementById("stat-lessons-count");
+  const studentsDisplay = document.getElementById("stat-students-count");
   const ratingDisplay = document.getElementById("stat-rating-display");
   const unlockedPill = document.getElementById("achievements-unlocked-pill");
+  const passportName = document.getElementById("passport-mentor-name");
+  const passportRank = document.getElementById("passport-rank-text");
+
+  // Имя наставника на паспорте
+  if (passportName) {
+    let name = "Личный прогресс";
+    if (window.currentAuthUser) {
+      name =
+        window.currentAuthUser.user_metadata?.full_name ||
+        window.currentAuthUser.user_metadata?.name ||
+        (window.currentAuthUser.email ? window.currentAuthUser.email.split("@")[0] : "Волонтёр-наставник");
+    } else {
+      const role = getUserRole();
+      name = role === "Ментор" ? "Кабинет наставника" : "Личный прогресс";
+    }
+    passportName.textContent = name;
+  }
+
+  // Ранг наставника
+  if (passportRank) {
+    if (hours >= 40) {
+      passportRank.textContent = "Мастер-наставник (Высший уровень)";
+    } else if (hours >= 20) {
+      passportRank.textContent = "Опытный волонтёр (Продвинутый)";
+    } else if (hours >= 1) {
+      passportRank.textContent = "Активный волонтёр";
+    } else {
+      passportRank.textContent = "Старт волонтёрской практики";
+    }
+  }
 
   if (hoursDisplay) {
     hoursDisplay.innerHTML = `<strong>${hours}</strong> / 50 ч.`;
@@ -782,15 +909,90 @@ function updateVolunteerStatsUI(stats) {
     lessonsCount.textContent = String(completedCount);
   }
 
+  if (studentsDisplay) {
+    studentsDisplay.textContent = String(studentsCount);
+  }
+
   if (ratingDisplay) {
     ratingDisplay.textContent = completedCount > 0 ? `★ ${rating.toFixed(1)}` : `★ —`;
   }
 
-  // Расчёт открытых бейджей
+  // Обновление карточек достижений (все 6 бейджей)
+  const badgeCards = document.querySelectorAll(".badges-grid .badge-card");
   let unlocked = 0;
-  if (completedCount >= 1) unlocked++;
-  if (completedCount >= 10) unlocked++;
-  if (hours >= 40) unlocked++;
+
+  function updateBadge(card, isUnlocked, statusText, progressPercent = null) {
+    if (!card) return;
+    if (isUnlocked) {
+      card.classList.add("is-unlocked");
+      card.classList.remove("is-in-progress");
+      unlocked++;
+    } else {
+      card.classList.remove("is-unlocked");
+      card.classList.add("is-in-progress");
+    }
+    const tag = card.querySelector(".badge-status-tag");
+    if (tag) {
+      tag.textContent = statusText;
+      if (isUnlocked) {
+        tag.className = "badge-status-tag status-done";
+      } else {
+        tag.className = "badge-status-tag status-progress";
+      }
+    }
+    const miniFill = card.querySelector(".mini-progress-fill");
+    if (miniFill && progressPercent !== null) {
+      miniFill.style.width = `${progressPercent}%`;
+    }
+  }
+
+  if (badgeCards && badgeCards.length >= 6) {
+    // 1. Первый наставник (1 урок)
+    updateBadge(
+      badgeCards[0],
+      completedCount >= 1,
+      completedCount >= 1 ? "Получено ✓" : `${completedCount} / 1`
+    );
+
+    // 2. Мастер кода (10 уроков)
+    const codePercent = Math.min(100, Math.round((completedCount / 10) * 100));
+    updateBadge(
+      badgeCards[1],
+      completedCount >= 10,
+      completedCount >= 10 ? "Получено ✓" : `${Math.min(completedCount, 10)} / 10`,
+      codePercent
+    );
+
+    // 3. Звезда доверия (10 уроков / рейтинг)
+    updateBadge(
+      badgeCards[2],
+      completedCount >= 10,
+      completedCount >= 10 ? "Получено ✓" : `${Math.min(completedCount, 10)} / 10`
+    );
+
+    // 4. Марафонец знаний (40 часов)
+    updateBadge(
+      badgeCards[3],
+      hours >= 40,
+      hours >= 40 ? "Получено ✓" : `${hours} / 40 ч.`
+    );
+
+    // 5. Надёжное плечо (100% дисциплины)
+    updateBadge(
+      badgeCards[4],
+      completedCount >= 1,
+      completedCount >= 1 ? "Получено ✓" : "0%"
+    );
+
+    // 6. Олимпиец (2 ученика)
+    const olympPercent = Math.min(100, Math.round((studentsCount / 2) * 100));
+    updateBadge(
+      badgeCards[5],
+      studentsCount >= 2,
+      studentsCount >= 2 ? "Получено ✓" : `${Math.min(studentsCount, 2)} / 2`,
+      olympPercent
+    );
+  }
 
   if (unlockedPill) {
     unlockedPill.textContent = `${unlocked} из 6 получено`;
@@ -802,9 +1004,14 @@ async function loadAndRenderAllScheduleAndStats() {
   if (!window.SupabaseService) return;
 
   try {
+    let currentUserId = "default_mentor";
+    if (typeof window.SupabaseService.getCurrentUserId === "function") {
+      currentUserId = await window.SupabaseService.getCurrentUserId();
+    }
+
     const [lessons, stats] = await Promise.all([
       window.SupabaseService.getLessons(),
-      window.SupabaseService.getMentorStats(),
+      window.SupabaseService.getMentorStats(currentUserId),
     ]);
 
     currentLessonsData = lessons || [];
@@ -816,6 +1023,62 @@ async function loadAndRenderAllScheduleAndStats() {
   } catch (err) {
     console.error("Ошибка обновления расписания и часов:", err);
   }
+}
+
+// Динамическое обновление текущей недели
+function initDynamicWeek() {
+  const monthNames = [
+    "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+    "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
+  ];
+
+  const now = new Date();
+  let currentDayOfWeek = now.getDay();
+  if (currentDayOfWeek === 0) currentDayOfWeek = 7; // Сделаем воскресенье 7-м днем, чтобы Пн был 1
+  
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - currentDayOfWeek + 1);
+
+  const monthTag = document.querySelector(".calendar-month-tag");
+  if (monthTag) {
+    monthTag.textContent = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+  }
+
+  const dayChips = document.querySelectorAll(".day-chip[data-day]:not([data-day='all'])");
+  const dayKeys = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+  
+  dayChips.forEach((chip) => {
+    const dayKey = chip.getAttribute("data-day");
+    const dayIndexOffset = dayKeys.indexOf(dayKey);
+    if (dayIndexOffset !== -1) {
+      const chipDate = new Date(startOfWeek);
+      chipDate.setDate(startOfWeek.getDate() + dayIndexOffset);
+      
+      const numSpan = chip.querySelector(".day-num");
+      if (numSpan) {
+        numSpan.textContent = chipDate.getDate();
+      }
+
+      if (
+        chipDate.getDate() === now.getDate() &&
+        chipDate.getMonth() === now.getMonth() &&
+        chipDate.getFullYear() === now.getFullYear()
+      ) {
+        chip.classList.add("is-today");
+        let badge = chip.querySelector(".day-badge-today");
+        if (!badge) {
+          badge = document.createElement("span");
+          badge.className = "day-badge-today";
+          badge.textContent = "Сегодня";
+          chip.insertBefore(badge, chip.firstChild);
+        }
+      } else {
+        chip.classList.remove("is-today");
+        const badge = chip.querySelector(".day-badge-today");
+        if (badge) badge.remove();
+      }
+    }
+  });
 }
 
 // Инициализация интерактивных чипов дней
@@ -849,39 +1112,282 @@ function initScheduleInteractivity() {
   }
 }
 
-// Инициализация при загрузке страницы
-document.addEventListener("DOMContentLoaded", () => {
+// ============================================================
+// Онбординг: Первичная регистрация пользователя (Google / Новый вход)
+// ============================================================
+function selectOnboardingRole(role) {
+  const roleInput = document.getElementById("onboarding-role-input");
+  const roleCards = document.querySelectorAll(".onboarding-role-card");
+  const subjectLabel = document.getElementById("onboarding-subject-label");
+
+  if (roleInput) roleInput.value = role;
+  roleCards.forEach((card) => {
+    if (card.getAttribute("data-role") === role) {
+      card.classList.add("is-active");
+    } else {
+      card.classList.remove("is-active");
+    }
+  });
+
+  if (subjectLabel) {
+    subjectLabel.textContent =
+      role === "Ментор" ? "Предмет преподавания" : "Предмет изучения";
+  }
+}
+
+function openOnboardingModal(currentUser, existingProfile) {
+  const modal = document.getElementById("onboarding-modal-overlay");
+  if (!modal) return;
+
+  // Предзаполняем имя пользователя
+  const nameInput = document.getElementById("onboarding-name-input");
+  if (nameInput) {
+    let defaultName = "";
+    if (currentUser) {
+      defaultName =
+        currentUser.user_metadata?.full_name ||
+        currentUser.user_metadata?.name ||
+        (currentUser.email ? currentUser.email.split("@")[0] : "");
+    } else if (
+      existingProfile &&
+      existingProfile.name &&
+      existingProfile.name !== "Алина Касымова"
+    ) {
+      defaultName = existingProfile.name;
+    }
+    nameInput.value = defaultName;
+  }
+
+  // Роль
+  const defaultRole = (existingProfile && existingProfile.role) || "Ученик";
+  selectOnboardingRole(defaultRole);
+
+  // Класс
+  const gradeSelect = document.getElementById("onboarding-grade-select");
+  if (gradeSelect && existingProfile && existingProfile.grade) {
+    gradeSelect.value = existingProfile.grade;
+  }
+
+  // Предмет
+  const subjectSelect = document.getElementById("onboarding-subject-select");
+  if (subjectSelect && existingProfile && existingProfile.subject) {
+    subjectSelect.value = existingProfile.subject;
+  }
+
+  modal.classList.remove("is-hidden");
+  modal.removeAttribute("hidden");
+  modal.style.display = "grid";
+}
+
+function closeOnboardingModal() {
+  const modal = document.getElementById("onboarding-modal-overlay");
+  if (!modal) return;
+  modal.classList.add("is-hidden");
+  modal.setAttribute("hidden", "true");
+  modal.style.display = "none";
+}
+
+function initOnboarding() {
+  const form = document.getElementById("onboarding-form");
+  const roleCards = document.querySelectorAll(".onboarding-role-card");
+
+  roleCards.forEach((card) => {
+    card.addEventListener("click", () => {
+      const role = card.getAttribute("data-role");
+      selectOnboardingRole(role);
+    });
+  });
+
+  if (form) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const nameInput = document.getElementById("onboarding-name-input");
+      const gradeSelect = document.getElementById("onboarding-grade-select");
+      const subjectSelect = document.getElementById("onboarding-subject-select");
+      const roleInput = document.getElementById("onboarding-role-input");
+
+      const name = nameInput ? nameInput.value.trim() : "";
+      const grade = gradeSelect ? gradeSelect.value : "10 класс";
+      const subject = subjectSelect ? subjectSelect.value : "Информатика";
+      const role = roleInput ? roleInput.value : "Ученик";
+
+      let currentUser = null;
+      if (window.SupabaseService) {
+        try {
+          currentUser = await window.SupabaseService.getCurrentUser();
+          window.currentAuthUser = currentUser;
+        } catch (err) {}
+      }
+
+      const newProfile = {
+        name: name || (currentUser?.email ? currentUser.email.split("@")[0] : "Пользователь"),
+        role: role,
+        grade: grade,
+        subject: subject,
+        email: currentUser?.email || "",
+        google_id: currentUser?.id || "",
+        isConfigured: true,
+        configured_at: new Date().toISOString(),
+      };
+
+      // Сохраняем в персональный ключ аккаунта и глобальный ключ
+      localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(newProfile));
+      if (currentUser && currentUser.id) {
+        localStorage.setItem(getAccountProfileKey(currentUser.id), JSON.stringify(newProfile));
+      }
+
+      closeOnboardingModal();
+      updateRoleUI();
+      await loadAndRenderAllScheduleAndStats();
+
+      alert(
+        `🎉 Добро пожаловать в TutorFlow, ${newProfile.name}!\nВаш профиль настроен. Вы вошли как «${newProfile.role}».`
+      );
+    });
+  }
+}
+
+async function checkFirstTimeUser() {
+  let currentUser = null;
+  if (window.SupabaseService) {
+    try {
+      currentUser = await window.SupabaseService.getCurrentUser();
+      window.currentAuthUser = currentUser;
+    } catch (err) {}
+  }
+
+  let profile = null;
+  try {
+    const accountKey = getAccountProfileKey(currentUser ? currentUser.id : null);
+    const rawAccount = localStorage.getItem(accountKey);
+    if (rawAccount) {
+      profile = JSON.parse(rawAccount);
+    } else {
+      const raw = localStorage.getItem(USER_PROFILE_KEY);
+      if (raw) profile = JSON.parse(raw);
+    }
+  } catch (e) {}
+
+  // Пользователь считается новым, если:
+  // 1. Авторизован через Google, но профиль под этот Google ID ещё не сохранялся
+  // 2. Либо в профиле нет флага isConfigured
+  const isNewGoogleUser =
+    currentUser && currentUser.email && (!profile || profile.email !== currentUser.email || profile.google_id !== currentUser.id);
+  const isProfileUnconfigured = !profile || !profile.isConfigured;
+
+  if (isNewGoogleUser || isProfileUnconfigured) {
+    openOnboardingModal(currentUser, profile);
+  }
+}
+
+// Инициализация кнопки выхода из аккаунта
+function initHeaderLogout() {
+  const logoutBtn = document.getElementById("header-logout-btn");
+  if (logoutBtn && !logoutBtn.dataset.bound) {
+    logoutBtn.dataset.bound = "true";
+    logoutBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      if (confirm("Вы действительно хотите выйти из аккаунта?")) {
+        if (window.SupabaseService && typeof window.SupabaseService.signOut === "function") {
+          await window.SupabaseService.signOut();
+        } else {
+          sessionStorage.removeItem("mentorProfile");
+          window.location.href = "../главный%20экран/index.html";
+        }
+      }
+    });
+  }
+}
+
+// Главная функция инициализации приложения
+async function initApp() {
+  if (window.SupabaseService) {
+    try {
+      const user = await window.SupabaseService.getCurrentUser();
+      window.currentAuthUser = user;
+    } catch (e) {}
+  }
+
   updateRoleUI();
   renderCourses();
+  initDynamicWeek();
   initScheduleInteractivity();
-  loadAndRenderAllScheduleAndStats();
+  initHeaderLogout();
+  await loadAndRenderAllScheduleAndStats();
+  initOnboarding();
+  await checkFirstTimeUser();
+}
+
+// Инициализация при загрузке страницы (единственное место вызова)
+let _appInitialized = false;
+document.addEventListener("DOMContentLoaded", () => {
+  if (_appInitialized) return;
+  _appInitialized = true;
+  initApp();
 
   // Живая подписка на обновления Supabase Realtime
   if (window.SupabaseService) {
     window.SupabaseService.subscribe(() => {
       loadAndRenderAllScheduleAndStats();
     });
+
+    if (typeof window.SupabaseService.onAuthStateChange === "function") {
+      window.SupabaseService.onAuthStateChange(async (event, session) => {
+        if (session && session.user) {
+          window.currentAuthUser = session.user;
+          updateRoleUI();
+          await loadAndRenderAllScheduleAndStats();
+          await checkFirstTimeUser();
+        }
+      });
+    }
   }
 });
 
-// Обновление при возврате со страницы профиля (bfcache)
-window.addEventListener("pageshow", () => {
-  updateRoleUI();
-  renderCourses();
-  loadAndRenderAllScheduleAndStats();
-});
-
-// Синхронизация между вкладками при изменении профиля
+// Синхронизация между вкладками при изменении профиля (только UI, без перезагрузки данных)
 window.addEventListener("storage", (e) => {
-  if (e.key === USER_PROFILE_KEY || e.key === STORAGE_KEY) {
+  if (e.key === USER_PROFILE_KEY || e.key === STORAGE_KEY || (e.key && e.key.startsWith("digitalMentor_profile_"))) {
     updateRoleUI();
     renderCourses();
-    loadAndRenderAllScheduleAndStats();
   }
 });
 
-updateRoleUI();
-renderCourses();
-initScheduleInteractivity();
-loadAndRenderAllScheduleAndStats();
+
+
+// Функции для кастомных уведомлений (Toast)
+function showToast(message, type = 'error') {
+  let toast = document.getElementById('custom-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'custom-toast';
+    toast.className = 'custom-toast';
+    document.body.appendChild(toast);
+  }
+  
+  toast.className = 'custom-toast';
+  if (type === 'error') {
+    toast.classList.add('toast-error');
+    toast.innerHTML = `
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <span>${message}</span>
+    `;
+  } else {
+    toast.innerHTML = `<span>${message}</span>`;
+  }
+
+  // Сброс анимации
+  toast.classList.remove('show');
+  void toast.offsetWidth; // trigger reflow
+  
+  toast.classList.add('show');
+  
+  if (window.toastTimeout) clearTimeout(window.toastTimeout);
+  window.toastTimeout = setTimeout(() => {
+    toast.classList.remove('show');
+  }, 3500);
+}
 
