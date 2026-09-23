@@ -1190,6 +1190,10 @@ function closeOnboardingModal() {
 function initOnboarding() {
   const form = document.getElementById("onboarding-form");
   const roleCards = document.querySelectorAll(".onboarding-role-card");
+  const confirmOverlay = document.getElementById("onboarding-confirm-overlay");
+  const confirmRoleName = document.getElementById("confirm-role-name");
+  const btnBack = document.getElementById("btn-onboarding-back");
+  const btnProceed = document.getElementById("btn-onboarding-proceed");
 
   roleCards.forEach((card) => {
     card.addEventListener("click", () => {
@@ -1198,8 +1202,18 @@ function initOnboarding() {
     });
   });
 
+  // Кнопка возврата к редактированию
+  if (btnBack && confirmOverlay) {
+    btnBack.addEventListener("click", () => {
+      confirmOverlay.style.display = "none";
+    });
+  }
+
+  // Временные данные перед окончательным подтверждением
+  let pendingProfileData = null;
+
   if (form) {
-    form.addEventListener("submit", async (e) => {
+    form.addEventListener("submit", (e) => {
       e.preventDefault();
       const nameInput = document.getElementById("onboarding-name-input");
       const gradeSelect = document.getElementById("onboarding-grade-select");
@@ -1211,6 +1225,32 @@ function initOnboarding() {
       const subject = subjectSelect ? subjectSelect.value : "Информатика";
       const role = roleInput ? roleInput.value : "Ученик";
 
+      if (!name) {
+        if (typeof showToast === "function") {
+          showToast("Пожалуйста, укажите имя и фамилию.", "error");
+        } else {
+          alert("Пожалуйста, укажите имя и фамилию.");
+        }
+        return;
+      }
+
+      pendingProfileData = { name, grade, subject, role };
+
+      // Показываем плашку подтверждения: "Вы уверены? Роль можно определить лишь 1 раз"
+      if (confirmRoleName) {
+        confirmRoleName.textContent = role;
+      }
+      if (confirmOverlay) {
+        confirmOverlay.style.display = "flex";
+      }
+    });
+  }
+
+  // Окончательное подтверждение выбора роли
+  if (btnProceed) {
+    btnProceed.addEventListener("click", async () => {
+      if (!pendingProfileData) return;
+
       let currentUser = null;
       if (window.SupabaseService) {
         try {
@@ -1220,13 +1260,14 @@ function initOnboarding() {
       }
 
       const newProfile = {
-        name: name || (currentUser?.email ? currentUser.email.split("@")[0] : "Пользователь"),
-        role: role,
-        grade: grade,
-        subject: subject,
+        name: pendingProfileData.name || (currentUser?.email ? currentUser.email.split("@")[0] : "Пользователь"),
+        role: pendingProfileData.role,
+        grade: pendingProfileData.grade,
+        subject: pendingProfileData.subject,
         email: currentUser?.email || "",
         google_id: currentUser?.id || "",
         isConfigured: true,
+        roleLocked: true, // Роль зафиксирована навсегда
         configured_at: new Date().toISOString(),
       };
 
@@ -1236,13 +1277,16 @@ function initOnboarding() {
         localStorage.setItem(getAccountProfileKey(currentUser.id), JSON.stringify(newProfile));
       }
 
+      if (confirmOverlay) {
+        confirmOverlay.style.display = "none";
+      }
       closeOnboardingModal();
       updateRoleUI();
       await loadAndRenderAllScheduleAndStats();
 
-      alert(
-        `🎉 Добро пожаловать в TutorFlow, ${newProfile.name}!\nВаш профиль настроен. Вы вошли как «${newProfile.role}».`
-      );
+      if (typeof showToast === "function") {
+        showToast(`Вы вошли как «${newProfile.role}» (роль зафиксирована)`);
+      }
     });
   }
 }
@@ -1268,9 +1312,12 @@ async function checkFirstTimeUser() {
     }
   } catch (e) {}
 
-  // Пользователь считается новым, если:
-  // 1. Авторизован через Google, но профиль под этот Google ID ещё не сохранялся
-  // 2. Либо в профиле нет флага isConfigured
+  // Если профиль уже настроен и роль зафиксирована — никогда не открываем онбординг повторно!
+  if (profile && profile.isConfigured) {
+    return;
+  }
+
+  // Пользователь считается новым, если профиль ещё не настроен
   const isNewGoogleUser =
     currentUser && currentUser.email && (!profile || profile.email !== currentUser.email || profile.google_id !== currentUser.id);
   const isProfileUnconfigured = !profile || !profile.isConfigured;

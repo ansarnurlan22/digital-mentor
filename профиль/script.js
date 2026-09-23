@@ -107,6 +107,20 @@ function setupField(fieldKey, getValueFromInput, setInputFromValue) {
   const editEl = document.getElementById(`edit-${fieldKey}`);
   const btn = document.getElementById(`btn-${fieldKey}`);
 
+  if (!row || !btn || !viewEl || !editEl) return;
+
+  // Роль фиксируется лишь 1 раз при регистрации и не может быть изменена
+  if (fieldKey === "role" && (currentProfile.roleLocked || currentProfile.isConfigured)) {
+    btn.innerHTML = `<span style="font-size:14px; margin-right:4px;">🔒</span><span class="action-text">Зафиксировано</span>`;
+    btn.style.opacity = "0.75";
+    btn.style.cursor = "not-allowed";
+    btn.title = "Роль определена при регистрации и не может быть изменена";
+    btn.addEventListener("click", () => {
+      showToast("Роль определена при регистрации и не может быть изменена");
+    });
+    return;
+  }
+
   btn.addEventListener("click", () => {
     const isEditing = editingState[fieldKey];
 

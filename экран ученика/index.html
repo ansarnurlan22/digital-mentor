@@ -691,6 +691,33 @@
             </button>
           </div>
         </form>
+
+        <!-- Плашка подтверждения: выбор роли лишь 1 раз -->
+        <div class="onboarding-confirm-overlay" id="onboarding-confirm-overlay" style="display: none;">
+          <div class="onboarding-confirm-card">
+            <div class="onboarding-confirm-icon">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+            </div>
+            <h4 class="onboarding-confirm-title">Вы уверены?</h4>
+            <p class="onboarding-confirm-text">
+              Роль <strong>«<span id="confirm-role-name">Ученик</span>»</strong> можно определить <strong>лишь 1 раз</strong>.
+              <br><br>
+              После подтверждения изменить роль для вашего аккаунта будет невозможно.
+            </p>
+            <div class="onboarding-confirm-buttons">
+              <button type="button" class="btn-onboarding-back" id="btn-onboarding-back">
+                Вернуться
+              </button>
+              <button type="button" class="btn-onboarding-proceed" id="btn-onboarding-proceed">
+                Да, подтвердить
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
