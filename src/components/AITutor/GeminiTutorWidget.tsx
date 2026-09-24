@@ -60,23 +60,47 @@ export const GeminiTutorWidget: React.FC<GeminiTutorWidgetProps> = ({
     setActiveTab('theory');
 
     try {
+      const parsedGrade = parseInt(String(profile.grade).replace(/\D/g, ''), 10) || 11;
+      const validGrade = parsedGrade >= 7 && parsedGrade <= 11 ? parsedGrade : 11;
+
       const response = await fetch('/api/tutor', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: topicToFetch }),
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-session': profile.name || 'student',
+        },
+        body: JSON.stringify({
+          topic: topicToFetch,
+          grade: validGrade,
+          subject: profile.subject || 'Алгебра',
+        }),
       });
 
       const json = await response.json();
 
+      if (response.status === 429) {
+        throw new Error(
+          json.error ||
+            'Слишком много запросов. Подождите 1 минуту перед следующим созданием теста.'
+        );
+      }
+
+      if (response.status === 401) {
+        throw new Error(
+          json.error || 'Для использования тьютора необходимо авторизоваться в системе.'
+        );
+      }
+
       if (!response.ok) {
-        throw new Error(json.error || `Ошибка сервера: ${response.status}`);
+        const details = Array.isArray(json.details) ? json.details.join(', ') : '';
+        throw new Error(details ? `${json.error}: ${details}` : json.error || `Ошибка сервера: ${response.status}`);
       }
 
       setLessonData(json);
       setTopicInput('');
     } catch (err: any) {
-      console.error('Ошибка Gemini Tutor:', err);
-      setError(err.message || 'Не удалось сформировать урок. Проверьте соединение или API-ключ.');
+      console.error('[Ment Widget Error]:', err);
+      setError(err.message || 'Не удалось сформировать урок. Проверьте соединение.');
     } finally {
       setIsLoading(false);
     }

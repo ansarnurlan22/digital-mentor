@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
+import {
+  TutorRequestSchema,
+  checkRateLimit,
+  getClientIp,
+  verifySession,
+  buildPromptInjectionGuard,
+} from '@/lib/security';
 
 /**
- * Server API Endpoint for Digital Mentor AI Tutor
- * Uses Google Gemini API to generate structured theory summary + interactive quiz
+ * ============================================================================
+ * Production Hardened API Route: POST /api/tutor
+ * Security Layer: Session Auth -> Rate Limiting -> Zod Validation -> Prompt Defense -> Gemini
+ * ============================================================================
  */
-
-// Системный промпт согласно спецификации Digital Mentor
-const SYSTEM_INSTRUCTION = `Ты — академический AI-тьютор платформы Digital Mentor для школьников Казахстана (11 класс, Алгебра/Геометрия).
-Объясняй строго, понятно, без лишней воды.
-Все математические формулы, переменные и выражения ВСЕГДА оборачивай в синтаксис LaTeX $...$ (для блочных используй $$...$$).
-Вопросы для квиза делай практическими, проверяющими ключевые ловушки и правила.
-Ответ верни СТРОГО в формате JSON без дополнительного текста.`;
 
 export interface TutorQuizItem {
   id: number;
@@ -24,48 +26,106 @@ export interface TutorLessonResponse {
   topic: string;
   theorySummary: string;
   quiz: TutorQuizItem[];
+  error?: string;
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const topic = body?.topic?.trim();
-
-    if (!topic) {
+    // ------------------------------------------------------------------------
+    // 1. АВТОРИЗАЦИЯ И ПРОВЕРКА СЕССИИ (Access Control)
+    // ------------------------------------------------------------------------
+    const sessionAuth = verifySession(req.headers);
+    if (!sessionAuth.authenticated) {
       return NextResponse.json(
-        { error: 'Укажите тему для изучения (параметр topic обязателен).' },
+        {
+          error:
+            sessionAuth.error ||
+            'Неавторизованный запрос. Войдите в систему для использования AI-тьютора.',
+        },
+        { status: 401 }
+      );
+    }
+
+    // ------------------------------------------------------------------------
+    // 2. ЗАЩИТА ОТ СПАМА И DoS (Rate Limiting: 5 запросов / 60 секунд)
+    // ------------------------------------------------------------------------
+    const clientIp = getClientIp(req.headers);
+    const rateLimitKey = `${clientIp}_${sessionAuth.userId || 'anon'}`;
+    const rateLimit = checkRateLimit(rateLimitKey);
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          error:
+            'Слишком много запросов. Подождите 1 минуту перед следующим созданием теста.',
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(rateLimit.resetSeconds),
+            'X-RateLimit-Limit': '5',
+            'X-RateLimit-Remaining': '0',
+          },
+        }
+      );
+    }
+
+    // ------------------------------------------------------------------------
+    // 3. ВАЛИДАЦИЯ ВХОДНЫХ ДАННЫХ И САНИТАЙЗИНГ (Zod Schema)
+    // ------------------------------------------------------------------------
+    let rawBody: unknown;
+    try {
+      rawBody = await req.json();
+    } catch {
+      return NextResponse.json(
+        { error: 'Некорректный JSON в теле запроса.' },
         { status: 400 }
       );
     }
 
+    const validationResult = TutorRequestSchema.safeParse(rawBody);
+    if (!validationResult.success) {
+      const errorMessages = validationResult.error.errors.map((e) => e.message);
+      return NextResponse.json(
+        {
+          error: 'Ошибка валидации входных данных.',
+          details: errorMessages,
+        },
+        { status: 400 }
+      );
+    }
+
+    const { topic, grade, subject } = validationResult.data;
+
+    // ------------------------------------------------------------------------
+    // 4. СЕРВЕРНАЯ ИЗОЛЯЦИЯ: ПРОВЕРКА API-КЛЮЧА
+    // ------------------------------------------------------------------------
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
+      console.error('[SECURITY ALERT] GEMINI_API_KEY is not defined in server environment');
       return NextResponse.json(
-        { error: 'API-ключ GEMINI_API_KEY не настроен в переменных окружения сервера.' },
+        {
+          error:
+            'Серверный AI-сервис временно недоступен (отсутствует ключ конфигурации). Обратитесь к администратору.',
+        },
         { status: 500 }
       );
     }
 
-    const userPrompt = `Составь компактную академическую выжимку теории и интерактивный мини-тест из 3–4 практических вопросов по теме: «${topic}».
+    // ------------------------------------------------------------------------
+    // 5. ЗАЩИТА ОТ PROMPT INJECTION (Изоляция темы и защитный промпт)
+    // ------------------------------------------------------------------------
+    const { systemInstruction, userPrompt } = buildPromptInjectionGuard(topic, subject, grade);
 
-Требования к JSON:
-{
-  "topic": "${topic}",
-  "theorySummary": "Краткая суть, строгий алгоритм решения и ключевые формулы в синтаксисе LaTeX $...$. Разбивай на абзацы и списки.",
-  "quiz": [
-    {
-      "id": 1,
-      "question": "Текст вопроса с формулами в $...$",
-      "options": ["Вариант A", "Вариант B", "Вариант C", "Вариант D"],
-      "correctIndex": 0,
-      "explanation": "Краткое и строгое математическое пояснение, почему этот ответ верный."
-    }
-  ]
-}`;
+    // Модели в порядке приоритета отказоустойчивости
+    const modelsToTry = [
+      'gemini-2.5-flash',
+      'gemini-3.5-flash',
+      'gemini-2.5-pro',
+      'gemini-flash-latest',
+    ];
 
-    // Модели в порядке приоритета (gemini-2.5-flash -> gemini-3.5-flash -> gemini-2.5-pro)
-    const modelsToTry = ['gemini-2.5-flash', 'gemini-3.5-flash', 'gemini-2.5-pro', 'gemini-flash-latest'];
-    let lastError: any = null;
+    let lastError: Error | null = null;
     let data: any = null;
 
     for (const model of modelsToTry) {
@@ -73,12 +133,12 @@ export async function POST(req: NextRequest) {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
         const payload = {
           systemInstruction: {
-            parts: [{ text: SYSTEM_INSTRUCTION }],
+            parts: [{ text: systemInstruction }],
           },
           contents: [{ parts: [{ text: userPrompt }] }],
           generationConfig: {
             responseMimeType: 'application/json',
-            temperature: 0.2,
+            temperature: 0.1, // Низкая вариативность для строгой детерминированности и безопасности
           },
         };
 
@@ -95,7 +155,7 @@ export async function POST(req: NextRequest) {
           const errText = await response.text();
           lastError = new Error(`Model ${model} returned ${response.status}: ${errText}`);
         }
-      } catch (err) {
+      } catch (err: any) {
         lastError = err;
       }
     }
@@ -106,22 +166,43 @@ export async function POST(req: NextRequest) {
 
     const rawJsonText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!rawJsonText) {
-      throw new Error('Пустой ответ от Gemini API.');
+      throw new Error('Пустой ответ от сервера AI.');
     }
 
-    // Парсим и валидируем JSON
-    const parsedData: TutorLessonResponse = JSON.parse(rawJsonText);
+    // Очистка ответа от Markdown code-fences, если модель их добавила
+    const cleanedJsonText = rawJsonText
+      .replace(/^```json\s*/i, '')
+      .replace(/\s*```$/, '')
+      .trim();
 
+    const parsedData = JSON.parse(cleanedJsonText);
+
+    // Если модель вернула ошибку фильтра безопасности
+    if (parsedData.error) {
+      return NextResponse.json(
+        { error: parsedData.error },
+        { status: 400 }
+      );
+    }
+
+    // Финальная валидация структуры ответа модели
     if (!parsedData.topic || !parsedData.theorySummary || !Array.isArray(parsedData.quiz)) {
-      throw new Error('Структура ответа модели не соответствует ожидаемой схеме JSON.');
+      throw new Error('Структура ответа AI-модели не соответствует спецификации JSON.');
     }
 
-    return NextResponse.json(parsedData, { status: 200 });
+    return NextResponse.json(parsedData, {
+      status: 200,
+      headers: {
+        'X-RateLimit-Limit': '5',
+        'X-RateLimit-Remaining': String(rateLimit.remaining),
+      },
+    });
   } catch (error: any) {
-    console.error('Ошибка в API /api/tutor:', error);
+    // Никогда не возвращаем сырые стеки ошибок или API-ключи клиенту
+    console.error('[API ERROR /api/tutor]:', error.message || error);
     return NextResponse.json(
       {
-        error: error.message || 'Внутренняя ошибка генерации урока Gemini AI.',
+        error: 'Внутренняя ошибка сервиса AI-тьютора. Пожалуйста, повторите попытку позже.',
       },
       { status: 500 }
     );

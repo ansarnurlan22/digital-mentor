@@ -7,9 +7,23 @@ Thumbs.db
 sync_all.py
 check_sync.py
 
-# Environment variables
+# Environment variables & secrets (Strict Security)
 .env
+.env*
 .env.local
-.env.*.local
-node_modules/
+.env*.local
+.env.production
+.env.development
+.env.test
+*.pem
+*.key
+*.cert
+*.crt
 
+# Node & Build artifacts
+node_modules/
+.next/
+out/
+build/
+dist/
+*.log

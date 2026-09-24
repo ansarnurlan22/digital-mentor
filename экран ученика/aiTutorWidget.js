@@ -5,8 +5,6 @@
  */
 
 (function () {
-  const GEMINI_API_KEY = window.GEMINI_API_KEY || localStorage.getItem('GEMINI_API_KEY') || '';
-
   // Профиль ученика
   function getStudentProfile() {
     try {
@@ -59,7 +57,7 @@
     },
   ];
 
-  // Запрос генерации урока в Gemini
+  // Запрос генерации урока через защищенный серверный эндпоинт /api/tutor
   async function generateLessonFromGemini(topic) {
     if (!topic || isLoading) return;
 
@@ -70,94 +68,80 @@
     activeTab = 'theory';
     renderDrawerContent();
 
-    const systemPrompt = `Ты — академический AI-тьютор Ment платформы Digital Mentor для школьников Казахстана (11 класс, Алгебра/Геометрия).
-Объясняй строго, понятно, без лишней воды.
-Все математические формулы, переменные и выражения ВСЕГДА оборачивай в синтаксис LaTeX $...$ (для блочных используй $$...$$).
-Вопросы для квиза делай практическими, проверяющими ключевые ловушки и правила.
-Ответ верни СТРОГО в формате JSON без дополнительного текста.`;
-
-    const userPrompt = `Составь компактную академическую выжимку теории и интерактивный мини-тест из 3–4 практических вопросов по теме: «${topic}».
-
-Требования к JSON:
-{
-  "topic": "${topic}",
-  "theorySummary": "Краткая суть, алгоритм решения и ключевые формулы в синтаксисе LaTeX $...$. Разбивай на понятные абзацы и списки.",
-  "quiz": [
-    {
-      "id": 1,
-      "question": "Текст практического вопроса с формулами в $...$",
-      "options": ["Вариант A", "Вариант B", "Вариант C", "Вариант D"],
-      "correctIndex": 0,
-      "explanation": "Математическое пояснение, почему этот вариант верный."
-    }
-  ]
-}`;
-
     try {
-      // 1. Пробуем серверный эндпоинт Next.js/Vercel /api/tutor
+      // Формируем безопасные заголовки с токеном сессии
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+
+      // Пытаемся получить активный токен сессии Supabase
       try {
-        const serverResp = await fetch('/api/tutor', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ topic }),
-        });
-        if (serverResp.ok) {
-          const data = await serverResp.json();
-          if (data && data.topic && data.theorySummary) {
-            currentLesson = data;
-            isLoading = false;
-            renderDrawerContent();
-            return;
+        if (window.supabaseClient && window.supabaseClient.auth) {
+          const sessionResp = await window.supabaseClient.auth.getSession();
+          const token = sessionResp?.data?.session?.access_token;
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
           }
         }
-      } catch (e) {
-        console.warn('Серверный эндпоинт /api/tutor недоступен, прямой запрос в Gemini:', e);
+      } catch (authErr) {}
+
+      // Передаем идентификатор сессии пользователя
+      const userIdentifier =
+        window.currentAuthUser?.id ||
+        window.currentAuthUser?.email ||
+        profile.name ||
+        'student';
+      headers['x-user-session'] = userIdentifier;
+
+      // Нормализуем номер класса (7..11)
+      const parsedGrade = parseInt(String(profile.grade).replace(/\D/g, ''), 10) || 11;
+      const validGrade = parsedGrade >= 7 && parsedGrade <= 11 ? parsedGrade : 11;
+
+      const serverResp = await fetch('/api/tutor', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          topic: topic.trim(),
+          grade: validGrade,
+          subject: profile.subject || 'Алгебра',
+        }),
+      });
+
+      const data = await serverResp.json();
+
+      if (serverResp.status === 429) {
+        alert(
+          '⏳ ' +
+            (data.error ||
+              'Слишком много запросов. Подождите 1 минуту перед следующим созданием теста.')
+        );
+        return;
       }
 
-      // 2. Прямой вызов Gemini API
-      const models = ['gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-flash-latest'];
-      let lastErr = null;
-      let resultData = null;
-
-      for (const m of models) {
-        try {
-          const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${GEMINI_API_KEY}`;
-          const resp = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              systemInstruction: { parts: [{ text: systemPrompt }] },
-              contents: [{ parts: [{ text: userPrompt }] }],
-              generationConfig: {
-                responseMimeType: 'application/json',
-                temperature: 0.2,
-              },
-            }),
-          });
-
-          if (resp.ok) {
-            const resJson = await resp.json();
-            const rawText = resJson?.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (rawText) {
-              resultData = JSON.parse(rawText);
-              break;
-            }
-          } else {
-            const errTxt = await resp.text();
-            lastErr = new Error(`Gemini ${m} status ${resp.status}: ${errTxt}`);
-          }
-        } catch (err) {
-          lastErr = err;
-        }
+      if (serverResp.status === 401) {
+        alert(
+          '🔒 ' +
+            (data.error ||
+              'Неавторизованный запрос. Войдите в систему для использования AI-тьютора.')
+        );
+        return;
       }
 
-      if (!resultData) {
-        throw lastErr || new Error('Не удалось получить ответ от Google Gemini API.');
+      if (!serverResp.ok) {
+        const errorDetail = Array.isArray(data.details)
+          ? data.details.join('\n')
+          : data.error || 'Ошибка генерации урока.';
+        alert('⚠️ ' + errorDetail);
+        return;
       }
 
-      currentLesson = resultData;
+      if (!data || !data.topic || !data.theorySummary) {
+        throw new Error('Получен некорректный формат урока от сервера.');
+      }
+
+      currentLesson = data;
     } catch (err) {
-      console.error('Ошибка Gemini:', err);
+      console.error('[Ment Client Error]:', err);
       alert('Ошибка при генерации урока: ' + (err.message || err));
     } finally {
       isLoading = false;
