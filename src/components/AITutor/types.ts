@@ -55,3 +55,18 @@ export interface TheoryCategory {
   icon: string;
   formulas: TheoryFormula[];
 }
+
+export interface TutorQuizItem {
+  id: number;
+  question: string;
+  options: [string, string, string, string] | string[];
+  correctIndex: number;
+  explanation: string;
+}
+
+export interface TutorLessonResponse {
+  topic: string;
+  theorySummary: string;
+  quiz: TutorQuizItem[];
+}
+

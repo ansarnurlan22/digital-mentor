@@ -10,4 +10,6 @@ export * from './TheoryModeView';
 export * from './AITutorFloatingButton';
 export * from './AITutorDrawer';
 export * from './AITutorWidget';
-export { AITutorWidget as default } from './AITutorWidget';
+export * from './GeminiTutorWidget';
+export { GeminiTutorWidget as default } from './GeminiTutorWidget';
+
