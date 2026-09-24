@@ -4,10 +4,6 @@ const DEFAULT_COURSES = [];
 const STORAGE_KEY = "digitalMentor_activeCourses";
 const USER_PROFILE_KEY = "digitalMentor_userProfile";
 
-// Очистка старых данных для абсолютно нового сайта
-localStorage.removeItem(STORAGE_KEY);
-localStorage.removeItem("dm_cloud_lessons_cache");
-
 // Получить ключ профиля для текущего аккаунта
 function getAccountProfileKey(userId = null) {
   const uid = userId || (window.currentAuthUser ? window.currentAuthUser.id : null);

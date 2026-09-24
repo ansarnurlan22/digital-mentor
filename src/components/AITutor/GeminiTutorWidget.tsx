@@ -114,9 +114,9 @@ export const GeminiTutorWidget: React.FC<GeminiTutorWidgetProps> = ({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-white">Digital Mentor AI</h3>
+              <h3 className="text-sm font-bold text-white">Ment</h3>
               <span className="rounded-full border border-sky-500/30 bg-sky-500/10 px-2 py-0.5 text-[10px] font-semibold text-sky-400">
-                Gemini 2.5
+                AI-тьютор
               </span>
             </div>
             <p className="text-xs text-slate-400">
@@ -166,7 +166,7 @@ export const GeminiTutorWidget: React.FC<GeminiTutorWidgetProps> = ({
               <Sparkles className="absolute h-5 w-5 text-sky-400" />
             </div>
             <h4 className="mt-5 text-sm font-semibold text-white">
-              Gemini анализирует тему и составляет задания...
+              Ment анализирует тему и составляет задания...
             </h4>
             <p className="mt-1.5 max-w-xs text-xs text-slate-400">
               Выделяем ключевые формулы, алгоритм решения и готовим интерактивный квиз
@@ -224,7 +224,7 @@ export const GeminiTutorWidget: React.FC<GeminiTutorWidgetProps> = ({
             </div>
 
             <div className="rounded-2xl border border-sky-500/20 bg-sky-950/10 p-4 text-xs text-sky-300">
-              <span className="font-semibold">💡 Как это работает:</span> Gemini мгновенно построит
+              <span className="font-semibold">💡 Как это работает:</span> Ment мгновенно построит
               академическую шпаргалку с формулами в LaTeX и мини-тест из 3–4 практических вопросов с
               разбором ошибок.
             </div>
@@ -286,7 +286,7 @@ export const GeminiTutorWidget: React.FC<GeminiTutorWidgetProps> = ({
                 <div className="rounded-2xl border border-slate-800 bg-[#0F172A]/80 p-4 shadow-sm backdrop-blur-md">
                   <div className="mb-3 flex items-center justify-between border-b border-slate-800/80 pb-2">
                     <span className="text-xs font-semibold text-slate-300">
-                      Конспект от Gemini AI
+                      Конспект от Ment
                     </span>
                     <button
                       type="button"

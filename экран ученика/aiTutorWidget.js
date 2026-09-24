@@ -54,7 +54,7 @@
   let messages = [
     {
       sender: 'assistant',
-      content: `Привет, **${profile.name}**! 👋\nЯ твой академический AI-тьютор по **${profile.subject}** (${profile.grade}) на базе Google Gemini.\n\nВведи любую тему (например, *«Логарифмические неравенства»* или *«Формулы приведения»*) — и я сгенерирую для тебя **сжатую выжимку теории** с формулами и **интерактивный мини-тест** с разбором!`,
+      content: `Привет, **${profile.name}**! 👋\nЯ твой академический напарник **Ment** по **${profile.subject}** (${profile.grade}).\n\nВведи любую тему (например, *«Логарифмические неравенства»* или *«Формулы приведения»*) — и я сгенерирую для тебя **сжатую выжимку теории** с формулами и **интерактивный мини-тест** с разбором!`,
       time: 'Сейчас',
     },
   ];
@@ -70,7 +70,7 @@
     activeTab = 'theory';
     renderDrawerContent();
 
-    const systemPrompt = `Ты — академический AI-тьютор платформы Digital Mentor для школьников Казахстана (11 класс, Алгебра/Геометрия).
+    const systemPrompt = `Ты — академический AI-тьютор Ment платформы Digital Mentor для школьников Казахстана (11 класс, Алгебра/Геометрия).
 Объясняй строго, понятно, без лишней воды.
 Все математические формулы, переменные и выражения ВСЕГДА оборачивай в синтаксис LaTeX $...$ (для блочных используй $$...$$).
 Вопросы для квиза делай практическими, проверяющими ключевые ловушки и правила.
@@ -198,11 +198,11 @@
 
       <!-- Плавающая кнопка (FAB) -->
       <div class="ai-tutor-fab-wrap">
-        <div class="ai-tutor-fab-badge" id="ai-tutor-fab-badge" title="Открыть персонального AI-тьютора">
+        <div class="ai-tutor-fab-badge" id="ai-tutor-fab-badge" title="Открыть персонального AI-тьютора Ment">
           <span class="ai-tutor-fab-dot"></span>
-          <span>AI-тьютор Gemini · 24/7</span>
+          <span>Ment · 24/7</span>
         </div>
-        <button type="button" class="ai-tutor-fab-btn" id="ai-tutor-fab-btn" aria-label="Открыть AI-тьютора">
+        <button type="button" class="ai-tutor-fab-btn" id="ai-tutor-fab-btn" aria-label="Открыть AI-тьютора Ment">
           <svg class="ai-tutor-fab-icon" id="ai-tutor-fab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
           </svg>
@@ -224,8 +224,8 @@
             </div>
             <div class="ai-tutor-title-wrap">
               <h4>
-                <span>Digital Mentor AI</span>
-                <span class="ai-tutor-tag">Gemini API</span>
+                <span>Ment</span>
+                <span class="ai-tutor-tag">AI-тьютор</span>
               </h4>
               <p class="ai-tutor-subtitle">
                 <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#34d399;"></span>
@@ -270,7 +270,7 @@
             <div style="width:64px;height:64px;border:3px solid rgba(56,189,248,0.2);border-top-color:#38bdf8;border-radius:50%;animation:spin 1s linear infinite;"></div>
             <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;">✨</div>
           </div>
-          <h4 style="color:#ffffff;font-size:15px;margin:0 0 8px;font-weight:700;">Gemini анализирует тему и составляет задания...</h4>
+          <h4 style="color:#ffffff;font-size:15px;margin:0 0 8px;font-weight:700;">Ment анализирует тему и составляет задания...</h4>
           <p style="color:#94a3b8;font-size:12px;max-width:280px;line-height:1.5;margin:0;">
             Формируем выжимку теории с формулами в LaTeX и мини-тест с разбором решений
           </p>
@@ -314,7 +314,7 @@
           </div>
 
           <div style="background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.2);border-radius:16px;padding:14px;font-size:12px;color:#7dd3fc;line-height:1.5;">
-            <strong>⚡ Что генерирует Gemini API:</strong>
+            <strong>⚡ Что генерирует Ment:</strong>
             <ul style="margin:6px 0 0 16px;padding:0;">
               <li>Краткую суть и строгий алгоритм решения</li>
               <li>Ключевые формулы в чистом синтаксисе LaTeX</li>
@@ -382,7 +382,7 @@
               ? `
             <div class="ai-theory-card" style="margin-bottom:14px;">
               <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(148,163,184,0.15);padding-bottom:8px;margin-bottom:12px;">
-                <span style="font-size:12px;font-weight:700;color:#e2e8f0;">Выжимка теории от Gemini AI</span>
+                <span style="font-size:12px;font-weight:700;color:#e2e8f0;">Выжимка теории от Ment</span>
                 <button type="button" id="ai-copy-theory-btn" style="background:none;border:none;color:#38bdf8;font-size:11px;cursor:pointer;">
                   ${isCopied ? '✓ Скопировано' : '📋 Копировать'}
                 </button>
