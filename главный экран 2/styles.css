@@ -3813,7 +3813,6 @@ body.light-theme {
 [data-theme="light"] .meeting-card-modern,
 [data-theme="light"] .volunteer-passport-card,
 [data-theme="light"] .achievements-card,
-[data-theme="light"] .badge-card,
 [data-theme="light"] .day-chip,
 [data-theme="light"] .input-dark,
 [data-theme="light"] .select-wrapper select,
@@ -4091,20 +4090,252 @@ body.light-theme {
   color: #0D9488 !important;
 }
 
-/* 12. Достижения и паспорт волонтера */
-[data-theme="light"] .passport-emblem {
-  background: #F0FDFA !important;
-  border: 1.5px solid #CCFBF1 !important;
-  color: #0D9488 !important;
+/* 12. Рейтинг месяца («Кандидат определяется», аватары, карточки метрик) */
+[data-theme="light"] .spotlight-person-card {
+  background: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-[data-theme="light"] .badge-icon-wrap {
+[data-theme="light"] .spotlight-person-card:hover {
+  background: #F1F5F9 !important;
+  border-color: #CBD5E1 !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Аватар-заглушка (круг с прочерком) */
+[data-theme="light"] .spotlight-avatar--clean {
+  background: rgba(226, 232, 240, 0.7) !important;
+  border: 1.5px dashed #CBD5E1 !important;
+  color: #94A3B8 !important;
+  box-shadow: none !important;
+}
+
+[data-theme="light"] .spotlight-avatar--mentor {
+  background: #FEF3C7 !important;
+  border: 2px solid #FCD34D !important;
+  color: #B45309 !important;
+}
+
+[data-theme="light"] .spotlight-avatar--student {
+  background: #D1FAE5 !important;
+  border: 2px solid #6EE7B7 !important;
+  color: #047857 !important;
+}
+
+/* Тексты блока рейтинга */
+[data-theme="light"] .spotlight-name {
+  color: #334155 !important;
+  font-weight: 600 !important;
+}
+
+[data-theme="light"] .spotlight-desc {
+  color: #94A3B8 !important;
+  font-size: 12px !important;
+}
+
+/* Бейджи ролей (Ментор / Ученик) в пастельных тонах */
+[data-theme="light"] .spotlight-role-pill {
+  background: #FFFBEB !important;
+  color: #B45309 !important;
+  border: 1px solid #FDE68A !important;
+  font-weight: 600 !important;
+}
+
+[data-theme="light"] .spotlight-role-pill--student {
+  background: #F0FDF4 !important;
+  color: #047857 !important;
+  border: 1px solid #A7F3D0 !important;
+  font-weight: 600 !important;
+}
+
+[data-theme="light"] .spotlight-badge--neutral {
   background: #F8FAFC !important;
   border: 1px solid #E2E8F0 !important;
   color: #64748B !important;
 }
 
+[data-theme="light"] .spotlight-month {
+  background: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #64748B !important;
+}
+
+/* Маленькие аналитические карточки метрик */
+[data-theme="light"] .spotlight-stats .stat-item,
+[data-theme="light"] .stat-item {
+  background: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+[data-theme="light"] .spotlight-stats .stat-item:hover,
+[data-theme="light"] .stat-item:hover {
+  background: rgba(241, 245, 249, 0.7) !important;
+  border-color: #CBD5E1 !important;
+  transform: translateY(-1px) !important;
+}
+
+[data-theme="light"] .stat-item .stat-value {
+  color: #0F172A !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="light"] .stat-item .stat-label {
+  color: #64748B !important;
+  font-size: 11.5px !important;
+  font-weight: 400 !important;
+}
+
+/* 13. Блок «Кабинет наставника» (Учёт часов и нижние метрики) */
+[data-theme="light"] .volunteer-passport-card {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 16px !important;
+}
+
+[data-theme="light"] .volunteer-passport-card::before {
+  background: linear-gradient(90deg, #0EA5E9, #06B6D4) !important;
+}
+
+[data-theme="light"] .passport-label {
+  color: #94A3B8 !important;
+}
+
+[data-theme="light"] .passport-name {
+  color: #0F172A !important;
+  font-weight: 800 !important;
+}
+
+[data-theme="light"] .passport-rank-badge {
+  background: #FFFBEB !important;
+  border: 1px solid #FDE68A !important;
+  color: #B45309 !important;
+  font-weight: 600 !important;
+}
+
+[data-theme="light"] .passport-emblem {
+  background: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+  box-shadow: none !important;
+}
+
+/* Контейнер учёта часов волонтёрства */
+[data-theme="light"] .volunteer-hours-block {
+  background: rgba(240, 249, 255, 0.55) !important;
+  border: 1px solid #E0F2FE !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+}
+
+[data-theme="light"] .hours-caption {
+  color: #334155 !important;
+  font-weight: 500 !important;
+}
+
+[data-theme="light"] .hours-count {
+  color: #0284C7 !important;
+  font-size: 17px !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="light"] .hours-count strong {
+  color: #0284C7 !important;
+  font-size: 20px !important;
+  font-weight: 800 !important;
+}
+
+[data-theme="light"] .progress-bar-track,
+[data-theme="light"] .hours-bar-track {
+  background: #E2E8F0 !important;
+  border: 1px solid #CBD5E1 !important;
+}
+
+[data-theme="light"] .progress-bar-fill,
+[data-theme="light"] .hours-bar-fill {
+  background: linear-gradient(90deg, #0EA5E9 0%, #06B6D4 100%) !important;
+  box-shadow: 0 1px 4px rgba(14, 165, 233, 0.3) !important;
+}
+
+[data-theme="light"] .hours-target-note {
+  color: #64748B !important;
+  font-size: 12px !important;
+}
+
+[data-theme="light"] .hours-target-note svg {
+  stroke: #0284C7 !important;
+}
+
+[data-theme="light"] .hours-target-note strong {
+  color: #0F172A !important;
+}
+
+/* Три нижние плашки («Проведено уроков», «Учеников обучено», «Средний рейтинг») */
+[data-theme="light"] .passport-stats-row .passport-stat-item {
+  background: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+[data-theme="light"] .passport-stats-row .passport-stat-item:hover {
+  background: rgba(241, 245, 249, 0.7) !important;
+  border-color: #CBD5E1 !important;
+  transform: translateY(-1px) !important;
+}
+
+[data-theme="light"] .passport-stat-item .pstat-val {
+  color: #0F172A !important;
+  font-weight: 600 !important;
+  font-size: 16px !important;
+}
+
+[data-theme="light"] .passport-stat-item .pstat-lbl {
+  color: #475569 !important;
+  font-size: 11.5px !important;
+}
+
+/* 14. Достижения и знаки отличия */
+[data-theme="light"] .achievements-card {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 16px !important;
+}
+
+[data-theme="light"] .achievements-header h4 {
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .achievements-progress-pill {
+  background: #F0FDF4 !important;
+  border: 1px solid #A7F3D0 !important;
+  color: #0D9488 !important;
+  font-weight: 600 !important;
+}
+
+[data-theme="light"] .badge-card {
+  background: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+[data-theme="light"] .badge-card:hover {
+  background: #FFFFFF !important;
+  border-color: #CBD5E1 !important;
+  box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.06) !important;
+  transform: translateY(-1px) !important;
+}
+
 [data-theme="light"] .badge-card.is-unlocked {
+  background: #FFFFFF !important;
   border-color: #A7F3D0 !important;
 }
 
@@ -4112,6 +4343,13 @@ body.light-theme {
   background: #F0FDF4 !important;
   border-color: #CCFBF1 !important;
   color: #0D9488 !important;
+}
+
+[data-theme="light"] .badge-icon-wrap {
+  background: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #64748B !important;
+  box-shadow: none !important;
 }
 
 [data-theme="light"] .badge-status-tag.status-done {
@@ -4126,12 +4364,20 @@ body.light-theme {
   border: 1px solid #E2E8F0 !important;
 }
 
-[data-theme="light"] .hours-bar-track {
+[data-theme="light"] .mini-progress-track {
   background: #E2E8F0 !important;
+  border: 1px solid #CBD5E1 !important;
 }
 
-[data-theme="light"] .hours-bar-fill {
+[data-theme="light"] .mini-progress-fill {
   background: linear-gradient(90deg, #0D9488 0%, #14B8A6 100%) !important;
+}
+
+[data-theme="light"] .gamification-badge {
+  background: #FFFBEB !important;
+  border: 1px solid #FDE68A !important;
+  color: #B45309 !important;
+  font-weight: 600 !important;
 }
 
 /* 13. Профиль пользователя и селектор тем */
