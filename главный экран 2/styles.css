@@ -3492,7 +3492,20 @@ body {
 }
 
 /* ============================================================
-   Светлая тема (Light Mode) для платформы Digital Mentor
+   Светлая тема (Light Mode) — Schoolhouse / College Board Design
+   - Основной фон страницы: мягкий серо-молочный (#F8FAFC, bg-slate-50)
+   - Поверхности, сайдбар, карточки: чистый белый (#FFFFFF, bg-white)
+   - Границы: ультратонкие и неконтрастные (#E2E8F0, border-slate-200)
+   - Тени: едва заметные рассеянные (0 1px 3px rgba(0,0,0,0.04))
+   - Заголовки: глубокий угольный оттенок (#0F172A, text-slate-900)
+   - Текст и описания: нейтральный приглушенный серый (#475569, text-slate-600)
+   - Вспомогательные подписи, даты, иконки: мягкий серый (#94A3B8, text-slate-400)
+   - CTA кнопки: благородный глубокий изумрудно-зеленый Schoolhouse (#0D9488)
+   - Второстепенные кнопки: белый фон, тонкая рамка (#CBD5E1), темный текст (#334155)
+   - Сайдбар: активная полупрозрачная плашка (#F0FDF4, text #0D9488) с левым индикатором
+   - Карточки программ: скругление rounded-xl, пастельные цветные иконки-бейджи
+   - Строка метаданных: компактные бейджи с легкими иконками и разделителями
+   - Плавные CSS переходы (transition: all 0.2s) с подъемом (-translate-y-0.5)
    ============================================================ */
 :root[data-theme="light"],
 [data-theme="light"],
@@ -3501,87 +3514,296 @@ body.light-theme {
   --bg-1: #FFFFFF;
   --bg-2: #F1F5F9;
   --card: #FFFFFF;
-  --card-hover: #F8FAFC;
-  --card-active: #E0F2FE;
+  --card-hover: #FFFFFF;
+  --card-active: #F8FAFC;
   --stroke: #E2E8F0;
   --text: #0F172A;
-  --muted: #64748B;
-  --muted-light: #334155;
-  --accent: #0284C7;
+  --muted: #475569;
+  --muted-light: #64748B;
+  --muted-extra: #94A3B8;
+  --accent: #0D9488;
+  --accent-hover: #0F766E;
   --accent-2: #2563EB;
-  --accent-deep: #0369A1;
-  --shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  --accent-deep: #0D9488;
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.02);
 }
 
 [data-theme="light"] body {
-  background: var(--bg-0) !important;
+  background: #F8FAFC !important;
   color: #0F172A !important;
 }
 
 [data-theme="light"] .app-layout {
-  background: var(--bg-0) !important;
+  background: #F8FAFC !important;
 }
 
-[data-theme="light"] .app-sidebar {
-  background: #FFFFFF !important;
-  border-right: 1px solid #E2E8F0 !important;
-  box-shadow: 2px 0 16px rgba(0, 0, 0, 0.03);
-}
-
-[data-theme="light"] .sidebar-nav-btn {
-  color: #64748B;
-}
-
-[data-theme="light"] .sidebar-nav-btn:hover {
-  background: #F1F5F9;
-  color: #0F172A;
-}
-
-[data-theme="light"] .sidebar-nav-btn.active {
-  background: #E0F2FE;
-  color: #0284C7;
-}
-
+/* 1. Хедер — чистый белый, тонкая граница, мягкая рассеянная тень */
+[data-theme="light"] .app-header,
 [data-theme="light"] .app-top-header {
   background: #FFFFFF !important;
   border-bottom: 1px solid #E2E8F0 !important;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03) !important;
 }
 
-[data-theme="light"] .header-btn-icon {
+[data-theme="light"] .header-logo-mark {
+  background: #0D9488 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.25) !important;
+}
+
+[data-theme="light"] .header-logo-text strong {
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .header-logo-text span {
+  color: #64748B !important;
+}
+
+[data-theme="light"] .role-pill {
   background: #F8FAFC !important;
   border: 1px solid #E2E8F0 !important;
   color: #334155 !important;
 }
 
-[data-theme="light"] .header-btn-icon:hover {
-  background: #F1F5F9 !important;
-  color: #0F172A !important;
-  border-color: #CBD5E1 !important;
+[data-theme="light"] .role-pill-dot {
+  background: #0D9488 !important;
+  box-shadow: 0 0 6px rgba(13, 148, 136, 0.4) !important;
 }
 
-[data-theme="light"] .header-user-btn {
-  background: #F8FAFC !important;
+[data-theme="light"] .role-pill.is-mentor {
+  background: #F0FDF4 !important;
+  border-color: #BBF7D0 !important;
+  color: #166534 !important;
+}
+
+[data-theme="light"] .role-pill.is-mentor .role-pill-dot {
+  background: #10B981 !important;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.4) !important;
+}
+
+[data-theme="light"] .header-icon-btn {
+  background: #FFFFFF !important;
   border: 1px solid #E2E8F0 !important;
+  color: #64748B !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-[data-theme="light"] .header-user-name {
+[data-theme="light"] .header-icon-btn:hover {
+  background: #F8FAFC !important;
+  border-color: #CBD5E1 !important;
   color: #0F172A !important;
+  transform: translateY(-1px) !important;
 }
 
-[data-theme="light"] .app-header-hero {
-  background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%) !important;
-  border: 1px solid #BAE6FD !important;
+[data-theme="light"] .header-icon-dot {
+  background: #0D9488 !important;
+  box-shadow: 0 0 6px rgba(13, 148, 136, 0.5) !important;
 }
 
-[data-theme="light"] .app-header-hero h1 {
+[data-theme="light"] .header-avatar {
+  background: #F1F5F9 !important;
+  border: 1.5px solid #CBD5E1 !important;
+  color: #0D9488 !important;
+}
+
+[data-theme="light"] .header-avatar-status {
+  border-color: #FFFFFF !important;
+}
+
+/* 2. Сайдбар — чистый белый, тонкая граница, мягкое активное состояние с левым индикатором */
+[data-theme="light"] .app-sidebar {
+  background: #FFFFFF !important;
+  border-right: 1px solid #E2E8F0 !important;
+  box-shadow: 1px 0 3px 0 rgba(0, 0, 0, 0.02) !important;
+}
+
+[data-theme="light"] .sidebar-brand-mark {
+  background: #0D9488 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.25) !important;
+}
+
+[data-theme="light"] .sidebar-nav-item,
+[data-theme="light"] .sidebar-nav-btn {
+  color: #64748B !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+[data-theme="light"] .sidebar-nav-item:hover,
+[data-theme="light"] .sidebar-nav-btn:hover {
   color: #0F172A !important;
+  background: #F1F5F9 !important;
+  border-color: transparent !important;
 }
 
-[data-theme="light"] .hero-subtitle {
+/* Активное состояние в сайдбаре: мягкая полупрозрачная плашка акцентного цвета с левым индикатором */
+[data-theme="light"] .sidebar-nav-item.is-active,
+[data-theme="light"] .sidebar-nav-btn.active {
+  background: #F0FDF4 !important;
+  color: #0D9488 !important;
+  border-left: 3px solid #0D9488 !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+}
+
+[data-theme="light"] .sidebar-nav-item.is-active svg,
+[data-theme="light"] .sidebar-nav-btn.active svg {
+  color: #0D9488 !important;
+  stroke: #0D9488 !important;
+  filter: none !important;
+}
+
+[data-theme="light"] .sidebar-tooltip {
+  background: #0F172A !important;
+  border: none !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15) !important;
+}
+
+[data-theme="light"] .sidebar-logout-btn {
+  color: #94A3B8 !important;
+}
+
+[data-theme="light"] .sidebar-logout-btn:hover {
+  color: #EF4444 !important;
+  background: #FEF2F2 !important;
+}
+
+/* 3. Типографика и иерархия текста */
+[data-theme="light"] h1,
+[data-theme="light"] h2,
+[data-theme="light"] h3,
+[data-theme="light"] h4,
+[data-theme="light"] h5,
+[data-theme="light"] .card-sat-title,
+[data-theme="light"] .program-title,
+[data-theme="light"] .next-meeting-title,
+[data-theme="light"] .spotlight-name,
+[data-theme="light"] .passport-name,
+[data-theme="light"] .custom-confirm-title,
+[data-theme="light"] .badge-title-row h5,
+[data-theme="light"] .mentor-meta-text strong {
+  color: #0F172A !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="light"] p,
+[data-theme="light"] .card-sat-desc,
+[data-theme="light"] .program-desc,
+[data-theme="light"] .hero-title-block p,
+[data-theme="light"] .plane-subtitle,
+[data-theme="light"] .field-label,
+[data-theme="light"] .form-group-dark label {
   color: #475569 !important;
+  line-height: 1.6 !important;
 }
 
+[data-theme="light"] .sat-section-tag {
+  color: #0D9488 !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="light"] .stat-label,
+[data-theme="light"] .hours-caption,
+[data-theme="light"] .pstat-lbl,
+[data-theme="light"] .meta-label,
+[data-theme="light"] .schedule-meta-text,
+[data-theme="light"] .stat-summary-label,
+[data-theme="light"] .stat-summary-note,
+[data-theme="light"] .topics-title {
+  color: #64748B !important;
+}
+
+/* 4. Акцентные цвета и интерактивные кнопки */
+/* Первичные кнопки (CTA, Зарегистрироваться, Добавить курс) — Schoolhouse emerald (#0D9488) */
+[data-theme="light"] .btn-sat-action,
+[data-theme="light"] .btn-meet-primary,
+[data-theme="light"] .btn-add-course,
+[data-theme="light"] .btn-schedule-lesson,
+[data-theme="light"] #modal-submit-btn,
+[data-theme="light"] #submit-lesson-btn,
+[data-theme="light"] .btn-confirm-ok,
+[data-theme="light"] .ai-tutor-send-btn {
+  background: #0D9488 !important;
+  color: #FFFFFF !important;
+  border: 1px solid #0D9488 !important;
+  box-shadow: 0 1px 3px rgba(13, 148, 136, 0.25) !important;
+  font-weight: 600 !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+[data-theme="light"] .btn-sat-action:hover,
+[data-theme="light"] .btn-meet-primary:hover,
+[data-theme="light"] .btn-add-course:hover,
+[data-theme="light"] .btn-schedule-lesson:hover,
+[data-theme="light"] #modal-submit-btn:hover,
+[data-theme="light"] #submit-lesson-btn:hover,
+[data-theme="light"] .btn-confirm-ok:hover,
+[data-theme="light"] .ai-tutor-send-btn:hover {
+  background: #0F766E !important;
+  border-color: #0F766E !important;
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.28) !important;
+  transform: translateY(-2px) !important;
+  filter: none !important;
+}
+
+/* Кнопка записи при уже записанном курсе */
+[data-theme="light"] .btn-sat-action.is-enrolled {
+  background: #F0FDF4 !important;
+  border: 1.5px solid #0D9488 !important;
+  color: #0D9488 !important;
+  box-shadow: none !important;
+}
+
+/* Второстепенные кнопки (Управление, Расписание, Все курсы, Отмена) */
+[data-theme="light"] .btn-meet-secondary,
+[data-theme="light"] .btn-filter-all,
+[data-theme="light"] .btn-calendar-filter,
+[data-theme="light"] .btn-confirm-cancel,
+[data-theme="light"] .btn-lesson-materials,
+[data-theme="light"] .btn-schedule-reminder {
+  background: #FFFFFF !important;
+  border: 1px solid #CBD5E1 !important;
+  color: #334155 !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03) !important;
+  font-weight: 600 !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+[data-theme="light"] .btn-meet-secondary:hover,
+[data-theme="light"] .btn-filter-all:hover,
+[data-theme="light"] .btn-confirm-cancel:hover,
+[data-theme="light"] .btn-lesson-materials:hover,
+[data-theme="light"] .btn-schedule-reminder:hover {
+  background: #F8FAFC !important;
+  border-color: #94A3B8 !important;
+  color: #0F172A !important;
+  transform: translateY(-1px) !important;
+}
+
+[data-theme="light"] .btn-calendar-filter:hover {
+  background: #F8FAFC !important;
+  border-color: #94A3B8 !important;
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .btn-calendar-filter.is-active,
+[data-theme="light"] .btn-calendar-filter.active {
+  background: #0D9488 !important;
+  border-color: #0D9488 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.25) !important;
+}
+
+/* 5. Карточки, плоскости и поверхности (Чистый белый surface, тонкие рамки, мягкие тени) */
+[data-theme="light"] .stat-summary-card,
+[data-theme="light"] .next-meeting-card,
+[data-theme="light"] .program-card,
+[data-theme="light"] .course-card-sat,
+[data-theme="light"] .schedule-card,
 [data-theme="light"] .courses-plane,
 [data-theme="light"] .schedule-plane,
 [data-theme="light"] .spotlight-plane,
@@ -3589,135 +3811,399 @@ body.light-theme {
 [data-theme="light"] .profile-card-large,
 [data-theme="light"] .profile-settings-card,
 [data-theme="light"] .meeting-card-modern,
-[data-theme="light"] .modal-window,
-[data-theme="light"] .custom-confirm-box {
-  background: #FFFFFF !important;
-  border: 1px solid #E2E8F0 !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05) !important;
-  color: #0F172A !important;
-}
-
-[data-theme="light"] .schedule-card {
-  background: #FFFFFF !important;
-  border: 1px solid #E2E8F0 !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
-}
-
-[data-theme="light"] .schedule-card:hover {
-  background: #F8FAFC !important;
-  border-color: #0284C7 !important;
-  box-shadow: 0 8px 24px rgba(2, 132, 199, 0.12);
-}
-
-[data-theme="light"] .course-card-sat {
-  background: #FFFFFF !important;
-  border: 1px solid #E2E8F0 !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
-}
-
-[data-theme="light"] .course-card-sat:hover {
-  border-color: #0284C7 !important;
-  box-shadow: 0 8px 24px rgba(2, 132, 199, 0.1);
-}
-
-[data-theme="light"] .spotlight-person-card,
-[data-theme="light"] .stat-item,
 [data-theme="light"] .volunteer-passport-card,
 [data-theme="light"] .achievements-card,
-[data-theme="light"] .volunteer-hours-block,
-[data-theme="light"] .passport-stat-item,
 [data-theme="light"] .badge-card,
 [data-theme="light"] .day-chip,
 [data-theme="light"] .input-dark,
 [data-theme="light"] .select-wrapper select,
 [data-theme="light"] .modal-date-input,
-[data-theme="light"] .modal-footer {
-  background: #F8FAFC !important;
+[data-theme="light"] .custom-toast {
+  background: #FFFFFF !important;
   border: 1px solid #E2E8F0 !important;
-  color: #0F172A !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.02) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-[data-theme="light"] .day-chip.active {
-  background: #E0F2FE !important;
-  border-color: #0284C7 !important;
-  color: #0369A1 !important;
+/* Эффект легкого подъема при наведении (-translate-y-0.5) */
+[data-theme="light"] .stat-summary-card:hover,
+[data-theme="light"] .next-meeting-card:hover,
+[data-theme="light"] .program-card:hover,
+[data-theme="light"] .course-card-sat:hover,
+[data-theme="light"] .schedule-card:hover,
+[data-theme="light"] .badge-card:hover,
+[data-theme="light"] .day-chip:hover {
+  border-color: #CBD5E1 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.03) !important;
 }
 
-[data-theme="light"] .day-chip-date {
-  color: #0F172A !important;
+/* 6. Левая колонка программ (Schoolhouse reference) */
+[data-theme="light"] .program-card {
+  border-radius: 14px !important;
+  padding: 22px !important;
 }
 
-[data-theme="light"] .card-sat-title,
-[data-theme="light"] .schedule-lesson-title,
-[data-theme="light"] h1, 
-[data-theme="light"] h2, 
-[data-theme="light"] h3, 
-[data-theme="light"] h4, 
-[data-theme="light"] h5,
-[data-theme="light"] .spotlight-name,
-[data-theme="light"] .passport-name,
-[data-theme="light"] .pstat-val,
-[data-theme="light"] .hours-count strong,
-[data-theme="light"] .next-meeting-title,
-[data-theme="light"] .custom-confirm-title,
-[data-theme="light"] .badge-title-row h5,
-[data-theme="light"] .mentor-meta-text strong,
-[data-theme="light"] .hours-target-note strong {
-  color: #0F172A !important;
+/* Пастельные цветные иконки программ */
+[data-theme="light"] .program-icon--mentoring {
+  background: #EFF6FF !important;
+  color: #2563EB !important;
+  border: 1px solid #BFDBFE !important;
 }
 
-[data-theme="light"] .card-sat-desc,
-[data-theme="light"] .schedule-meta-text,
-[data-theme="light"] .stat-label,
-[data-theme="light"] .hours-caption,
-[data-theme="light"] .pstat-lbl,
-[data-theme="light"] .badge-content p,
-[data-theme="light"] .field-label,
-[data-theme="light"] .form-group-dark label {
+[data-theme="light"] .program-icon--sor {
+  background: #F0FDF4 !important;
+  color: #0D9488 !important;
+  border: 1px solid #A7F3D0 !important;
+}
+
+[data-theme="light"] .program-icon--workshops {
+  background: #FAF5FF !important;
+  color: #9333EA !important;
+  border: 1px solid #E9D5FF !important;
+}
+
+/* Карточка выбранной программы: тонкий активный контур в тон акцентного цвета без тяжелых теней */
+[data-theme="light"] .program-card.is-active {
+  border: 2px solid #0D9488 !important;
+  background: #FFFFFF !important;
+  box-shadow: 0 2px 10px rgba(13, 148, 136, 0.12) !important;
+}
+
+[data-theme="light"] .program-meta-footer {
   color: #64748B !important;
 }
 
-[data-theme="light"] .btn-meet-secondary {
+/* 7. Карточки курсов и метаданные */
+[data-theme="light"] .course-card-sat {
+  border-radius: 16px !important;
+}
+
+[data-theme="light"] .card-sat-subject-icon {
+  background: #F0FDFA !important;
+  border: 1px solid #CCFBF1 !important;
+  color: #0D9488 !important;
+  box-shadow: none !important;
+}
+
+[data-theme="light"] .card-sat-subject-icon svg {
+  color: #0D9488 !important;
+  stroke: #0D9488 !important;
+  filter: none !important;
+}
+
+[data-theme="light"] .card-sat-mentor-row {
+  color: #64748B !important;
+}
+
+/* Строка метаданных внизу карточек курсов: компактные бейджи с легкими контурными иконками */
+[data-theme="light"] .card-sat-meta-row {
+  border-top: 1px solid #F1F5F9 !important;
+  border-bottom: 1px solid #F1F5F9 !important;
+  gap: 12px !important;
+  padding: 12px 0 !important;
+}
+
+[data-theme="light"] .card-sat-meta-row .meta-item {
+  background: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 8px !important;
+  padding: 4px 10px !important;
+  font-size: 12px !important;
+}
+
+[data-theme="light"] .card-sat-meta-row .meta-icon {
+  color: #94A3B8 !important;
+  font-size: 13px !important;
+}
+
+[data-theme="light"] .card-sat-meta-row .meta-label {
+  color: #64748B !important;
+}
+
+[data-theme="light"] .card-sat-meta-row .meta-val {
+  color: #0F172A !important;
+  font-weight: 600 !important;
+}
+
+[data-theme="light"] .topic-chip {
+  background: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #475569 !important;
+  font-weight: 500 !important;
+}
+
+/* Кнопка удаления курса */
+[data-theme="light"] .btn-card-delete {
+  background: #FEF2F2 !important;
+  border: 1px solid #FECACA !important;
+  color: #EF4444 !important;
+}
+
+[data-theme="light"] .btn-card-delete:hover {
+  background: #FEE2E2 !important;
+  color: #DC2626 !important;
+}
+
+/* 8. Мягкие бейджи статусов («Пилотный запуск», «100% бесплатно», грейды) */
+[data-theme="light"] .card-pill--grade {
+  background: #EFF6FF !important;
+  color: #1D4ED8 !important;
+  border: 1px solid #DBEAFE !important;
+}
+
+[data-theme="light"] .card-pill--program {
   background: #F1F5F9 !important;
+  color: #475569 !important;
+  border: 1px solid #E2E8F0 !important;
+}
+
+[data-theme="light"] .program-badge {
+  background: #F1F5F9 !important;
+  color: #475569 !important;
+  border: 1px solid #E2E8F0 !important;
+}
+
+[data-theme="light"] .program-badge--neon {
+  background: #CCFBF1 !important;
+  color: #0F766E !important;
+  border: 1px solid #99F6E4 !important;
+}
+
+[data-theme="light"] .card-sat-status {
+  color: #64748B !important;
+}
+
+[data-theme="light"] .status-pulse-dot,
+[data-theme="light"] .mentor-badge-indicator {
+  background: #10B981 !important;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.4) !important;
+}
+
+[data-theme="light"] .badge-count {
+  background: #F0FDF4 !important;
+  border: 1px solid #CCFBF1 !important;
+  color: #0D9488 !important;
+}
+
+[data-theme="light"] .schedule-badge {
+  background: #F0FDF4 !important;
+  border: 1px solid #A7F3D0 !important;
+  color: #0D9488 !important;
+}
+
+/* 9. Цифры и значения метрик (сбалансированные, не режущие глаз) */
+[data-theme="light"] .stat-summary-val,
+[data-theme="light"] .stat-value,
+[data-theme="light"] .pstat-val,
+[data-theme="light"] .metric-value,
+[data-theme="light"] .hours-count {
+  color: #0F172A !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="light"] .hours-count strong {
+  color: #0D9488 !important;
+}
+
+/* 10. Расписание и календарь */
+[data-theme="light"] .calendar-month-tag {
+  background: #F8FAFC !important;
   border: 1px solid #CBD5E1 !important;
   color: #334155 !important;
 }
 
-[data-theme="light"] .btn-meet-secondary:hover {
-  background: #E2E8F0 !important;
-  color: #0F172A !important;
+[data-theme="light"] .day-chip {
+  border-radius: 12px !important;
+  color: #475569 !important;
 }
 
-[data-theme="light"] .btn-calendar-filter {
-  background: #F1F5F9 !important;
+[data-theme="light"] .day-chip .day-name {
+  color: #64748B !important;
+}
+
+[data-theme="light"] .day-chip .day-num {
+  color: #0F172A !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="light"] .day-chip.is-selected,
+[data-theme="light"] .day-chip.active {
+  background: #0D9488 !important;
+  border-color: #0D9488 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.28) !important;
+}
+
+[data-theme="light"] .day-chip.is-selected .day-name,
+[data-theme="light"] .day-chip.is-selected .day-num,
+[data-theme="light"] .day-chip.active .day-name,
+[data-theme="light"] .day-chip.active .day-num {
+  color: #FFFFFF !important;
+}
+
+[data-theme="light"] .schedule-time-badge {
+  background: #F0FDF4 !important;
+  border: 1px solid #CCFBF1 !important;
+  color: #0D9488 !important;
+}
+
+[data-theme="light"] .schedule-date-badge {
+  background: #F8FAFC !important;
   border: 1px solid #E2E8F0 !important;
   color: #475569 !important;
 }
 
-[data-theme="light"] .btn-calendar-filter.active {
-  background: #E0F2FE !important;
-  border-color: #0284C7 !important;
-  color: #0284C7 !important;
-}
-
-[data-theme="light"] .calendar-month-tag {
-  background: #F1F5F9 !important;
-  border: 1px solid #E2E8F0 !important;
+[data-theme="light"] .schedule-lesson-title {
   color: #0F172A !important;
 }
 
-[data-theme="light"] .btn-lesson-materials,
-[data-theme="light"] .btn-schedule-reminder {
-  background: #F8FAFC !important;
-  border: 1px solid #E2E8F0 !important;
-  color: #334155 !important;
+[data-theme="light"] .btn-delete-lesson {
+  background: #FEF2F2 !important;
+  border: 1px solid #FECACA !important;
+  color: #EF4444 !important;
 }
 
-[data-theme="light"] .btn-lesson-materials:hover,
-[data-theme="light"] .btn-schedule-reminder:hover {
+[data-theme="light"] .btn-delete-lesson:hover {
+  background: #FEE2E2 !important;
+  color: #DC2626 !important;
+}
+
+[data-theme="light"] .btn-complete-lesson {
+  background: #F0FDF4 !important;
+  border: 1px solid #A7F3D0 !important;
+  color: #0D9488 !important;
+}
+
+[data-theme="light"] .btn-complete-lesson:hover {
+  background: #0D9488 !important;
+  color: #FFFFFF !important;
+}
+
+/* 11. Ближайшая онлайн-встреча */
+[data-theme="light"] .next-meeting-icon {
+  background: #F0FDFA !important;
+  border: 1px solid #CCFBF1 !important;
+  color: #0D9488 !important;
+}
+
+[data-theme="light"] #dash-next-meeting-tag {
+  color: #0D9488 !important;
+}
+
+/* 12. Достижения и паспорт волонтера */
+[data-theme="light"] .passport-emblem {
+  background: #F0FDFA !important;
+  border: 1.5px solid #CCFBF1 !important;
+  color: #0D9488 !important;
+}
+
+[data-theme="light"] .badge-icon-wrap {
+  background: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #64748B !important;
+}
+
+[data-theme="light"] .badge-card.is-unlocked {
+  border-color: #A7F3D0 !important;
+}
+
+[data-theme="light"] .badge-card.is-unlocked .badge-icon-wrap {
+  background: #F0FDF4 !important;
+  border-color: #CCFBF1 !important;
+  color: #0D9488 !important;
+}
+
+[data-theme="light"] .badge-status-tag.status-done {
+  background: #DCFCE7 !important;
+  color: #166534 !important;
+  border: 1px solid #BBF7D0 !important;
+}
+
+[data-theme="light"] .badge-status-tag.status-progress {
   background: #F1F5F9 !important;
-  border-color: #0284C7 !important;
-  color: #0284C7 !important;
+  color: #64748B !important;
+  border: 1px solid #E2E8F0 !important;
+}
+
+[data-theme="light"] .hours-bar-track {
+  background: #E2E8F0 !important;
+}
+
+[data-theme="light"] .hours-bar-fill {
+  background: linear-gradient(90deg, #0D9488 0%, #14B8A6 100%) !important;
+}
+
+/* 13. Профиль пользователя и селектор тем */
+[data-theme="light"] .profile-avatar-large {
+  background: #F0FDFA !important;
+  border: 2px solid #CCFBF1 !important;
+  color: #0D9488 !important;
+}
+
+[data-theme="light"] .theme-option-card {
+  background: #F8FAFC !important;
+  border: 1.5px solid #E2E8F0 !important;
+}
+
+[data-theme="light"] .theme-option-card:hover {
+  border-color: #CBD5E1 !important;
+  transform: translateY(-2px);
+}
+
+[data-theme="light"] .theme-option-card.active {
+  border-color: #0D9488 !important;
+  background: #FFFFFF !important;
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.14) !important;
+}
+
+[data-theme="light"] .theme-option-card.active .theme-option-title {
+  color: #0D9488 !important;
+}
+
+[data-theme="light"] .theme-option-card.active .theme-check-icon {
+  background: #0D9488 !important;
+  color: #FFFFFF !important;
+}
+
+/* 14. Формы, выпадающие списки и модальные окна */
+[data-theme="light"] .modal-backdrop {
+  background: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(4px);
+}
+
+[data-theme="light"] .modal-window,
+[data-theme="light"] .custom-confirm-box {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  box-shadow: 0 20px 40px -8px rgba(15, 23, 42, 0.12) !important;
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .modal-header {
+  border-bottom: 1px solid #F1F5F9 !important;
+}
+
+[data-theme="light"] .modal-footer {
+  background: #F8FAFC !important;
+  border-top: 1px solid #E2E8F0 !important;
+}
+
+[data-theme="light"] .input-dark,
+[data-theme="light"] .select-wrapper select,
+[data-theme="light"] .modal-date-input {
+  background: #FFFFFF !important;
+  border: 1px solid #CBD5E1 !important;
+  color: #0F172A !important;
+  border-radius: 10px !important;
+}
+
+[data-theme="light"] .input-dark:focus,
+[data-theme="light"] .select-wrapper select:focus,
+[data-theme="light"] .modal-date-input:focus {
+  border-color: #0D9488 !important;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15) !important;
+  outline: none;
 }
 
 [data-theme="light"] .select-wrapper select option,
@@ -3728,46 +4214,12 @@ body.light-theme {
   color: #0F172A !important;
 }
 
-[data-theme="light"] .input-dark:focus,
-[data-theme="light"] .select-wrapper select:focus,
-[data-theme="light"] .modal-date-input:focus {
-  border-color: #0284C7 !important;
-  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15) !important;
-}
-
-[data-theme="light"] .custom-confirm-msg {
-  color: #475569 !important;
-}
-
-[data-theme="light"] .btn-confirm-cancel {
-  border: 1px solid #CBD5E1 !important;
-  color: #475569 !important;
-}
-
-[data-theme="light"] .btn-confirm-cancel:hover {
-  background: #F1F5F9 !important;
-  color: #0F172A !important;
-}
-
-[data-theme="light"] .custom-toast {
-  background: #FFFFFF !important;
-  border-color: #E2E8F0 !important;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12) !important;
-  color: #0F172A !important;
-}
-
-[data-theme="light"] .topic-chip {
-  background: #F1F5F9 !important;
-  color: #334155 !important;
-  border: 1px solid #E2E8F0 !important;
-}
-
-/* AI Tutor Drawer in Light Mode */
+/* 15. Академический напарник Ment (AI Tutor Drawer) */
 [data-theme="light"] .ai-tutor-drawer {
   background: #FFFFFF !important;
   border-left: 1px solid #E2E8F0 !important;
+  box-shadow: -8px 0 30px rgba(15, 23, 42, 0.08) !important;
   color: #0F172A !important;
-  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.08) !important;
 }
 
 [data-theme="light"] .ai-tutor-header {
@@ -3784,8 +4236,8 @@ body.light-theme {
 }
 
 [data-theme="light"] .ai-tutor-tab-btn.is-active {
-  color: #0284C7 !important;
-  border-bottom-color: #0284C7 !important;
+  color: #0D9488 !important;
+  border-bottom-color: #0D9488 !important;
 }
 
 [data-theme="light"] .ai-theory-card,
@@ -3798,13 +4250,13 @@ body.light-theme {
 
 [data-theme="light"] .ai-quiz-option:hover {
   background: #F1F5F9 !important;
-  border-color: #0284C7 !important;
+  border-color: #CBD5E1 !important;
 }
 
 [data-theme="light"] .ai-quiz-option.is-selected {
-  background: #E0F2FE !important;
-  border-color: #0284C7 !important;
-  color: #0369A1 !important;
+  background: #0D9488 !important;
+  border-color: #0D9488 !important;
+  color: #FFFFFF !important;
 }
 
 [data-theme="light"] .ai-msg-bubble--assistant {
@@ -3814,12 +4266,12 @@ body.light-theme {
 }
 
 [data-theme="light"] .ai-msg-bubble--user {
-  background: linear-gradient(135deg, #0284C7, #38BDF8) !important;
+  background: #0D9488 !important;
   color: #FFFFFF !important;
 }
 
 [data-theme="light"] .ai-tutor-input-box {
-  background: #F8FAFC !important;
+  background: #FFFFFF !important;
   border: 1px solid #CBD5E1 !important;
   color: #0F172A !important;
 }
@@ -3834,21 +4286,22 @@ body.light-theme {
 }
 
 [data-theme="light"] .ai-topic-chip {
-  background: #F1F5F9 !important;
-  border: 1px solid #E2E8F0 !important;
-  color: #334155 !important;
+  background: #F0FDF4 !important;
+  border: 1px solid #CCFBF1 !important;
+  color: #0D9488 !important;
+  font-weight: 500 !important;
 }
 
 [data-theme="light"] .ai-topic-chip:hover {
-  background: #E0F2FE !important;
-  border-color: #0284C7 !important;
-  color: #0284C7 !important;
+  background: #0D9488 !important;
+  border-color: #0D9488 !important;
+  color: #FFFFFF !important;
 }
 
 [data-theme="light"] .ai-tutor-fab-badge {
   background: #FFFFFF !important;
-  border-color: #CBD5E1 !important;
-  color: #0F172A !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #0D9488 !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08) !important;
 }
 
