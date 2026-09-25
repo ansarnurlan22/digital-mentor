@@ -43,6 +43,18 @@ export default function AdminPage() {
     // Загрузка данных пользователей
     const initialUsers: User[] = [
       {
+        id: 'usr-admin-ansar',
+        name: 'Ансар Нурлан',
+        email: 'ansarnurlan2@gmail.com',
+        role: 'Администратор',
+        grade: '11 класс',
+        subject: 'SAT Math & Руководитель проекта',
+        hours: 180,
+        mentor: '',
+        loginDate: 'Сегодня, 18:00',
+        status: 'active',
+      },
+      {
         id: 'usr-1',
         name: 'Алихан Сейдалиев',
         email: 'alikhan.seidaliev@gmail.com',

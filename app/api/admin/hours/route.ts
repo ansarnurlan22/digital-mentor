@@ -40,6 +40,14 @@ let mockHours = [
 function checkAdminRole(request: NextRequest): boolean {
   const roleCookie = request.cookies.get('user_role')?.value;
   const customRoleHeader = request.headers.get('x-user-role');
+  const userEmailCookie = request.cookies.get('user_email')?.value;
+  const customEmailHeader = request.headers.get('x-user-email');
+
+  const email = (customEmailHeader || userEmailCookie || '').toLowerCase().trim();
+  if (email === 'ansarnurlan2@gmail.com' || email === 'ansarnurlan22@gmail.com') {
+    return true;
+  }
+
   const role = (customRoleHeader || roleCookie || 'admin').toLowerCase();
   return role === 'admin' || role === 'администратор';
 }

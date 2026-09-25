@@ -3,6 +3,18 @@ import type { NextRequest } from 'next/server';
 
 let mockUsers = [
   {
+    id: "usr-admin-ansar",
+    name: "Ансар Нурлан",
+    email: "ansarnurlan2@gmail.com",
+    role: "Администратор",
+    grade: "11 класс",
+    subject: "SAT Math & Руководитель проекта",
+    hours: 180,
+    mentor: "",
+    loginDate: "Сегодня, 18:00",
+    status: "active"
+  },
+  {
     id: "usr-admin-1",
     name: "Алихан Сейдалиев",
     email: "alikhan.seidaliev@gmail.com",
@@ -91,6 +103,14 @@ let mockUsers = [
 function checkAdminRole(request: NextRequest): boolean {
   const roleCookie = request.cookies.get('user_role')?.value;
   const customRoleHeader = request.headers.get('x-user-role');
+  const userEmailCookie = request.cookies.get('user_email')?.value;
+  const customEmailHeader = request.headers.get('x-user-email');
+
+  const email = (customEmailHeader || userEmailCookie || '').toLowerCase().trim();
+  if (email === 'ansarnurlan2@gmail.com' || email === 'ansarnurlan22@gmail.com') {
+    return true;
+  }
+
   const role = (customRoleHeader || roleCookie || 'admin').toLowerCase();
   return role === 'admin' || role === 'администратор';
 }

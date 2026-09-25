@@ -11,12 +11,16 @@ export function middleware(request: NextRequest) {
 
   if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
     const roleCookie = request.cookies.get('user_role')?.value;
-    const authHeader = request.headers.get('authorization');
     const customRoleHeader = request.headers.get('x-user-role');
+    const emailCookie = request.cookies.get('user_email')?.value;
+    const customEmailHeader = request.headers.get('x-user-email');
+
+    const email = (customEmailHeader || emailCookie || '').toLowerCase().trim();
+    const isSuperAdminEmail = email === 'ansarnurlan2@gmail.com' || email === 'ansarnurlan22@gmail.com';
 
     // Проверяем роль пользователя
     const role = (customRoleHeader || roleCookie || '').toLowerCase();
-    const isAdmin = role === 'admin' || role === 'администратор';
+    const isAdmin = isSuperAdminEmail || role === 'admin' || role === 'администратор';
 
     if (!isAdmin) {
       // 1. Для API-запросов возвращаем 403 Forbidden в формате JSON

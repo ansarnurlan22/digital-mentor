@@ -186,9 +186,42 @@ function getAccountProfileKey(userId = null) {
   return uid ? `digitalMentor_profile_${uid}` : USER_PROFILE_KEY;
 }
 
+// Список Root-администраторов платформы (безусловный статус role: "admin")
+const SUPER_ADMIN_EMAILS = [
+  "ansarnurlan2@gmail.com",
+  "ansarnurlan22@gmail.com",
+  "alikhan.seidaliev@gmail.com"
+];
+
 // Получить текущую роль пользователя (Администратор, Ментор или Ученик)
 function getUserRole() {
   try {
+    // 0. Высший приоритет: проверка авторизованного аккаунта Google по email
+    if (window.currentAuthUser && window.currentAuthUser.email) {
+      if (SUPER_ADMIN_EMAILS.includes(window.currentAuthUser.email.toLowerCase().trim())) {
+        return "Администратор";
+      }
+    }
+
+    // 1. Проверка сохранённого профиля аккаунта на email супер-администратора
+    const accountKey = getAccountProfileKey();
+    const accountData = localStorage.getItem(accountKey);
+    if (accountData) {
+      const parsed = JSON.parse(accountData);
+      if (parsed && parsed.email && SUPER_ADMIN_EMAILS.includes(parsed.email.toLowerCase().trim())) {
+        return "Администратор";
+      }
+    }
+
+    const profileData = localStorage.getItem(USER_PROFILE_KEY);
+    if (profileData) {
+      const parsed = JSON.parse(profileData);
+      if (parsed && parsed.email && SUPER_ADMIN_EMAILS.includes(parsed.email.toLowerCase().trim())) {
+        return "Администратор";
+      }
+    }
+
+    // 2. Тестовый переключатель роли (если был активирован вручную в интерфейсе)
     const testRole = localStorage.getItem("digitalMentor_testRole");
     if (testRole) {
       if (testRole === "admin" || testRole === "Администратор") return "Администратор";
@@ -197,14 +230,11 @@ function getUserRole() {
       return testRole;
     }
 
-    const accountKey = getAccountProfileKey();
-    const accountData = localStorage.getItem(accountKey);
     if (accountData) {
       const parsed = JSON.parse(accountData);
       if (parsed && parsed.role) return parsed.role;
     }
 
-    const profileData = localStorage.getItem(USER_PROFILE_KEY);
     if (profileData) {
       const parsed = JSON.parse(profileData);
       // Если авторизован пользователь Google, проверяем совпадение email
@@ -225,7 +255,7 @@ function getUserRole() {
   } catch (e) {
     console.error("Ошибка чтения роли пользователя", e);
   }
-  return "Администратор"; // По умолчанию в среде разработки предоставляем роль Администратора для тестирования админки
+  return "Администратор"; // По умолчанию в среде разработки предоставляем роль Администратора
 }
 
 // Получить курсы из localStorage или вернуть дефолтные
@@ -1930,6 +1960,23 @@ async function checkFirstTimeUser() {
     }
   } catch (e) {}
 
+  // Если авторизован ansarnurlan2@gmail.com — автоматически назначаем права Администратора
+  if (currentUser && currentUser.email && currentUser.email.toLowerCase().trim() === "ansarnurlan2@gmail.com") {
+    const adminProfile = {
+      name: (currentUser.user_metadata && (currentUser.user_metadata.full_name || currentUser.user_metadata.name)) || "Ансар Нурлан",
+      role: "Администратор",
+      grade: "11 класс",
+      subject: "SAT Math & Руководитель проекта",
+      email: "ansarnurlan2@gmail.com",
+      google_id: currentUser.id,
+      isConfigured: true
+    };
+    localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(adminProfile));
+    localStorage.setItem(getAccountProfileKey(currentUser.id), JSON.stringify(adminProfile));
+    updateRoleUI();
+    return;
+  }
+
   // Если профиль уже настроен и роль зафиксирована — никогда не открываем онбординг повторно!
   if (profile && profile.isConfigured) {
     return;
@@ -2116,12 +2163,14 @@ function renderProfilePage() {
 
   if (!profile) {
     profile = {
-      name: "Матвей",
-      role: "Ученик",
+      name: "Ансар Нурлан",
+      role: "Администратор",
       grade: "11 класс",
-      subject: "Алгебра",
-      email: "matvey.student@gmail.com",
+      subject: "SAT Math & Руководитель",
+      email: "ansarnurlan2@gmail.com",
     };
+  } else if (profile.email && profile.email.toLowerCase().trim() === "ansarnurlan2@gmail.com") {
+    profile.role = "Администратор";
   }
 
   const avatarEl = document.getElementById("profile-page-avatar");
@@ -2440,6 +2489,18 @@ const ADMIN_HOURS_STORAGE_KEY = "digitalMentor_adminHours";
 
 const INITIAL_ADMIN_USERS = [
   {
+    id: "usr-admin-ansar",
+    name: "Ансар Нурлан",
+    email: "ansarnurlan2@gmail.com",
+    role: "Администратор",
+    grade: "11 класс",
+    subject: "SAT Math & Руководитель проекта",
+    hours: 180,
+    mentor: "",
+    loginDate: "Сегодня, 18:00",
+    status: "active"
+  },
+  {
     id: "usr-admin-1",
     name: "Алихан Сейдалиев",
     email: "alikhan.seidaliev@gmail.com",
@@ -2565,8 +2626,32 @@ function getAdminUsers() {
   try {
     const data = localStorage.getItem(ADMIN_USERS_STORAGE_KEY);
     if (data) {
-      const parsed = JSON.parse(data);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      let parsed = JSON.parse(data);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Гарантируем, что ansarnurlan2@gmail.com всегда присутствует со статусом Администратора
+        const ansarUser = parsed.find(
+          (u) => u.email && u.email.toLowerCase().trim() === "ansarnurlan2@gmail.com"
+        );
+        if (ansarUser) {
+          ansarUser.role = "Администратор";
+          ansarUser.status = "active";
+        } else {
+          parsed.unshift({
+            id: "usr-admin-ansar",
+            name: "Ансар Нурлан",
+            email: "ansarnurlan2@gmail.com",
+            role: "Администратор",
+            grade: "11 класс",
+            subject: "SAT Math & Руководитель проекта",
+            hours: 180,
+            mentor: "",
+            loginDate: "Сегодня, 18:00",
+            status: "active"
+          });
+        }
+        saveAdminUsers(parsed);
+        return parsed;
+      }
     }
   } catch (e) {
     console.error("Ошибка чтения пользователей админки", e);
