@@ -25,87 +25,269 @@
     <div class="page-glow"></div>
     <div class="page-glow page-glow--right"></div>
 
-    <header class="header">
-      <div class="logo">
-        <div class="logo-mark" aria-hidden="true">D</div>
-        <div class="logo-text">
-          <strong>Digital Mentor</strong>
-          <span>Школьники-волонтёры со всего города помогают ученикам</span>
+    <div class="app-layout">
+      <!-- Узкая вертикальная боковая панель слева (Sidebar) -->
+      <aside class="app-sidebar" aria-label="Главная навигация">
+        <div class="sidebar-top">
+          <a href="#dashboard-section" class="sidebar-brand-mark" title="Digital Mentor">
+            <span>D</span>
+          </a>
         </div>
-      </div>
-      <div class="header-actions">
-        <div class="status-pill">
-          <span class="status-dot"></span>
-          Астана — учебный портал
-        </div>
-        <div class="role-pill" id="role-pill">
-          <span class="role-pill-dot"></span>
-          <span id="role-pill-text">Роль: Ученик</span>
-        </div>
-        <a class="btn-nav btn-profile" href="../профиль/index.html">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
-          Профиль
-        </a>
-        <button class="btn-nav btn-logout" id="header-logout-btn" type="button" title="Выйти из аккаунта">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-            <polyline points="16 17 21 12 16 7"></polyline>
-            <line x1="21" y1="12" x2="9" y2="12"></line>
-          </svg>
-          Выйти
-        </button>
-      </div>
-    </header>
 
-    <main class="main-content">
-      <section class="courses-plane">
-        <div class="plane-header">
-          <div class="plane-title-block">
-            <div class="plane-heading-row">
-              <h2>Активные курсы</h2>
-              <span class="badge-count" id="courses-count">0 курсов</span>
-            </div>
-            <p class="plane-subtitle">
-              Список ваших текущих дисциплин и учебных программ с менторами
-            </p>
-          </div>
-
-          <!-- Кнопка добавления курса (видна только ментору) -->
-          <button class="btn-add-course" id="open-modal-btn" type="button" aria-label="Добавить курс" title="Добавить курс">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
+        <nav class="sidebar-nav">
+          <!-- 1. Дашборд (Активен) -->
+          <a href="#dashboard-section" class="sidebar-nav-item is-active" id="nav-item-dashboard" title="Дашборд">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+              <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+              <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+              <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
             </svg>
-            <span>Добавить курс</span>
+            <span class="sidebar-tooltip">Дашборд</span>
+          </a>
+
+          <!-- 2. Курсы -->
+          <a href="#courses-plane" class="sidebar-nav-item" id="nav-item-courses" title="Курсы">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            </svg>
+            <span class="sidebar-tooltip">Курсы</span>
+          </a>
+
+          <!-- 3. Расписание -->
+          <a href="#schedule-section" class="sidebar-nav-item" id="nav-item-schedule" title="Расписание">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <span class="sidebar-tooltip">Расписание</span>
+          </a>
+
+          <!-- 4. Достижения -->
+          <a href="#achievements-section" class="sidebar-nav-item" id="nav-item-achievements" title="Достижения">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="6"></circle>
+              <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"></path>
+            </svg>
+            <span class="sidebar-tooltip">Достижения</span>
+          </a>
+
+          <!-- 5. Профиль -->
+          <a href="../профиль/index.html" class="sidebar-nav-item" id="nav-item-profile" title="Профиль">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span class="sidebar-tooltip">Профиль</span>
+          </a>
+        </nav>
+
+        <div class="sidebar-bottom">
+          <button type="button" class="sidebar-nav-item sidebar-logout-btn" id="sidebar-logout-btn" title="Выйти из аккаунта">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            <span class="sidebar-tooltip">Выход</span>
           </button>
+        </div>
+      </aside>
 
-          <!-- Бейдж только просмотра (виден только ученику) -->
-          <div class="view-only-badge" id="view-only-badge" hidden>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="16" x2="12" y2="12"></line>
-              <line x1="12" y1="8" x2="12.01" y2="8"></line>
-            </svg>
-            <span>Режим ученика · Только просмотр</span>
+      <!-- Основная область приложения -->
+      <div class="app-main">
+        <!-- Чистый минималистичный хедер -->
+        <header class="app-header">
+          <div class="app-header-left">
+            <div class="header-logo">
+              <div class="header-logo-mark" aria-hidden="true">D</div>
+              <div class="header-logo-text">
+                <strong>Digital Mentor</strong>
+                <span>Академическое наставничество · Астана</span>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div class="courses-grid" id="courses-grid">
-          <!-- Карточки курсов генерируются динамически через script.js -->
-        </div>
+          <div class="app-header-right">
+            <!-- Роль пользователя -->
+            <div class="role-pill" id="role-pill">
+              <span class="role-pill-dot"></span>
+              <span id="role-pill-text">Роль: Ученик</span>
+            </div>
 
-        <div class="empty-state" id="empty-state" hidden>
-          <div class="empty-icon">📚</div>
-          <h3>Нет активных курсов</h3>
-          <p>Нажмите на кнопку «+ Добавить курс» в правом верхнем углу, чтобы выбрать дисциплину.</p>
-        </div>
-      </section>
+            <!-- Иконка уведомлений -->
+            <button type="button" class="header-icon-btn" id="header-notifications-btn" title="Уведомления" aria-label="Уведомления">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+              <span class="header-icon-dot"></span>
+            </button>
 
-      <!-- 2 плоскости: Лучший ментор месяца и Лучший ученик месяца -->
-      <section class="spotlight-section">
+            <!-- Иконка чата (вызывает тьютора Ment) -->
+            <button type="button" class="header-icon-btn" id="header-chat-btn" title="Академический напарник Ment (24/7)" aria-label="Чат с Ment">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </button>
+
+            <!-- Аватар профиля -->
+            <a href="../профиль/index.html" class="header-profile-badge" title="Перейти в личный профиль">
+              <div class="header-avatar" id="header-avatar">АК</div>
+              <span class="header-avatar-status"></span>
+            </a>
+          </div>
+        </header>
+
+        <!-- Основной контент дашборда -->
+        <main class="main-content" id="dashboard-section">
+          <!-- Hero-блок дашборда -->
+          <section class="dashboard-hero">
+            <div class="hero-title-block">
+              <h2>Академические программы и курсы</h2>
+              <p>
+                Выберите направление подготовки к СОР/СОЧ или индивидуальное наставничество
+                с лучшими старшеклассниками-волонтёрами.
+              </p>
+            </div>
+
+            <div class="hero-actions-block">
+              <!-- Кнопка добавления курса (видна только ментору) -->
+              <button class="btn-add-course" id="open-modal-btn" type="button" aria-label="Добавить курс" title="Добавить курс">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <span>Добавить курс</span>
+              </button>
+
+              <!-- Бейдж только просмотра (виден только ученику) -->
+              <div class="view-only-badge" id="view-only-badge" hidden>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <span>Режим ученика · Просмотр</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- ДВУХКОЛОНОЧНЫЙ МАКЕТ (Schoolhouse/SAT Style) -->
+          <div class="dashboard-sat-layout">
+            <!-- Левая колонка: 3 вертикальные карточки программ -->
+            <aside class="programs-column" aria-label="Учебные программы">
+              <div class="programs-column-heading">
+                <span class="sat-section-tag">Направления</span>
+                <h3>Программы</h3>
+              </div>
+
+              <div class="programs-stack" id="programs-stack">
+                <!-- 1. Наставничество -->
+                <div class="program-card" data-program="mentoring" id="program-card-mentoring" tabindex="0" role="button">
+                  <div class="program-card-header">
+                    <div class="program-icon-box program-icon--mentoring" aria-hidden="true">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                      </svg>
+                    </div>
+                    <span class="program-badge">1-на-1</span>
+                  </div>
+                  <h4 class="program-title">Наставничество</h4>
+                  <p class="program-desc">
+                    Индивидуальные регулярные онлайн-сессии со школьником-волонтёром для углублённого разбора тем.
+                  </p>
+                  <div class="program-meta-footer">
+                    <span>Индивидуальный темп</span>
+                    <span>•</span>
+                    <span>1–2 раза в нед.</span>
+                  </div>
+                </div>
+
+                <!-- 2. Подготовка к СОР/СОЧ (Выбрана по умолчанию) -->
+                <div class="program-card is-active" data-program="sor-soch" id="program-card-sor-soch" tabindex="0" role="button">
+                  <div class="program-card-header">
+                    <div class="program-icon-box program-icon--sor" aria-hidden="true">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <circle cx="12" cy="12" r="6"></circle>
+                        <circle cx="12" cy="12" r="2"></circle>
+                      </svg>
+                    </div>
+                    <span class="program-badge program-badge--neon">СОР / СОЧ</span>
+                  </div>
+                  <h4 class="program-title">Подготовка к СОР/СОЧ</h4>
+                  <p class="program-desc">
+                    Интенсивный разбор типовых заданий четверти, сложных математических формул и критериев оценивания.
+                  </p>
+                  <div class="program-meta-footer">
+                    <span>Алгоритмы и формулы</span>
+                    <span>•</span>
+                    <span>Срезы знаний</span>
+                  </div>
+                </div>
+
+                <!-- 3. Воркшопы и вебинары -->
+                <div class="program-card" data-program="workshops" id="program-card-workshops" tabindex="0" role="button">
+                  <div class="program-card-header">
+                    <div class="program-icon-box program-icon--workshops" aria-hidden="true">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                      </svg>
+                    </div>
+                    <span class="program-badge">Группы</span>
+                  </div>
+                  <h4 class="program-title">Воркшопы</h4>
+                  <p class="program-desc">
+                    Интерактивные групповые мастер-классы, разборы олимпиадных задач и экспресс-тестирование.
+                  </p>
+                  <div class="program-meta-footer">
+                    <span>Практикумы</span>
+                    <span>•</span>
+                    <span>Командный разбор</span>
+                  </div>
+                </div>
+              </div>
+            </aside>
+
+            <!-- Правая колонка: Детализированный список курсов -->
+            <section class="courses-column" id="courses-plane" aria-label="Детализированный список курсов">
+              <div class="courses-column-header">
+                <div>
+                  <span class="sat-section-tag" id="current-program-filter-label">Фильтр: Подготовка к СОР/СОЧ</span>
+                  <h3 id="current-program-heading">Список курсов</h3>
+                </div>
+
+                <div class="courses-header-controls">
+                  <button type="button" class="btn-filter-all" id="btn-show-all-courses">
+                    Все курсы
+                  </button>
+                  <span class="badge-count" id="courses-count">0 курсов</span>
+                </div>
+              </div>
+
+              <!-- Контейнер для детализированных карточек курсов -->
+              <div class="courses-grid" id="courses-grid">
+                <!-- Карточки курсов генерируются динамически через script.js -->
+              </div>
+
+              <!-- Состояние отсутствия курсов -->
+              <div class="empty-state" id="empty-state" hidden>
+                <div class="empty-icon">📚</div>
+                <h3>Нет активных курсов в этой программе</h3>
+                <p id="empty-state-text">Выберите другую программу слева или нажмите «Все курсы».</p>
+              </div>
+            </section>
+          </div>
+
+          <!-- Секция: Достижения и рейтинг месяца -->
+          <section class="spotlight-section" id="achievements-section">
         <!-- 1 плоскость: Лучший ментор месяца -->
         <article class="spotlight-plane spotlight-plane--mentor">
           <div class="spotlight-plane-header">
@@ -461,6 +643,8 @@
         </div>
       </section>
     </main>
+  </div>
+</div>
 
     <!-- Модальное окно добавления курса -->
     <div class="modal-overlay is-hidden" id="modal-overlay" hidden>

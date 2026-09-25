@@ -538,6 +538,7 @@
   }
 
   // Переключение открытия Drawer
+  window.toggleAiTutor = toggleDrawer;
   function toggleDrawer(open) {
     isOpen = typeof open === 'boolean' ? open : !isOpen;
     const drawer = document.getElementById('ai-tutor-drawer');

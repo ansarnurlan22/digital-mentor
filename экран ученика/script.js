@@ -1,5 +1,69 @@
-// Начальные демонстрационные курсы
-const DEFAULT_COURSES = [];
+// Начальные демонстрационные курсы в стиле Schoolhouse/SAT
+const DEFAULT_COURSES = [
+  {
+    id: "course-sat-alg-11",
+    name: "Алгебра 11 класс (СОР/СОЧ Prep)",
+    grade: "11",
+    program: "sor-soch",
+    programName: "СОР/СОЧ Prep",
+    mentor: "Айбек С. · Старшеклассник-призёр олимпиад",
+    description: "Интенсивный разбор типовых заданий четверти, сложных логарифмических и показательных неравенств, а также критериев оценивания СОР/СОЧ.",
+    topics: ["Логарифмы", "Показательные уравнения", "Стереометрия", "Критерии оценивания"],
+    durationWeeks: "4 недели",
+    frequency: "2 раза в неделю",
+    lessonDuration: "60 минут",
+    maxStudents: 4,
+    startDate: "2026-10-01"
+  },
+  {
+    id: "course-sat-geom-10",
+    name: "Геометрия 10 класс (СОР/СОЧ Prep)",
+    grade: "10",
+    program: "sor-soch",
+    programName: "СОР/СОЧ Prep",
+    mentor: "Дана М. · Победитель республиканской олимпиады",
+    description: "Аксиомы стереометрии, взаимное расположение прямых и плоскостей, вычисление расстояний и углов в пространстве к текущим четвертным срезам.",
+    topics: ["Векторы", "Перпендикулярность плоскостей", "Многогранники", "Разбор типовых задач"],
+    durationWeeks: "3 недели",
+    frequency: "2 раза в неделю",
+    lessonDuration: "60 минут",
+    maxStudents: 5,
+    startDate: "2026-10-05"
+  },
+  {
+    id: "course-sat-phys-11",
+    name: "Физика 10–11 класс (1-на-1 Наставничество)",
+    grade: "10-11",
+    program: "mentoring",
+    programName: "1-на-1 Наставничество",
+    mentor: "Алихан К. · Студент НУ / Выпускник НИШ",
+    description: "Индивидуальные сессии в комфортном темпе: законы сохранения, термодинамика и электродинамика без зубрежки сложных формул.",
+    topics: ["Механика", "Электромагнетизм", "Термодинамика", "Практические расчеты"],
+    durationWeeks: "8 недель",
+    frequency: "1–2 раза в неделю",
+    lessonDuration: "75 минут",
+    maxStudents: 1,
+    startDate: "2026-10-03"
+  },
+  {
+    id: "course-sat-cs-workshop",
+    name: "Информатика & Python (Практический Воркшоп)",
+    grade: "9-11",
+    program: "workshops",
+    programName: "Воркшоп",
+    mentor: "Арман Т. · Разработчик & Ментор",
+    description: "Интерактивный командный воркшоп: разбор олимпиадных алгоритмов, динамического программирования и решение задач на скорость.",
+    topics: ["Алгоритмы и структуры", "Динамическое программирование", "Графы", "Live-coding"],
+    durationWeeks: "2 недели",
+    frequency: "3 раза в неделю",
+    lessonDuration: "90 минут",
+    maxStudents: 12,
+    startDate: "2026-10-10"
+  }
+];
+
+// Текущий фильтр программы (по умолчанию 'sor-soch' согласно спецификации)
+let currentProgramFilter = "sor-soch";
 
 const STORAGE_KEY = "digitalMentor_activeCourses";
 const USER_PROFILE_KEY = "digitalMentor_userProfile";
@@ -49,7 +113,10 @@ function getCourses() {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
     if (data) {
-      return JSON.parse(data);
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
     }
   } catch (e) {
     console.error("Ошибка чтения localStorage", e);
@@ -173,89 +240,221 @@ function pluralizeCourses(count) {
   return `${count} курсов`;
 }
 
-// Отрисовка списка курсов
+// Отрисовка списка курсов в стиле Schoolhouse/SAT
 function renderCourses() {
-  const courses = getCourses();
-  const isMentor = getUserRole() === "Ментор";
+  const allCourses = getCourses();
+  const role = getUserRole();
+  const isMentor = role === "Ментор";
   const grid = document.getElementById("courses-grid");
   const countEl = document.getElementById("courses-count");
   const emptyState = document.getElementById("empty-state");
 
-  countEl.textContent = pluralizeCourses(courses.length);
+  // Фильтрация по текущей выбранной программе
+  let filteredCourses = allCourses;
+  if (currentProgramFilter && currentProgramFilter !== "all") {
+    filteredCourses = allCourses.filter((course) => {
+      const prog = course.program || "sor-soch";
+      return prog === currentProgramFilter;
+    });
+  }
 
-  if (courses.length === 0) {
-    grid.innerHTML = "";
-    emptyState.hidden = false;
+  if (countEl) {
+    countEl.textContent = pluralizeCourses(filteredCourses.length);
+  }
+
+  if (filteredCourses.length === 0) {
+    if (grid) grid.innerHTML = "";
+    if (emptyState) emptyState.hidden = false;
     return;
   }
 
-  emptyState.hidden = true;
-  grid.innerHTML = courses
-    .map((course) => {
-      const iconSvg = getSubjectIcon(course.name);
+  if (emptyState) emptyState.hidden = true;
 
-      // Крестик удаления виден только ментору
-      const deleteButtonHtml = isMentor
-        ? `
-            <button class="btn-card-delete" onclick="removeCourse(event, '${course.id}')" type="button" title="Удалить курс" aria-label="Удалить курс">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-          `
-        : "";
+  if (grid) {
+    grid.innerHTML = filteredCourses
+      .map((course) => {
+        const iconSvg = getSubjectIcon(course.name);
+        const enrolledKey = `digitalMentor_enrolled_${course.id}`;
+        const isEnrolled = !isMentor && localStorage.getItem(enrolledKey) === "true";
 
-      const maxStudents = course.maxStudents || 3;
-      const startDateFormatted = formatDateDisplay(course.startDate);
+        // Программа курса
+        const programPill = course.programName || (
+          course.program === "mentoring"
+            ? "1-на-1"
+            : course.program === "workshops"
+            ? "Воркшоп"
+            : "СОР/СОЧ Prep"
+        );
 
-      return `
-        <article class="course-card" data-id="${course.id}">
-          <div class="course-card-top">
-            <div class="course-subject-icon" aria-hidden="true">
-              ${iconSvg}
+        // Список тем (чипы)
+        const topics = Array.isArray(course.topics) && course.topics.length > 0
+          ? course.topics
+          : ["Базовые формулы", "Практикум", "Разбор типовых заданий"];
+
+        const topicsHtml = `
+          <div class="card-sat-topics">
+            <span class="topics-title">Ключевые темы</span>
+            <div class="topics-chips">
+              ${topics.map((t) => `<span class="topic-chip">${escapeHtml(t)}</span>`).join("")}
             </div>
-            <span class="course-badge-grade">${escapeHtml(course.grade)} класс</span>
-            ${deleteButtonHtml}
           </div>
+        `;
 
-          <div class="course-card-body">
-            <h3>${escapeHtml(course.name)}</h3>
-            <p>${escapeHtml(course.mentor || "Школьник-волонтёр · Ментор назначен")}</p>
-            
-            <div class="course-meta-tags">
-              <span class="meta-tag meta-students">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="9" cy="7" r="4"></circle>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        // Кнопка удаления (только для ментора)
+        const deleteButtonHtml = isMentor
+          ? `
+              <button class="btn-card-delete" onclick="removeCourse(event, '${course.id}')" type="button" title="Удалить курс" aria-label="Удалить курс">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
-                до ${maxStudents} учеников
-              </span>
-              <span class="meta-tag meta-date">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                  <line x1="16" y1="2" x2="16" y2="6"></line>
-                  <line x1="8" y1="2" x2="8" y2="6"></line>
-                  <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
-                Старт: ${startDateFormatted}
-              </span>
-            </div>
-          </div>
+              </button>
+            `
+          : "";
 
-          <div class="course-card-footer">
-            <div class="course-status">
-              <span class="course-status-dot"></span>
-              Активен
+        // Кнопка действия (Ментор: Посмотреть расписание, Ученик: Зарегистрироваться)
+        const actionButtonText = isMentor
+          ? "Посмотреть расписание"
+          : isEnrolled
+          ? "Вы записаны ✓"
+          : "Зарегистрироваться";
+
+        const actionButtonClass = isEnrolled ? "btn-sat-action is-enrolled" : "btn-sat-action";
+
+        return `
+          <article class="course-card-sat" data-id="${escapeHtml(course.id)}">
+            <div class="card-sat-header">
+              <div class="card-sat-title-block">
+                <div class="card-sat-subject-icon" aria-hidden="true">
+                  ${iconSvg}
+                </div>
+                <div>
+                  <h4 class="card-sat-title">${escapeHtml(course.name)}</h4>
+                  <div class="card-sat-mentor-row">
+                    <span class="mentor-badge-indicator" aria-hidden="true"></span>
+                    <span>${escapeHtml(course.mentor || "Школьник-волонтёр · Ментор назначен")}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card-sat-badges">
+                <span class="card-pill card-pill--grade">${escapeHtml(course.grade || "10-11")} класс</span>
+                <span class="card-pill card-pill--program">${escapeHtml(programPill)}</span>
+                ${deleteButtonHtml}
+              </div>
             </div>
-            <button class="btn-course-action" type="button">Материалы</button>
-          </div>
-        </article>
-      `;
-    })
-    .join("");
+
+            <p class="card-sat-desc">${escapeHtml(course.description || "Углубленная программа подготовки и наставничества для школьников.")}</p>
+
+            ${topicsHtml}
+
+            <div class="card-sat-meta-row">
+              <div class="meta-item">
+                <span class="meta-icon" aria-hidden="true">⌚</span>
+                <span class="meta-label">Срок:</span>
+                <span class="meta-val">${escapeHtml(course.durationWeeks || "4 недели")}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-icon" aria-hidden="true">🔄</span>
+                <span class="meta-label">Частота:</span>
+                <span class="meta-val">${escapeHtml(course.frequency || "2 раза в неделю")}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-icon" aria-hidden="true">⏳</span>
+                <span class="meta-label">Длительность:</span>
+                <span class="meta-val">${escapeHtml(course.lessonDuration || "60 минут")}</span>
+              </div>
+            </div>
+
+            <div class="card-sat-footer">
+              <div class="card-sat-status">
+                <span class="status-pulse-dot" aria-hidden="true"></span>
+                <span>${isEnrolled ? "Вы записаны на курс" : "Идёт набор учеников"}</span>
+              </div>
+              <button class="${actionButtonClass}" type="button" onclick="handleCourseAction('${course.id}')">
+                ${actionButtonText}
+              </button>
+            </div>
+          </article>
+        `;
+      })
+      .join("");
+  }
+}
+
+// Обработка клика по кнопке действия курса
+window.handleCourseAction = function (courseId) {
+  const role = getUserRole();
+  if (role === "Ментор") {
+    const scheduleSection = document.getElementById("schedule-section");
+    if (scheduleSection) {
+      scheduleSection.scrollIntoView({ behavior: "smooth" });
+      scheduleSection.style.transition = "box-shadow 0.4s ease";
+      scheduleSection.style.boxShadow = "0 0 35px rgba(56, 189, 248, 0.45)";
+      setTimeout(() => {
+        scheduleSection.style.boxShadow = "";
+      }, 2000);
+    }
+    return;
+  }
+
+  // Роль: Ученик -> Регистрация на курс
+  const enrolledKey = `digitalMentor_enrolled_${courseId}`;
+  const isEnrolled = localStorage.getItem(enrolledKey) === "true";
+
+  if (isEnrolled) {
+    showToast("Вы уже зарегистрированы на этот курс!", "info");
+    return;
+  }
+
+  localStorage.setItem(enrolledKey, "true");
+  showToast("Вы успешно зарегистрировались на курс! Ментор свяжется с вами.", "success");
+  renderCourses();
+};
+
+// Инициализация фильтров учебных программ (Schoolhouse/SAT)
+function initProgramFilters() {
+  const programCards = document.querySelectorAll(".program-card");
+  const allBtn = document.getElementById("btn-show-all-courses");
+  const filterLabel = document.getElementById("current-program-filter-label");
+  const headingLabel = document.getElementById("current-program-heading");
+
+  function setProgram(progId) {
+    currentProgramFilter = progId;
+    programCards.forEach((c) => {
+      const isSelected = c.dataset.program === progId;
+      c.classList.toggle("is-active", isSelected);
+    });
+
+    if (progId === "sor-soch") {
+      if (filterLabel) filterLabel.textContent = "Фильтр: Подготовка к СОР/СОЧ";
+      if (headingLabel) headingLabel.textContent = "Курсы: Подготовка к СОР/СОЧ";
+    } else if (progId === "mentoring") {
+      if (filterLabel) filterLabel.textContent = "Фильтр: Наставничество 1-на-1";
+      if (headingLabel) headingLabel.textContent = "Курсы: Индивидуальное наставничество";
+    } else if (progId === "workshops") {
+      if (filterLabel) filterLabel.textContent = "Фильтр: Воркшопы";
+      if (headingLabel) headingLabel.textContent = "Курсы: Практические воркшопы";
+    } else {
+      if (filterLabel) filterLabel.textContent = "Фильтр: Все направления";
+      if (headingLabel) headingLabel.textContent = "Все доступные курсы";
+    }
+
+    renderCourses();
+  }
+
+  programCards.forEach((card) => {
+    card.addEventListener("click", () => {
+      const prog = card.getAttribute("data-program");
+      setProgram(prog);
+    });
+  });
+
+  if (allBtn) {
+    allBtn.addEventListener("click", () => {
+      setProgram("all");
+    });
+  }
 }
 
 // Защита от XSS
@@ -1325,19 +1524,49 @@ async function checkFirstTimeUser() {
 
 // Инициализация кнопки выхода из аккаунта
 function initHeaderLogout() {
-  const logoutBtn = document.getElementById("header-logout-btn");
-  if (logoutBtn && !logoutBtn.dataset.bound) {
-    logoutBtn.dataset.bound = "true";
-    logoutBtn.addEventListener("click", async (e) => {
-      e.preventDefault();
-      if (confirm("Вы действительно хотите выйти из аккаунта?")) {
-        if (window.SupabaseService && typeof window.SupabaseService.signOut === "function") {
-          await window.SupabaseService.signOut();
-        } else {
-          sessionStorage.removeItem("mentorProfile");
-          window.location.href = "../главный%20экран/index.html";
+  const logoutBtns = [
+    document.getElementById("header-logout-btn"),
+    document.getElementById("sidebar-logout-btn"),
+  ].filter(Boolean);
+
+  logoutBtns.forEach((btn) => {
+    if (!btn.dataset.bound) {
+      btn.dataset.bound = "true";
+      btn.addEventListener("click", async (e) => {
+        e.preventDefault();
+        if (confirm("Вы действительно хотите выйти из аккаунта?")) {
+          if (window.SupabaseService && typeof window.SupabaseService.signOut === "function") {
+            await window.SupabaseService.signOut();
+          } else {
+            sessionStorage.removeItem("mentorProfile");
+            window.location.href = "../главный%20экран/index.html";
+          }
         }
+      });
+    }
+  });
+}
+
+// Инициализация кнопок шапки (Чат с Ment, Уведомления)
+function initHeaderControls() {
+  const chatBtn = document.getElementById("header-chat-btn");
+  if (chatBtn && !chatBtn.dataset.bound) {
+    chatBtn.dataset.bound = "true";
+    chatBtn.addEventListener("click", () => {
+      if (typeof window.toggleAiTutor === "function") {
+        window.toggleAiTutor(true);
+      } else {
+        const fab = document.getElementById("ai-tutor-fab-btn");
+        if (fab) fab.click();
       }
+    });
+  }
+
+  const notifBtn = document.getElementById("header-notifications-btn");
+  if (notifBtn && !notifBtn.dataset.bound) {
+    notifBtn.dataset.bound = "true";
+    notifBtn.addEventListener("click", () => {
+      showToast("У вас нет новых уведомлений. Все системы в норме!", "info");
     });
   }
 }
@@ -1352,10 +1581,12 @@ async function initApp() {
   }
 
   updateRoleUI();
+  initProgramFilters();
   renderCourses();
   initDynamicWeek();
   initScheduleInteractivity();
   initHeaderLogout();
+  initHeaderControls();
   await loadAndRenderAllScheduleAndStats();
   initOnboarding();
   await checkFirstTimeUser();
@@ -1416,10 +1647,29 @@ function showToast(message, type = 'error') {
         <line x1="12" y1="8" x2="12" y2="12"></line>
         <line x1="12" y1="16" x2="12.01" y2="16"></line>
       </svg>
-      <span>${message}</span>
+      <span>${escapeHtml(message)}</span>
+    `;
+  } else if (type === 'success') {
+    toast.classList.add('toast-success');
+    toast.innerHTML = `
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+      <span>${escapeHtml(message)}</span>
+    `;
+  } else if (type === 'info') {
+    toast.classList.add('toast-info');
+    toast.innerHTML = `
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+      </svg>
+      <span>${escapeHtml(message)}</span>
     `;
   } else {
-    toast.innerHTML = `<span>${message}</span>`;
+    toast.innerHTML = `<span>${escapeHtml(message)}</span>`;
   }
 
   // Сброс анимации
