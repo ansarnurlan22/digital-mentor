@@ -83,6 +83,14 @@
             </svg>
             <span class="sidebar-tooltip">Профиль</span>
           </a>
+
+          <!-- 6. Панель администратора (Admin Dashboard) -->
+          <a href="#/admin" data-route="admin" class="sidebar-nav-item" id="nav-item-admin" title="Панель администратора">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            <span class="sidebar-tooltip">Админ-панель</span>
+          </a>
         </nav>
 
         <div class="sidebar-bottom">
@@ -898,6 +906,259 @@
             </div>
           </div>
 
+
+          <!-- СТРАНИЦА 6: ПАНЕЛЬ АДМИНИСТРАТОРА (ADMIN DASHBOARD) -->
+          <div class="page-view" id="page-admin" data-page="admin" hidden>
+            <section class="dashboard-hero">
+              <div class="hero-title-block">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                  <span class="sat-section-tag" style="color: #7E22CE; background: #FAF5FF; padding: 2px 8px; border-radius: 6px; border: 1px solid #E9D5FF; font-size: 11px;">Роль: Root Administrator</span>
+                  <span class="admin-live-badge"><span class="status-pulse-dot" style="background: #10B981;"></span> Система онлайн</span>
+                </div>
+                <h2>Панель администратора Digital Mentor</h2>
+                <p>Единый центр управления пользователями, верификации волонтёрских часов и мониторинга академических курсов.</p>
+              </div>
+
+              <!-- Переключатель роли для быстрого тестирования доступа -->
+              <div class="admin-role-switch-box">
+                <span style="font-size: 12px; color: var(--muted); font-weight: 600;">Тестовая роль:</span>
+                <div class="admin-role-pills">
+                  <button type="button" class="btn-role-toggle active" data-set-role="admin">🛡️ Админ</button>
+                  <button type="button" class="btn-role-toggle" data-set-role="mentor">🎓 Ментор</button>
+                  <button type="button" class="btn-role-toggle" data-set-role="student">🎒 Ученик</button>
+                </div>
+              </div>
+            </section>
+
+            <!-- Навигационные вкладки админ-панели -->
+            <div class="admin-tabs-bar">
+              <button type="button" class="admin-tab-btn is-active" data-admin-tab="overview">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="7" height="9"></rect>
+                  <rect x="14" y="3" width="7" height="5"></rect>
+                  <rect x="14" y="12" width="7" height="9"></rect>
+                  <rect x="3" y="16" width="7" height="5"></rect>
+                </svg>
+                <span>Обзор (Overview)</span>
+              </button>
+              <button type="button" class="admin-tab-btn" data-admin-tab="users">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <span>Пользователи (Users)</span>
+                <span class="admin-tab-count" id="admin-users-tab-count">0</span>
+              </button>
+              <button type="button" class="admin-tab-btn" data-admin-tab="hours">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span>Волонтёрские часы (Hours & Badges)</span>
+                <span class="admin-tab-count admin-tab-count--alert" id="admin-pending-hours-count">0</span>
+              </button>
+              <button type="button" class="admin-tab-btn" data-admin-tab="courses">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+                <span>Курсы и группы (Courses)</span>
+              </button>
+            </div>
+
+            <!-- ВКЛАДКА 1: ОБЗОР (OVERVIEW) -->
+            <div class="admin-tab-content is-active" id="admin-tab-pane-overview">
+              <div class="dashboard-stats-grid">
+                <div class="stat-summary-card">
+                  <span class="stat-summary-label">Всего пользователей</span>
+                  <span class="stat-summary-val" id="admin-stat-total-users">128</span>
+                  <span class="stat-summary-note">+14 за последние 7 дней</span>
+                </div>
+                <div class="stat-summary-card">
+                  <span class="stat-summary-label">Активных менторов</span>
+                  <span class="stat-summary-val" id="admin-stat-active-mentors">34</span>
+                  <span class="stat-summary-note">100% верифицированы</span>
+                </div>
+                <div class="stat-summary-card">
+                  <span class="stat-summary-label">Подтверждённых часов</span>
+                  <span class="stat-summary-val" id="admin-stat-total-hours" style="color: #0284C7 !important;">486 ч.</span>
+                  <span class="stat-summary-note">+28 ч. за эту неделю</span>
+                </div>
+                <div class="stat-summary-card">
+                  <span class="stat-summary-label">Проведённых уроков</span>
+                  <span class="stat-summary-val" id="admin-stat-total-lessons">512</span>
+                  <span class="stat-summary-note">Без сорванных сессий</span>
+                </div>
+              </div>
+
+              <!-- Блок статуса системы и аудита событий -->
+              <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-top: 24px;">
+                <div class="admin-card">
+                  <div class="admin-card-header">
+                    <h4>Журнал системных событий</h4>
+                    <span class="badge-count" style="font-size: 11px;">Аудит действий</span>
+                  </div>
+                  <div class="admin-activity-list" id="admin-activity-list">
+                    <!-- Заполняется динамически -->
+                  </div>
+                </div>
+
+                <div class="admin-card">
+                  <div class="admin-card-header">
+                    <h4>Безопасность и API</h4>
+                  </div>
+                  <div class="admin-security-status">
+                    <div class="sec-item">
+                      <span class="sec-dot online"></span>
+                      <div>
+                        <strong>API Security Middleware</strong>
+                        <p>Доступ к /admin и /api/admin/* только для role: admin (403 Guard)</p>
+                      </div>
+                    </div>
+                    <div class="sec-item">
+                      <span class="sec-dot online"></span>
+                      <div>
+                        <strong>Supabase RLS & Auth</strong>
+                        <p>Защищённые сессии, разделение ролей Ученик / Ментор / Админ</p>
+                      </div>
+                    </div>
+                    <div class="sec-item">
+                      <span class="sec-dot online"></span>
+                      <div>
+                        <strong>Верификация часов</strong>
+                        <p>Аудит начисления волонтёрских часов с подтверждением в 1 клик</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ВКЛАДКА 2: ПОЛЬЗОВАТЕЛИ (USERS) -->
+            <div class="admin-tab-content" id="admin-tab-pane-users">
+              <div class="admin-card">
+                <div class="admin-toolbar">
+                  <div class="admin-search-wrapper">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="admin-user-search-input" placeholder="Поиск по имени или email..." class="admin-search-input" />
+                  </div>
+
+                  <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <div class="select-wrapper" style="min-width: 160px;">
+                      <select id="admin-user-role-filter" class="input-dark" style="padding: 8px 12px; font-size: 13px;">
+                        <option value="all">Все роли</option>
+                        <option value="Ученик">Ученики</option>
+                        <option value="Ментор">Менторы</option>
+                        <option value="Администратор">Администраторы</option>
+                      </select>
+                    </div>
+
+                    <button type="button" class="btn-meet-primary" id="btn-admin-add-user" style="padding: 8px 16px; font-size: 13px;">
+                      + Добавить пользователя
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Таблица пользователей -->
+                <div class="admin-table-container">
+                  <table class="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Пользователь</th>
+                        <th>Email</th>
+                        <th>Роль</th>
+                        <th>Класс / Предмет</th>
+                        <th>Дата входа</th>
+                        <th>Статус</th>
+                        <th style="text-align: right;">Действия</th>
+                      </tr>
+                    </thead>
+                    <tbody id="admin-users-tbody">
+                      <!-- Заполняется динамически через script.js -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- ВКЛАДКА 3: ВОЛОНТЁРСКИЕ ЧАСЫ (HOURS & BADGES) -->
+            <div class="admin-tab-content" id="admin-tab-pane-hours">
+              <div class="admin-card">
+                <div class="admin-card-header">
+                  <div>
+                    <h4>Заявки на подтверждение волонтёрских часов</h4>
+                    <p style="margin: 4px 0 0; font-size: 13px; color: var(--muted);">
+                      Проверяйте проведённые онлайн-сессии менторов и начисляйте часы волонтёрства в один клик.
+                    </p>
+                  </div>
+                  <button type="button" class="btn-meet-secondary" id="btn-admin-recalc-hours" style="font-size: 12px; padding: 6px 12px;">
+                    🔄 Пересчитать баланс часов
+                  </button>
+                </div>
+
+                <div class="admin-table-container">
+                  <table class="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Ментор</th>
+                        <th>Предмет / Тема урока</th>
+                        <th>Ученик / Аудитория</th>
+                        <th>Дата и время</th>
+                        <th>Часы</th>
+                        <th>Статус</th>
+                        <th style="text-align: right;">Действие</th>
+                      </tr>
+                    </thead>
+                    <tbody id="admin-hours-tbody">
+                      <!-- Заполняется динамически через script.js -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- ВКЛАДКА 4: КУРСЫ И ГРУППЫ (COURSES) -->
+            <div class="admin-tab-content" id="admin-tab-pane-courses">
+              <div class="admin-card">
+                <div class="admin-card-header">
+                  <div>
+                    <h4>Академические дисциплины и учебные группы</h4>
+                    <p style="margin: 4px 0 0; font-size: 13px; color: var(--muted);">
+                      Управление активными курсами платформы, распределение менторов и мониторинг записей учеников.
+                    </p>
+                  </div>
+                  <button type="button" class="btn-meet-primary" id="btn-admin-create-course" style="font-size: 13px; padding: 8px 16px;">
+                    + Создать новый курс
+                  </button>
+                </div>
+
+                <div class="admin-table-container">
+                  <table class="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Курс</th>
+                        <th>Направление</th>
+                        <th>Класс</th>
+                        <th>Назначенный ментор</th>
+                        <th>Учеников</th>
+                        <th>Статус набора</th>
+                        <th style="text-align: right;">Действия</th>
+                      </tr>
+                    </thead>
+                    <tbody id="admin-courses-tbody">
+                      <!-- Заполняется динамически через script.js -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </main>
   </div>
 </div>
@@ -1223,6 +1484,103 @@
             </div>
           </div>
         </div>
+    <!-- Модальное окно редактирования пользователя администратором (CRUD Modal) -->
+    <div class="modal-overlay is-hidden" id="admin-user-modal-overlay" hidden>
+      <div class="modal-window" role="dialog" aria-modal="true" aria-labelledby="admin-user-modal-title">
+        <div class="modal-header">
+          <h3 id="admin-user-modal-title">Редактирование профиля пользователя</h3>
+          <button class="modal-close" id="close-admin-user-modal-btn" type="button" aria-label="Закрыть окно">&times;</button>
+        </div>
+
+        <form id="admin-user-edit-form">
+          <input type="hidden" id="admin-edit-user-id" />
+          <div class="modal-body">
+            <label class="modal-field">
+              <span class="field-label">Имя и фамилия</span>
+              <input type="text" id="admin-edit-user-name" class="input-dark" placeholder="ФИО пользователя" required />
+            </label>
+
+            <label class="modal-field">
+              <span class="field-label">Электронная почта (Email)</span>
+              <input type="email" id="admin-edit-user-email" class="input-dark" placeholder="user@gmail.com" required />
+            </label>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+              <label class="modal-field">
+                <span class="field-label">Роль в системе</span>
+                <div class="select-wrapper">
+                  <select id="admin-edit-user-role" required>
+                    <option value="Ученик">Ученик</option>
+                    <option value="Ментор">Ментор</option>
+                    <option value="Администратор">Администратор</option>
+                  </select>
+                </div>
+              </label>
+
+              <label class="modal-field">
+                <span class="field-label">Класс</span>
+                <div class="select-wrapper">
+                  <select id="admin-edit-user-grade" required>
+                    <option value="7 класс">7 класс</option>
+                    <option value="8 класс">8 класс</option>
+                    <option value="9 класс">9 класс</option>
+                    <option value="10 класс">10 класс</option>
+                    <option value="11 класс">11 класс</option>
+                  </select>
+                </div>
+              </label>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+              <label class="modal-field">
+                <span class="field-label">Дисциплина / Предмет</span>
+                <div class="select-wrapper">
+                  <select id="admin-edit-user-subject">
+                    <option value="Алгебра">Алгебра</option>
+                    <option value="Геометрия">Геометрия</option>
+                    <option value="Физика">Физика</option>
+                    <option value="Информатика">Информатика & Python</option>
+                    <option value="Химия">Химия</option>
+                    <option value="Биология">Биология</option>
+                    <option value="Английский язык">Английский язык</option>
+                    <option value="SAT Math">Digital SAT Math</option>
+                  </select>
+                </div>
+              </label>
+
+              <label class="modal-field">
+                <span class="field-label">Подтверждённые часы (ч.)</span>
+                <input type="number" id="admin-edit-user-hours" class="input-dark" min="0" max="999" step="0.5" value="0" />
+              </label>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+              <label class="modal-field">
+                <span class="field-label">Привязанный ментор</span>
+                <div class="select-wrapper">
+                  <select id="admin-edit-user-mentor">
+                    <option value="">Не назначен (Самостоятельное обучение)</option>
+                  </select>
+                </div>
+              </label>
+
+              <label class="modal-field">
+                <span class="field-label">Статус аккаунта</span>
+                <div class="select-wrapper">
+                  <select id="admin-edit-user-status">
+                    <option value="active">Активен (Доступ открыт)</option>
+                    <option value="blocked">Заблокирован (Доступ закрыт)</option>
+                  </select>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn-cancel" id="cancel-admin-user-btn" type="button">Отмена</button>
+            <button class="btn-submit" type="submit" id="save-admin-user-btn">Сохранить изменения</button>
+          </div>
+        </form>
       </div>
     </div>
 

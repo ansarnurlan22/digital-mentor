@@ -186,9 +186,17 @@ function getAccountProfileKey(userId = null) {
   return uid ? `digitalMentor_profile_${uid}` : USER_PROFILE_KEY;
 }
 
-// Получить текущую роль пользователя (Ментор или Ученик)
+// Получить текущую роль пользователя (Администратор, Ментор или Ученик)
 function getUserRole() {
   try {
+    const testRole = localStorage.getItem("digitalMentor_testRole");
+    if (testRole) {
+      if (testRole === "admin" || testRole === "Администратор") return "Администратор";
+      if (testRole === "mentor" || testRole === "Ментор") return "Ментор";
+      if (testRole === "student" || testRole === "Ученик") return "Ученик";
+      return testRole;
+    }
+
     const accountKey = getAccountProfileKey();
     const accountData = localStorage.getItem(accountKey);
     if (accountData) {
@@ -217,7 +225,7 @@ function getUserRole() {
   } catch (e) {
     console.error("Ошибка чтения роли пользователя", e);
   }
-  return "Ученик"; // По умолчанию — ученик
+  return "Администратор"; // По умолчанию в среде разработки предоставляем роль Администратора для тестирования админки
 }
 
 // Получить курсы из localStorage или вернуть дефолтные
@@ -260,10 +268,11 @@ function formatDateDisplay(dateStr) {
   return dateStr;
 }
 
-// Обновление интерфейса в зависимости от роли (Ментор или Ученик)
+// Обновление интерфейса в зависимости от роли (Администратор, Ментор или Ученик)
 function updateRoleUI() {
   const role = getUserRole();
-  const isMentor = role === "Ментор";
+  const isAdmin = role === "Администратор" || role === "admin";
+  const isMentor = role === "Ментор" || isAdmin;
 
   const openModalBtn = document.getElementById("open-modal-btn");
   const viewOnlyBadge = document.getElementById("view-only-badge");
@@ -272,20 +281,41 @@ function updateRoleUI() {
   const emptyStateText = document.querySelector("#empty-state p");
 
   if (rolePillText) {
-    rolePillText.textContent = isMentor ? "Роль: Ментор" : "Роль: Ученик";
+    if (isAdmin) {
+      rolePillText.textContent = "Роль: Администратор";
+    } else if (isMentor) {
+      rolePillText.textContent = "Роль: Ментор";
+    } else {
+      rolePillText.textContent = "Роль: Ученик";
+    }
   }
 
   if (rolePill) {
-    rolePill.classList.toggle("is-mentor", isMentor);
-    rolePill.title = isMentor
-      ? "Вы вошли как ментор — вам доступно добавление и управление курсами"
-      : "Вы вошли как ученик — доступен только просмотр курсов";
+    rolePill.classList.toggle("is-admin", isAdmin);
+    rolePill.classList.toggle("is-mentor", isMentor && !isAdmin);
+    if (isAdmin) {
+      rolePill.title = "Вы вошли как Администратор — полный доступ к системе, ролям и верификации часов";
+    } else if (isMentor) {
+      rolePill.title = "Вы вошли как ментор — вам доступно добавление и управление курсами";
+    } else {
+      rolePill.title = "Вы вошли как ученик — доступен только просмотр курсов";
+    }
   }
+
+  // Обновляем состояние кнопок переключения ролей в админке
+  document.querySelectorAll(".btn-role-toggle").forEach((btn) => {
+    const btnRole = btn.getAttribute("data-set-role");
+    const active =
+      (isAdmin && btnRole === "admin") ||
+      (!isAdmin && isMentor && btnRole === "mentor") ||
+      (!isAdmin && !isMentor && btnRole === "student");
+    btn.classList.toggle("active", active);
+  });
 
   const openScheduleModalBtn = document.getElementById("open-schedule-modal-btn");
 
   if (isMentor) {
-    // Ментор: может добавлять курсы и планировать уроки
+    // Ментор или Администратор: может добавлять курсы и планировать уроки
     if (openModalBtn) openModalBtn.hidden = false;
     if (openScheduleModalBtn) {
       openScheduleModalBtn.hidden = false;
@@ -1975,8 +2005,24 @@ function initHeaderControls() {
 // ============================================================
 function initSpaRouter() {
   function handleRoute(route, pushState = true) {
-    const validRoutes = ["dashboard", "courses", "schedule", "achievements", "profile"];
+    const validRoutes = ["dashboard", "courses", "schedule", "achievements", "profile", "admin"];
     const targetRoute = validRoutes.includes(route) ? route : "dashboard";
+
+    // 0. Контроль доступа и безопасность (RBAC Middleware):
+    // Доступ к роуту /admin разрешён исключительно пользователям со статусом role: "admin"
+    if (targetRoute === "admin") {
+      const currentRole = String(getUserRole() || "").toLowerCase();
+      const isAdmin = currentRole.includes("админ") || currentRole === "admin";
+      if (!isAdmin) {
+        showToast(
+          `403 Forbidden: Доступ запрещён. Вы авторизованы со статусом «${getUserRole()}». Раздел администратора доступен исключительно администраторам платформы.`,
+          "error"
+        );
+        // Неавторизованных пользователей или обычных учеников/менторов перенаправляем на / (dashboard)
+        handleRoute("dashboard", pushState);
+        return;
+      }
+    }
 
     // 1. Скрываем все страницы
     document.querySelectorAll(".page-view").forEach((view) => {
@@ -2005,6 +2051,10 @@ function initSpaRouter() {
       renderCourses();
     } else if (targetRoute === "schedule") {
       loadAndRenderAllScheduleAndStats();
+    } else if (targetRoute === "admin") {
+      if (typeof renderAdminDashboard === "function") {
+        renderAdminDashboard();
+      }
     }
 
     // 5. Обновляем URL в адресной строке без перезагрузки всей страницы
@@ -2021,13 +2071,13 @@ function initSpaRouter() {
     const hash = window.location.hash.replace(/^#\/?/, "").trim();
     if (hash) {
       const clean = hash.split("/")[0].split("?")[0];
-      if (["dashboard", "courses", "schedule", "achievements", "profile"].includes(clean)) {
+      if (["dashboard", "courses", "schedule", "achievements", "profile", "admin"].includes(clean)) {
         return clean;
       }
     }
     const params = new URLSearchParams(window.location.search);
     const p = params.get("page");
-    if (p && ["dashboard", "courses", "schedule", "achievements", "profile"].includes(p)) {
+    if (p && ["dashboard", "courses", "schedule", "achievements", "profile", "admin"].includes(p)) {
       return p;
     }
     return "dashboard";
@@ -2184,6 +2234,7 @@ async function initApp() {
 
   updateRoleUI();
   initSpaRouter();
+  initAdminDashboard();
   initProfilePage();
   initProgramFilters();
   renderCourses();
@@ -2379,4 +2430,916 @@ function showConfirmDialog(title, message, onConfirm, onCancel = null, options =
 
 window.showToast = showToast;
 window.showConfirmDialog = showConfirmDialog;
+
+// ============================================================
+// МОДУЛЬ АДМИНИСТРАТОРА (ADMIN DASHBOARD MODULE)
+// ============================================================
+
+const ADMIN_USERS_STORAGE_KEY = "digitalMentor_adminUsers";
+const ADMIN_HOURS_STORAGE_KEY = "digitalMentor_adminHours";
+
+const INITIAL_ADMIN_USERS = [
+  {
+    id: "usr-admin-1",
+    name: "Алихан Сейдалиев",
+    email: "alikhan.seidaliev@gmail.com",
+    role: "Администратор",
+    grade: "11 класс",
+    subject: "SAT Math",
+    hours: 120,
+    mentor: "",
+    loginDate: "Сегодня, 17:30",
+    status: "active"
+  },
+  {
+    id: "usr-mentor-2",
+    name: "Айгерим Муратова",
+    email: "aigerim.m@gmail.com",
+    role: "Ментор",
+    grade: "11 класс",
+    subject: "Алгебра",
+    hours: 42,
+    mentor: "",
+    loginDate: "Сегодня, 16:45",
+    status: "active"
+  },
+  {
+    id: "usr-mentor-3",
+    name: "Арман Тлеубаев",
+    email: "arman.tleubayev@gmail.com",
+    role: "Ментор",
+    grade: "10 класс",
+    subject: "Информатика",
+    hours: 38,
+    mentor: "",
+    loginDate: "Сегодня, 15:10",
+    status: "active"
+  },
+  {
+    id: "usr-mentor-4",
+    name: "Дильназ Каримова",
+    email: "dilnaz.karimova@gmail.com",
+    role: "Ментор",
+    grade: "11 класс",
+    subject: "Физика",
+    hours: 29.5,
+    mentor: "",
+    loginDate: "Вчера, 19:20",
+    status: "active"
+  },
+  {
+    id: "usr-student-5",
+    name: "Дамир Жумабеков",
+    email: "damir.zhumabek@gmail.com",
+    role: "Ученик",
+    grade: "9 класс",
+    subject: "Алгебра",
+    hours: 0,
+    mentor: "Айгерим Муратова",
+    loginDate: "Сегодня, 14:05",
+    status: "active"
+  },
+  {
+    id: "usr-student-6",
+    name: "София Ли",
+    email: "sofia.lee@gmail.com",
+    role: "Ученик",
+    grade: "10 класс",
+    subject: "Информатика",
+    hours: 0,
+    mentor: "Арман Тлеубаев",
+    loginDate: "Сегодня, 11:30",
+    status: "active"
+  },
+  {
+    id: "usr-student-7",
+    name: "Санжар Ибраев",
+    email: "sanzhar.ibrayev@gmail.com",
+    role: "Ученик",
+    grade: "11 класс",
+    subject: "Физика",
+    hours: 0,
+    mentor: "Дильназ Каримова",
+    loginDate: "23.09.2026",
+    status: "blocked"
+  }
+];
+
+const INITIAL_ADMIN_HOURS = [
+  {
+    id: "req-1",
+    mentorName: "Айгерим Муратова",
+    mentorEmail: "aigerim.m@gmail.com",
+    subject: "Алгебра & Анализ: Тригонометрические формулы",
+    audience: "Дамир Жумабеков (9 класс)",
+    date: "2026-09-25",
+    time: "16:00 - 17:00",
+    duration: 1.0,
+    status: "pending"
+  },
+  {
+    id: "req-2",
+    mentorName: "Арман Тлеубаев",
+    mentorEmail: "arman.tleubayev@gmail.com",
+    subject: "Python: Динамическое программирование и графы",
+    audience: "Группа 10-11 кл. (София Ли + 3)",
+    date: "2026-09-25",
+    time: "15:00 - 16:30",
+    duration: 1.5,
+    status: "pending"
+  },
+  {
+    id: "req-3",
+    mentorName: "Дильназ Каримова",
+    mentorEmail: "dilnaz.karimova@gmail.com",
+    subject: "Физика: Законы Ньютона и динамика точки",
+    audience: "Санжар Ибраев (11 класс)",
+    date: "2026-09-24",
+    time: "18:00 - 19:00",
+    duration: 1.0,
+    status: "verified"
+  }
+];
+
+function getAdminUsers() {
+  try {
+    const data = localStorage.getItem(ADMIN_USERS_STORAGE_KEY);
+    if (data) {
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {
+    console.error("Ошибка чтения пользователей админки", e);
+  }
+  saveAdminUsers(INITIAL_ADMIN_USERS);
+  return INITIAL_ADMIN_USERS;
+}
+
+function saveAdminUsers(users) {
+  try {
+    localStorage.setItem(ADMIN_USERS_STORAGE_KEY, JSON.stringify(users));
+  } catch (e) {
+    console.error("Ошибка записи пользователей админки", e);
+  }
+}
+
+function getAdminHours() {
+  try {
+    const data = localStorage.getItem(ADMIN_HOURS_STORAGE_KEY);
+    if (data) {
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {
+    console.error("Ошибка чтения заявок на часы", e);
+  }
+  saveAdminHours(INITIAL_ADMIN_HOURS);
+  return INITIAL_ADMIN_HOURS;
+}
+
+function saveAdminHours(hours) {
+  try {
+    localStorage.setItem(ADMIN_HOURS_STORAGE_KEY, JSON.stringify(hours));
+  } catch (e) {
+    console.error("Ошибка записи заявок на часы", e);
+  }
+}
+
+function initAdminDashboard() {
+  // 1. Навигационные вкладки админ-панели
+  const tabButtons = document.querySelectorAll(".admin-tab-btn[data-admin-tab]");
+  tabButtons.forEach((btn) => {
+    if (btn.dataset.bound) return;
+    btn.dataset.bound = "true";
+    btn.addEventListener("click", () => {
+      const targetTab = btn.getAttribute("data-admin-tab");
+      
+      tabButtons.forEach((b) => b.classList.toggle("is-active", b === btn));
+      document.querySelectorAll(".admin-tab-content").forEach((pane) => {
+        pane.classList.remove("is-active");
+      });
+
+      const activePane = document.getElementById(`admin-tab-pane-${targetTab}`);
+      if (activePane) {
+        activePane.classList.add("is-active");
+      }
+
+      if (targetTab === "overview") renderAdminOverview();
+      else if (targetTab === "users") renderAdminUsers();
+      else if (targetTab === "hours") renderAdminHours();
+      else if (targetTab === "courses") renderAdminCourses();
+    });
+  });
+
+  // 2. Живой поиск и фильтр пользователей
+  const searchInput = document.getElementById("admin-user-search-input");
+  if (searchInput && !searchInput.dataset.bound) {
+    searchInput.dataset.bound = "true";
+    searchInput.addEventListener("input", () => {
+      renderAdminUsers();
+    });
+  }
+
+  const roleFilter = document.getElementById("admin-user-role-filter");
+  if (roleFilter && !roleFilter.dataset.bound) {
+    roleFilter.dataset.bound = "true";
+    roleFilter.addEventListener("change", () => {
+      renderAdminUsers();
+    });
+  }
+
+  // 3. Добавление нового пользователя
+  const addUserBtn = document.getElementById("btn-admin-add-user");
+  if (addUserBtn && !addUserBtn.dataset.bound) {
+    addUserBtn.dataset.bound = "true";
+    addUserBtn.addEventListener("click", () => {
+      openAdminUserModal(null);
+    });
+  }
+
+  // 4. Закрытие модального окна пользователя
+  const closeModalBtn = document.getElementById("close-admin-user-modal-btn");
+  const cancelModalBtn = document.getElementById("cancel-admin-user-btn");
+  const modalOverlay = document.getElementById("admin-user-modal-overlay");
+
+  if (closeModalBtn && !closeModalBtn.dataset.bound) {
+    closeModalBtn.dataset.bound = "true";
+    closeModalBtn.addEventListener("click", closeAdminUserModal);
+  }
+  if (cancelModalBtn && !cancelModalBtn.dataset.bound) {
+    cancelModalBtn.dataset.bound = "true";
+    cancelModalBtn.addEventListener("click", closeAdminUserModal);
+  }
+  if (modalOverlay && !modalOverlay.dataset.bound) {
+    modalOverlay.dataset.bound = "true";
+    modalOverlay.addEventListener("click", (e) => {
+      if (e.target === modalOverlay) closeAdminUserModal();
+    });
+  }
+
+  // 5. Сохранение данных пользователя (CRUD)
+  const userEditForm = document.getElementById("admin-user-edit-form");
+  if (userEditForm && !userEditForm.dataset.bound) {
+    userEditForm.dataset.bound = "true";
+    userEditForm.addEventListener("submit", handleSaveAdminUser);
+  }
+
+  // 6. Пересчёт волонтёрских часов
+  const recalcHoursBtn = document.getElementById("btn-admin-recalc-hours");
+  if (recalcHoursBtn && !recalcHoursBtn.dataset.bound) {
+    recalcHoursBtn.dataset.bound = "true";
+    recalcHoursBtn.addEventListener("click", () => {
+      const users = getAdminUsers();
+      const totalHours = users.reduce((sum, u) => sum + (Number(u.hours) || 0), 0);
+      showToast(`✓ Баланс волонтёрских часов пересчитан. Всего подтверждено: ${totalHours} ч.`, "success");
+      renderAdminOverview();
+      renderAdminHours();
+    });
+  }
+
+  // 7. Создание курса из вкладки админки
+  const createCourseBtn = document.getElementById("btn-admin-create-course");
+  if (createCourseBtn && !createCourseBtn.dataset.bound) {
+    createCourseBtn.dataset.bound = "true";
+    createCourseBtn.addEventListener("click", () => {
+      const modal = document.getElementById("modal-overlay");
+      if (modal) {
+        modal.hidden = false;
+        modal.classList.remove("is-hidden");
+      }
+    });
+  }
+
+  // 8. Переключатели тестовой роли в шапке админ-панели (RBAC Testing)
+  document.querySelectorAll(".btn-role-toggle[data-set-role]").forEach((btn) => {
+    if (btn.dataset.bound) return;
+    btn.dataset.bound = "true";
+    btn.addEventListener("click", () => {
+      const targetRole = btn.getAttribute("data-set-role");
+      localStorage.setItem("digitalMentor_testRole", targetRole);
+      updateRoleUI();
+
+      if (targetRole !== "admin") {
+        showToast(
+          `Роль аккаунта изменена на «${getUserRole()}». Проверка Middleware безопасности...`,
+          "info"
+        );
+        setTimeout(() => {
+          // Запуск проверки роута: не-админ получит 403 Forbidden и будет перенаправлен на дашборд
+          const currentHash = window.location.hash;
+          if (currentHash.includes("admin")) {
+            window.location.hash = "#/dashboard";
+            showToast(
+              `403 Forbidden: Доступ к /admin отклонён для роли «${getUserRole()}». Перенаправление на главную страницу.`,
+              "error"
+            );
+          }
+        }, 300);
+      } else {
+        showToast("✓ Включен режим Root Администратора. Полный доступ к панели открыт.", "success");
+      }
+    });
+  });
+
+  // 9. Клик по плашке роли в хедере: быстрое переключение ролей для удобного тестирования
+  const headerRolePill = document.getElementById("role-pill");
+  if (headerRolePill && !headerRolePill.dataset.boundRoleToggle) {
+    headerRolePill.dataset.boundRoleToggle = "true";
+    headerRolePill.style.cursor = "pointer";
+    headerRolePill.addEventListener("click", () => {
+      const currentRole = getUserRole();
+      let nextRole = "admin";
+      if (currentRole === "Администратор") nextRole = "student";
+      else if (currentRole === "Ученик") nextRole = "mentor";
+      else nextRole = "admin";
+
+      localStorage.setItem("digitalMentor_testRole", nextRole);
+      updateRoleUI();
+      const roleName = getUserRole();
+      showToast(`Роль переключена на: ${roleName}`, "info");
+
+      if (window.location.hash.includes("admin") && nextRole !== "admin") {
+        window.location.hash = "#/dashboard";
+        showToast(
+          `403 Forbidden: Доступ к разделу администратора закрыт для роли «${roleName}».`,
+          "error"
+        );
+      }
+    });
+  }
+
+  // Первоначальный рендер данных админки
+  renderAdminDashboard();
+}
+
+function renderAdminDashboard() {
+  renderAdminOverview();
+  renderAdminUsers();
+  renderAdminHours();
+  renderAdminCourses();
+}
+
+function renderAdminOverview() {
+  const users = getAdminUsers();
+  const hours = getAdminHours();
+  const courses = typeof getCourses === "function" ? getCourses() : [];
+
+  const totalUsersEl = document.getElementById("admin-stat-total-users");
+  const activeMentorsEl = document.getElementById("admin-stat-active-mentors");
+  const totalHoursEl = document.getElementById("admin-stat-total-hours");
+  const totalLessonsEl = document.getElementById("admin-stat-total-lessons");
+
+  const mentorsCount = users.filter((u) => u.role === "Ментор").length;
+  const totalHoursSum = users.reduce((acc, u) => acc + (Number(u.hours) || 0), 0);
+  const verifiedRequestsCount = hours.filter((h) => h.status === "verified").length;
+
+  if (totalUsersEl) totalUsersEl.textContent = users.length;
+  if (activeMentorsEl) activeMentorsEl.textContent = mentorsCount;
+  if (totalHoursEl) totalHoursEl.textContent = `${totalHoursSum.toFixed(1)} ч.`;
+  if (totalLessonsEl) totalLessonsEl.textContent = Math.max(courses.length * 4 + verifiedRequestsCount, 24);
+
+  // Список аудита событий
+  const activityListEl = document.getElementById("admin-activity-list");
+  if (activityListEl) {
+    const activities = [
+      {
+        icon: "✓",
+        text: "Верифицировано занятие ментора Айгерим Муратовой (+1.0 ч. в профиль)",
+        time: "15 мин назад"
+      },
+      {
+        icon: "👤",
+        text: "Пользователь Дамир Жумабеков назначен к ментору Айгерим Муратова",
+        time: "40 мин назад"
+      },
+      {
+        icon: "📚",
+        text: "Опубликован новый курс: Digital SAT Math Prep (модуль 2)",
+        time: "2 часа назад"
+      },
+      {
+        icon: "🛡️",
+        text: "Система безопасности Middleware: аудит ролей без замечаний",
+        time: "Сегодня, 10:00"
+      }
+    ];
+
+    activityListEl.innerHTML = activities
+      .map(
+        (act) => `
+        <div class="admin-activity-item">
+          <div class="activity-icon-badge">${act.icon}</div>
+          <div class="activity-info">
+            <p>${escapeHtml(act.text)}</p>
+            <span>${escapeHtml(act.time)}</span>
+          </div>
+        </div>
+      `
+      )
+      .join("");
+  }
+}
+
+function renderAdminUsers() {
+  const users = getAdminUsers();
+  const searchInput = document.getElementById("admin-user-search-input");
+  const roleFilter = document.getElementById("admin-user-role-filter");
+  const tbody = document.getElementById("admin-users-tbody");
+  const tabCountBadge = document.getElementById("admin-users-tab-count");
+
+  const query = searchInput ? searchInput.value.trim().toLowerCase() : "";
+  const selectedRole = roleFilter ? roleFilter.value : "all";
+
+  const filteredUsers = users.filter((u) => {
+    const matchSearch =
+      !query ||
+      u.name.toLowerCase().includes(query) ||
+      u.email.toLowerCase().includes(query) ||
+      (u.subject && u.subject.toLowerCase().includes(query));
+
+    const matchRole =
+      selectedRole === "all" ||
+      u.role.toLowerCase() === selectedRole.toLowerCase();
+
+    return matchSearch && matchRole;
+  });
+
+  if (tabCountBadge) {
+    tabCountBadge.textContent = users.length;
+  }
+
+  if (!tbody) return;
+
+  if (filteredUsers.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align: center; padding: 32px; color: var(--muted);">
+          Пользователи по заданным критериям не найдены.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = filteredUsers
+    .map((user) => {
+      // Инициалы для аватара
+      const parts = user.name.split(" ");
+      const initials = parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase() : user.name.slice(0, 2).toUpperCase();
+
+      // Класс бейджа роли
+      let roleBadgeClass = "badge-role--student";
+      if (user.role === "Администратор") roleBadgeClass = "badge-role--admin";
+      else if (user.role === "Ментор") roleBadgeClass = "badge-role--mentor";
+
+      // Класс статуса
+      const isBlocked = user.status === "blocked";
+      const statusBadgeClass = isBlocked ? "badge-status--blocked" : "badge-status--active";
+      const statusText = isBlocked ? "Заблокирован" : "Активен";
+
+      return `
+        <tr data-user-id="${user.id}">
+          <td>
+            <div class="admin-user-cell">
+              <div class="user-table-avatar">${initials}</div>
+              <div>
+                <strong>${escapeHtml(user.name)}</strong>
+                ${user.hours ? `<span style="font-size: 11px; color: #0284C7; display: block;">Волонтёрских часов: ${user.hours} ч.</span>` : ""}
+              </div>
+            </div>
+          </td>
+          <td>
+            <span style="font-family: monospace; font-size: 12.5px;">${escapeHtml(user.email)}</span>
+          </td>
+          <td>
+            <span class="badge-role ${roleBadgeClass}">${escapeHtml(user.role)}</span>
+          </td>
+          <td>
+            <div style="font-size: 13px;">
+              <span>${escapeHtml(user.grade || "—")}</span>
+              <span style="color: var(--muted); display: block; font-size: 11.5px;">${escapeHtml(user.subject || "Самостоятельно")}</span>
+            </div>
+          </td>
+          <td>
+            <span style="font-size: 12px; color: var(--muted);">${escapeHtml(user.loginDate || "Недавно")}</span>
+          </td>
+          <td>
+            <span class="badge-status ${statusBadgeClass}">${statusText}</span>
+          </td>
+          <td style="text-align: right;">
+            <div style="display: inline-flex; gap: 6px; align-items: center;">
+              <button type="button" class="btn-action-icon" data-edit-user-id="${user.id}" title="Редактировать пользователя">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button type="button" class="btn-action-icon ${isBlocked ? 'btn-action-icon--unblock' : 'btn-action-icon--block'}" data-toggle-user-id="${user.id}" title="${isBlocked ? 'Разблокировать' : 'Заблокировать доступ'}">
+                ${isBlocked ? `
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+                  </svg>
+                ` : `
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                `}
+              </button>
+              <button type="button" class="btn-action-icon btn-action-icon--delete" data-delete-user-id="${user.id}" title="Удалить аккаунт">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  // Делегирование событий на кнопки действий
+  tbody.querySelectorAll("[data-edit-user-id]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      openAdminUserModal(btn.getAttribute("data-edit-user-id"));
+    });
+  });
+
+  tbody.querySelectorAll("[data-toggle-user-id]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      toggleAdminUserStatus(btn.getAttribute("data-toggle-user-id"));
+    });
+  });
+
+  tbody.querySelectorAll("[data-delete-user-id]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      deleteAdminUser(btn.getAttribute("data-delete-user-id"));
+    });
+  });
+}
+
+function renderAdminHours() {
+  const hours = getAdminHours();
+  const tbody = document.getElementById("admin-hours-tbody");
+  const pendingCountBadge = document.getElementById("admin-pending-hours-count");
+
+  const pendingCount = hours.filter((h) => h.status === "pending").length;
+  if (pendingCountBadge) {
+    pendingCountBadge.textContent = pendingCount;
+    pendingCountBadge.style.display = pendingCount > 0 ? "inline-flex" : "none";
+  }
+
+  if (!tbody) return;
+
+  if (hours.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align: center; padding: 32px; color: var(--muted);">
+          Нет активных заявок на подтверждение волонтёрских часов.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = hours
+    .map((req) => {
+      const isPending = req.status === "pending";
+
+      return `
+        <tr data-req-id="${req.id}">
+          <td>
+            <strong>${escapeHtml(req.mentorName)}</strong>
+            <span style="font-size: 11.5px; color: var(--muted); display: block;">${escapeHtml(req.mentorEmail)}</span>
+          </td>
+          <td>
+            <span style="font-weight: 600; font-size: 13px;">${escapeHtml(req.subject)}</span>
+          </td>
+          <td>
+            <span style="font-size: 12.5px;">${escapeHtml(req.audience)}</span>
+          </td>
+          <td>
+            <div style="font-size: 12px;">
+              <span>${escapeHtml(req.date)}</span>
+              <span style="color: var(--muted); display: block;">${escapeHtml(req.time)}</span>
+            </div>
+          </td>
+          <td>
+            <span class="badge-duration">+${req.duration} ч.</span>
+          </td>
+          <td>
+            ${isPending ? `
+              <span class="badge-status badge-status--pending">Ожидает проверки</span>
+            ` : `
+              <span class="badge-status badge-status--verified">Подтверждено</span>
+            `}
+          </td>
+          <td style="text-align: right;">
+            ${isPending ? `
+              <button type="button" class="btn-meet-primary" style="padding: 6px 12px; font-size: 12px;" data-verify-hour-id="${req.id}">
+                ✓ Подтвердить (+${req.duration} ч.)
+              </button>
+            ` : `
+              <span style="color: #10B981; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                Верифицировано
+              </span>
+            `}
+          </td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  tbody.querySelectorAll("[data-verify-hour-id]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      verifyAdminHour(btn.getAttribute("data-verify-hour-id"));
+    });
+  });
+}
+
+function verifyAdminHour(reqId) {
+  const hours = getAdminHours();
+  const req = hours.find((h) => h.id === reqId);
+  if (!req) return;
+
+  req.status = "verified";
+  saveAdminHours(hours);
+
+  // Добавляем подтверждённые часы в профиль ментора в списке пользователей
+  const users = getAdminUsers();
+  const mentor = users.find(
+    (u) => u.name === req.mentorName || u.email === req.mentorEmail
+  );
+  if (mentor) {
+    mentor.hours = Number(mentor.hours || 0) + Number(req.duration || 1);
+    saveAdminUsers(users);
+  }
+
+  // Обновляем отображение часов в блоке наставника, если пользователь авторизован как этот ментор
+  const hoursDisplay = document.getElementById("volunteer-hours-display");
+  if (hoursDisplay && mentor) {
+    hoursDisplay.textContent = `${mentor.hours} ч.`;
+  }
+
+  showToast(
+    `✓ Волонтёрские часы (+${req.duration} ч.) успешно начислены ментору ${req.mentorName}!`,
+    "success"
+  );
+
+  renderAdminHours();
+  renderAdminOverview();
+}
+
+function renderAdminCourses() {
+  const courses = typeof getCourses === "function" ? getCourses() : [];
+  const tbody = document.getElementById("admin-courses-tbody");
+  if (!tbody) return;
+
+  if (courses.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align: center; padding: 32px; color: var(--muted);">
+          Нет доступных курсов. Нажмите кнопку «+ Создать новый курс».
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = courses
+    .map((course) => {
+      return `
+        <tr data-course-id="${course.id}">
+          <td>
+            <strong>${escapeHtml(course.name)}</strong>
+            <span style="font-size: 11.5px; color: var(--muted); display: block;">
+              ${course.topics && course.topics.length ? course.topics.slice(0, 2).join(", ") : "Базовая программа"}
+            </span>
+          </td>
+          <td>
+            <span class="badge-role badge-role--mentor" style="font-size: 11px;">
+              ${escapeHtml(course.programName || "1-на-1")}
+            </span>
+          </td>
+          <td>
+            <span>${escapeHtml(course.grade || "10-11")} класс</span>
+          </td>
+          <td>
+            <span style="font-weight: 500;">${escapeHtml(course.mentor || "Назначается")}</span>
+          </td>
+          <td>
+            <span style="font-size: 12.5px;">${course.studentsCount || 1} / ${course.maxStudents || 4} мест</span>
+          </td>
+          <td>
+            <span class="badge-status badge-status--active">Идёт набор</span>
+          </td>
+          <td style="text-align: right;">
+            <button type="button" class="btn-action-icon btn-action-icon--delete" data-admin-del-course-id="${course.id}" title="Удалить курс">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+          </td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  tbody.querySelectorAll("[data-admin-del-course-id]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const courseId = btn.getAttribute("data-admin-del-course-id");
+      showConfirmDialog(
+        "Удаление курса",
+        "Вы действительно хотите удалить данный академический курс?",
+        () => {
+          let updated = getCourses().filter((c) => c.id !== courseId);
+          saveCourses(updated);
+          showToast("Курс успешно удалён из каталога платформы", "success");
+          renderAdminCourses();
+          if (typeof renderCourses === "function") renderCourses();
+        },
+        null,
+        { danger: true, confirmText: "Удалить" }
+      );
+    });
+  });
+}
+
+function openAdminUserModal(userId = null) {
+  const overlay = document.getElementById("admin-user-modal-overlay");
+  const title = document.getElementById("admin-user-modal-title");
+  const saveBtn = document.getElementById("save-admin-user-btn");
+
+  const idInput = document.getElementById("admin-edit-user-id");
+  const nameInput = document.getElementById("admin-edit-user-name");
+  const emailInput = document.getElementById("admin-edit-user-email");
+  const roleSelect = document.getElementById("admin-edit-user-role");
+  const gradeSelect = document.getElementById("admin-edit-user-grade");
+  const subjectSelect = document.getElementById("admin-edit-user-subject");
+  const hoursInput = document.getElementById("admin-edit-user-hours");
+  const mentorSelect = document.getElementById("admin-edit-user-mentor");
+  const statusSelect = document.getElementById("admin-edit-user-status");
+
+  // Заполняем список менторов для выбора
+  if (mentorSelect) {
+    const users = getAdminUsers();
+    const mentors = users.filter((u) => u.role === "Ментор");
+    mentorSelect.innerHTML = `<option value="">Не назначен (Самостоятельное обучение)</option>` +
+      mentors.map((m) => `<option value="${escapeHtml(m.name)}">${escapeHtml(m.name)} (${escapeHtml(m.subject || "Ментор")})</option>`).join("");
+  }
+
+  if (userId) {
+    // Режим редактирования
+    const users = getAdminUsers();
+    const user = users.find((u) => u.id === userId);
+    if (!user) return;
+
+    if (title) title.textContent = "Редактирование профиля пользователя";
+    if (saveBtn) saveBtn.textContent = "Сохранить изменения";
+
+    if (idInput) idInput.value = user.id;
+    if (nameInput) nameInput.value = user.name || "";
+    if (emailInput) emailInput.value = user.email || "";
+    if (roleSelect) roleSelect.value = user.role || "Ученик";
+    if (gradeSelect) gradeSelect.value = user.grade || "10 класс";
+    if (subjectSelect) subjectSelect.value = user.subject || "Алгебра";
+    if (hoursInput) hoursInput.value = user.hours || 0;
+    if (mentorSelect) mentorSelect.value = user.mentor || "";
+    if (statusSelect) statusSelect.value = user.status || "active";
+  } else {
+    // Режим создания нового пользователя
+    if (title) title.textContent = "Добавление нового пользователя";
+    if (saveBtn) saveBtn.textContent = "Создать пользователя";
+
+    if (idInput) idInput.value = "";
+    if (nameInput) nameInput.value = "";
+    if (emailInput) emailInput.value = "";
+    if (roleSelect) roleSelect.value = "Ученик";
+    if (gradeSelect) gradeSelect.value = "10 класс";
+    if (subjectSelect) subjectSelect.value = "Алгебра";
+    if (hoursInput) hoursInput.value = 0;
+    if (mentorSelect) mentorSelect.value = "";
+    if (statusSelect) statusSelect.value = "active";
+  }
+
+  if (overlay) {
+    overlay.hidden = false;
+    overlay.classList.remove("is-hidden");
+  }
+}
+
+function closeAdminUserModal() {
+  const overlay = document.getElementById("admin-user-modal-overlay");
+  if (overlay) {
+    overlay.classList.add("is-hidden");
+    setTimeout(() => {
+      overlay.hidden = true;
+    }, 200);
+  }
+}
+
+function handleSaveAdminUser(e) {
+  e.preventDefault();
+  const id = document.getElementById("admin-edit-user-id").value;
+  const name = document.getElementById("admin-edit-user-name").value.trim();
+  const email = document.getElementById("admin-edit-user-email").value.trim();
+  const role = document.getElementById("admin-edit-user-role").value;
+  const grade = document.getElementById("admin-edit-user-grade").value;
+  const subject = document.getElementById("admin-edit-user-subject").value;
+  const hours = parseFloat(document.getElementById("admin-edit-user-hours").value) || 0;
+  const mentor = document.getElementById("admin-edit-user-mentor").value;
+  const status = document.getElementById("admin-edit-user-status").value;
+
+  if (!name || !email) {
+    showToast("Пожалуйста, заполните имя и email пользователя", "error");
+    return;
+  }
+
+  const users = getAdminUsers();
+
+  if (id) {
+    // Обновление существующего пользователя
+    const index = users.findIndex((u) => u.id === id);
+    if (index !== -1) {
+      users[index] = {
+        ...users[index],
+        name,
+        email,
+        role,
+        grade,
+        subject,
+        hours,
+        mentor,
+        status
+      };
+      saveAdminUsers(users);
+      showToast(`✓ Профиль пользователя «${name}» успешно обновлён`, "success");
+    }
+  } else {
+    // Добавление нового пользователя
+    const newUser = {
+      id: `usr-${Date.now()}`,
+      name,
+      email,
+      role,
+      grade,
+      subject,
+      hours,
+      mentor,
+      status,
+      loginDate: "Только что"
+    };
+    users.unshift(newUser);
+    saveAdminUsers(users);
+    showToast(`✓ Новый пользователь «${name}» успешно добавлен в систему`, "success");
+  }
+
+  closeAdminUserModal();
+  renderAdminUsers();
+  renderAdminOverview();
+}
+
+function toggleAdminUserStatus(userId) {
+  const users = getAdminUsers();
+  const user = users.find((u) => u.id === userId);
+  if (!user) return;
+
+  const newStatus = user.status === "blocked" ? "active" : "blocked";
+  user.status = newStatus;
+  saveAdminUsers(users);
+
+  showToast(
+    `Статус пользователя ${user.name} изменён: ${newStatus === "active" ? "Активен (доступ открыт)" : "Заблокирован"}`,
+    newStatus === "active" ? "success" : "info"
+  );
+
+  renderAdminUsers();
+}
+
+function deleteAdminUser(userId) {
+  const users = getAdminUsers();
+  const user = users.find((u) => u.id === userId);
+  if (!user) return;
+
+  showConfirmDialog(
+    "Удаление пользователя",
+    `Вы действительно хотите безвозвратно удалить пользователя «${user.name}» (${user.email})?`,
+    () => {
+      const updated = users.filter((u) => u.id !== userId);
+      saveAdminUsers(updated);
+      showToast(`Пользователь «${user.name}» удалён из базы платформы`, "success");
+      renderAdminUsers();
+      renderAdminOverview();
+    },
+    null,
+    { danger: true, confirmText: "Удалить" }
+  );
+}
+
 
