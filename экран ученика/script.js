@@ -742,7 +742,7 @@ addCourseForm.addEventListener("submit", (e) => {
   e.preventDefault();
 
   if (getUserRole() !== "Ментор") {
-    alert("Добавление курсов разрешено только менторам.");
+    showToast("Добавление курсов разрешено только менторам.", "error");
     closeModal();
     return;
   }
@@ -753,17 +753,17 @@ addCourseForm.addEventListener("submit", (e) => {
   const startDate = courseStartDateInput ? courseStartDateInput.value : "";
 
   if (!name || !grade) {
-    alert("Пожалуйста, выберите название курса и класс.");
+    showToast("Пожалуйста, выберите название курса и класс.", "error");
     return;
   }
 
   if (isNaN(maxStudents) || maxStudents < 2 || maxStudents > 5) {
-    alert("Количество учеников должно быть от 2 до 5.");
+    showToast("Количество учеников должно быть от 2 до 5.", "error");
     return;
   }
 
   if (!startDate) {
-    alert("Пожалуйста, укажите дату начала курса.");
+    showToast("Пожалуйста, укажите дату начала курса.", "error");
     return;
   }
 
@@ -781,6 +781,10 @@ addCourseForm.addEventListener("submit", (e) => {
   saveCourses(courses);
 
   renderCourses();
+  if (typeof updateDashboardDynamicStats === "function") {
+    updateDashboardDynamicStats();
+  }
+  showToast("Курс успешно создан и добавлен в программу!", "success");
   closeModal();
 });
 
@@ -808,7 +812,7 @@ const lessonMeetInput = document.getElementById("lesson-meet-input");
 
 function openScheduleModal() {
   if (getUserRole() !== "Ментор") {
-    alert("Планировать уроки могут только менторы.");
+    showToast("Планировать уроки могут только менторы.", "error");
     return;
   }
   if (!scheduleModalOverlay) return;
@@ -898,7 +902,7 @@ if (addLessonForm) {
     e.preventDefault();
 
     if (getUserRole() !== "Ментор") {
-      alert("Планирование уроков доступно только менторам.");
+      showToast("Планирование уроков доступно только менторам.", "error");
       closeScheduleModal();
       return;
     }
@@ -913,7 +917,7 @@ if (addLessonForm) {
     const meet_url = lessonMeetInput.value.trim() || "https://meet.google.com";
 
     if (!subject || !grade || !title || !lesson_date) {
-      alert("Пожалуйста, заполните все обязательные поля урока.");
+      showToast("Пожалуйста, заполните все обязательные поля урока.", "error");
       return;
     }
 
@@ -965,10 +969,10 @@ if (addLessonForm) {
       }
 
       closeScheduleModal();
-      alert("✅ Урок успешно запланирован и появился в общем расписании!");
+      showToast("Урок успешно запланирован и добавлен в расписание!", "success");
       await loadAndRenderAllScheduleAndStats();
     } catch (err) {
-      alert("Ошибка при создании урока: " + err.message);
+      showToast("Ошибка при создании урока: " + (err.message || err), "error");
     } finally {
       const submitBtn = document.getElementById("submit-lesson-btn");
       if (submitBtn) submitBtn.disabled = false;
@@ -1023,42 +1027,47 @@ window.handleDeleteLesson = async function (event, lessonId) {
     if (typeof event.preventDefault === "function") event.preventDefault();
   }
 
-  const confirmed = confirm("Вы действительно хотите отменить и удалить этот урок из расписания?");
-  if (!confirmed) return;
+  showConfirmDialog(
+    "Отмена и удаление урока",
+    "Вы действительно хотите отменить этот урок и удалить его из общего расписания?",
+    async () => {
+      const clickedBtn = event && event.currentTarget ? event.currentTarget : null;
+      if (clickedBtn) {
+        clickedBtn.disabled = true;
+        clickedBtn.textContent = "Удаление...";
+      }
 
-  const clickedBtn = event && event.currentTarget ? event.currentTarget : null;
-  if (clickedBtn) {
-    clickedBtn.disabled = true;
-    clickedBtn.textContent = "Удаление...";
-  }
-
-  try {
-    if (window.SupabaseService) {
-      await window.SupabaseService.deleteLesson(lessonId);
-    }
-    // Мгновенное удаление из локального списка на экране
-    currentLessonsData = currentLessonsData.filter((l) => String(l.id) !== String(lessonId));
-    renderScheduleLessons(currentLessonsData);
-    if (typeof updateDashboardDynamicStats === "function") {
-      updateDashboardDynamicStats();
-    }
-    showToast("Урок удален из расписания", "info");
-  } catch (err) {
-    console.error("Ошибка при удалении урока:", err);
-    alert("Не удалось удалить урок: " + (err.message || err));
-    if (clickedBtn) {
-      clickedBtn.disabled = false;
-      clickedBtn.innerHTML = `
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="3 6 5 6 21 6"></polyline>
-          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-          <line x1="10" y1="11" x2="10" y2="17"></line>
-          <line x1="14" y1="11" x2="14" y2="17"></line>
-        </svg>
-        <span>Удалить</span>
-      `;
-    }
-  }
+      try {
+        if (window.SupabaseService) {
+          await window.SupabaseService.deleteLesson(lessonId);
+        }
+        // Мгновенное удаление из локального списка на экране
+        currentLessonsData = currentLessonsData.filter((l) => String(l.id) !== String(lessonId));
+        renderScheduleLessons(currentLessonsData);
+        if (typeof updateDashboardDynamicStats === "function") {
+          updateDashboardDynamicStats();
+        }
+        showToast("Урок успешно удален из расписания", "info");
+      } catch (err) {
+        console.error("Ошибка при удалении урока:", err);
+        showToast("Не удалось удалить урок: " + (err.message || err), "error");
+        if (clickedBtn) {
+          clickedBtn.disabled = false;
+          clickedBtn.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+            <span>Удалить</span>
+          `;
+        }
+      }
+    },
+    null,
+    { danger: true, confirmText: "Удалить урок" }
+  );
 };
 
 // Отрисовка списка уроков расписания
@@ -1246,7 +1255,7 @@ function renderScheduleLessons(lessons) {
   // Навешиваем клики на скачивание материалов
   container.querySelectorAll(".btn-lesson-materials").forEach((btn) => {
     btn.addEventListener("click", () => {
-      alert("📚 Презентация и методические материалы к уроку открыты для скачивания.");
+      showToast("Учебные и методические материалы к уроку подготовлены для скачивания", "info");
     });
   });
 
@@ -1632,11 +1641,7 @@ function initOnboarding() {
       const role = roleInput ? roleInput.value : "Ученик";
 
       if (!name) {
-        if (typeof showToast === "function") {
-          showToast("Пожалуйста, укажите имя и фамилию.", "error");
-        } else {
-          alert("Пожалуйста, укажите имя и фамилию.");
-        }
+        showToast("Пожалуйста, укажите имя и фамилию.", "error");
         return;
       }
 
@@ -1743,16 +1748,22 @@ function initHeaderLogout() {
   logoutBtns.forEach((btn) => {
     if (!btn.dataset.bound) {
       btn.dataset.bound = "true";
-      btn.addEventListener("click", async (e) => {
+      btn.addEventListener("click", (e) => {
         e.preventDefault();
-        if (confirm("Вы действительно хотите выйти из аккаунта?")) {
-          if (window.SupabaseService && typeof window.SupabaseService.signOut === "function") {
-            await window.SupabaseService.signOut();
-          } else {
-            sessionStorage.removeItem("mentorProfile");
-            window.location.href = "../главный%20экран/index.html";
-          }
-        }
+        showConfirmDialog(
+          "Выход из аккаунта",
+          "Вы действительно хотите выйти из своего профиля на платформе?",
+          async () => {
+            if (window.SupabaseService && typeof window.SupabaseService.signOut === "function") {
+              await window.SupabaseService.signOut();
+            } else {
+              sessionStorage.removeItem("mentorProfile");
+              window.location.href = "../главный%20экран/index.html";
+            }
+          },
+          null,
+          { danger: true, confirmText: "Выйти" }
+        );
       });
     }
   });
@@ -1947,15 +1958,21 @@ function initProfilePage() {
   const profileLogoutBtn = document.getElementById("profile-page-logout-btn");
   if (profileLogoutBtn && !profileLogoutBtn.dataset.bound) {
     profileLogoutBtn.dataset.bound = "true";
-    profileLogoutBtn.addEventListener("click", async () => {
-      if (confirm("Вы действительно хотите выйти из аккаунта?")) {
-        if (window.SupabaseService && typeof window.SupabaseService.signOut === "function") {
-          await window.SupabaseService.signOut();
-        } else {
-          sessionStorage.removeItem("mentorProfile");
-          window.location.href = "../главный%20экран/index.html";
-        }
-      }
+    profileLogoutBtn.addEventListener("click", () => {
+      showConfirmDialog(
+        "Выход из аккаунта",
+        "Вы действительно хотите выйти из своего профиля на платформе?",
+        async () => {
+          if (window.SupabaseService && typeof window.SupabaseService.signOut === "function") {
+            await window.SupabaseService.signOut();
+          } else {
+            sessionStorage.removeItem("mentorProfile");
+            window.location.href = "../главный%20экран/index.html";
+          }
+        },
+        null,
+        { danger: true, confirmText: "Выйти" }
+      );
     });
   }
 }
@@ -2031,7 +2048,9 @@ window.addEventListener("storage", (e) => {
 
 
 
-// Функции для кастомных уведомлений (Toast)
+// ============================================================
+// Функции для кастомных уведомлений (Toast) и диалогов (Modal)
+// ============================================================
 function showToast(message, type = 'error') {
   let toast = document.getElementById('custom-toast');
   if (!toast) {
@@ -2075,15 +2094,93 @@ function showToast(message, type = 'error') {
     toast.innerHTML = `<span>${escapeHtml(message)}</span>`;
   }
 
-  // Сброс анимации
+  // Сброс и запуск анимации
   toast.classList.remove('show');
   void toast.offsetWidth; // trigger reflow
-  
   toast.classList.add('show');
   
   if (window.toastTimeout) clearTimeout(window.toastTimeout);
   window.toastTimeout = setTimeout(() => {
     toast.classList.remove('show');
-  }, 3500);
+  }, 4000);
 }
+
+// Диалог подтверждения действий (Schoolhouse/SAT style)
+function showConfirmDialog(title, message, onConfirm, onCancel = null, options = {}) {
+  let overlay = document.getElementById('custom-confirm-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'custom-confirm-overlay';
+    overlay.className = 'custom-confirm-overlay';
+    document.body.appendChild(overlay);
+  }
+
+  const isDanger = options.danger !== false;
+  const confirmBtnText = options.confirmText || (isDanger ? 'Подтвердить' : 'Продолжить');
+  const cancelBtnText = options.cancelText || 'Отмена';
+
+  overlay.innerHTML = `
+    <div class="custom-confirm-box" role="dialog" aria-modal="true">
+      <div class="custom-confirm-header">
+        <div class="custom-confirm-icon ${isDanger ? '' : 'custom-confirm-icon--info'}">
+          ${isDanger ? `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          ` : `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+          `}
+        </div>
+        <h4 class="custom-confirm-title">${escapeHtml(title)}</h4>
+      </div>
+      <p class="custom-confirm-msg">${escapeHtml(message)}</p>
+      <div class="custom-confirm-actions">
+        <button type="button" class="btn-confirm-cancel" id="btn-dialog-cancel">${escapeHtml(cancelBtnText)}</button>
+        <button type="button" class="btn-confirm-accept ${isDanger ? '' : 'btn-confirm-accept--primary'}" id="btn-dialog-accept">${escapeHtml(confirmBtnText)}</button>
+      </div>
+    </div>
+  `;
+
+  function closeDialog() {
+    overlay.classList.remove('show');
+    setTimeout(() => {
+      if (!overlay.classList.contains('show')) {
+        overlay.innerHTML = '';
+      }
+    }, 250);
+  }
+
+  const cancelBtn = overlay.querySelector('#btn-dialog-cancel');
+  const acceptBtn = overlay.querySelector('#btn-dialog-accept');
+
+  cancelBtn.addEventListener('click', () => {
+    closeDialog();
+    if (typeof onCancel === 'function') onCancel();
+  });
+
+  acceptBtn.addEventListener('click', () => {
+    closeDialog();
+    if (typeof onConfirm === 'function') onConfirm();
+  });
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      closeDialog();
+      if (typeof onCancel === 'function') onCancel();
+    }
+  });
+
+  requestAnimationFrame(() => {
+    overlay.classList.add('show');
+  });
+}
+
+window.showToast = showToast;
+window.showConfirmDialog = showConfirmDialog;
 

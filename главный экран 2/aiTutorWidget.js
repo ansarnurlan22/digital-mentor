@@ -110,28 +110,34 @@
       const data = await serverResp.json();
 
       if (serverResp.status === 429) {
-        alert(
-          '⏳ ' +
-            (data.error ||
-              'Слишком много запросов. Подождите 1 минуту перед следующим созданием теста.')
-        );
+        if (typeof window.showToast === 'function') {
+          window.showToast(
+            data.error ||
+              'Слишком много запросов. Подождите 1 минуту перед следующим созданием теста.',
+            'error'
+          );
+        }
         return;
       }
 
       if (serverResp.status === 401) {
-        alert(
-          '🔒 ' +
-            (data.error ||
-              'Неавторизованный запрос. Войдите в систему для использования AI-тьютора.')
-        );
+        if (typeof window.showToast === 'function') {
+          window.showToast(
+            data.error ||
+              'Неавторизованный запрос. Войдите в систему для использования AI-тьютора.',
+            'error'
+          );
+        }
         return;
       }
 
       if (!serverResp.ok) {
         const errorDetail = Array.isArray(data.details)
-          ? data.details.join('\n')
+          ? data.details.join(' ')
           : data.error || 'Ошибка генерации урока.';
-        alert('⚠️ ' + errorDetail);
+        if (typeof window.showToast === 'function') {
+          window.showToast(errorDetail, 'error');
+        }
         return;
       }
 
@@ -143,7 +149,9 @@
       trackMentMinutes(25);
     } catch (err) {
       console.error('[Ment Client Error]:', err);
-      alert('Ошибка при генерации урока: ' + (err.message || err));
+      if (typeof window.showToast === 'function') {
+        window.showToast('Ошибка при генерации урока: ' + (err.message || err), 'error');
+      }
     } finally {
       isLoading = false;
       renderDrawerContent();
@@ -549,7 +557,9 @@
 
     document.getElementById('ai-quiz-finish-btn')?.addEventListener('click', () => {
       trackMentMinutes(15);
-      alert(`Квиз завершен: ${correctCount} из ${totalQ} верно! Возвращаемся к конспекту.`);
+      if (typeof window.showToast === 'function') {
+        window.showToast(`Квиз завершен: ${correctCount} из ${totalQ} верно! Возвращаемся к конспекту.`, 'success');
+      }
       activeTab = 'theory';
       renderDrawerContent();
     });
