@@ -386,15 +386,7 @@ function renderCourses() {
 window.handleCourseAction = function (courseId) {
   const role = getUserRole();
   if (role === "Ментор") {
-    const scheduleSection = document.getElementById("schedule-section");
-    if (scheduleSection) {
-      scheduleSection.scrollIntoView({ behavior: "smooth" });
-      scheduleSection.style.transition = "box-shadow 0.4s ease";
-      scheduleSection.style.boxShadow = "0 0 35px rgba(56, 189, 248, 0.45)";
-      setTimeout(() => {
-        scheduleSection.style.boxShadow = "";
-      }, 2000);
-    }
+    window.location.hash = "#/schedule";
     return;
   }
 
@@ -1571,6 +1563,184 @@ function initHeaderControls() {
   }
 }
 
+// ============================================================
+// Multi-page SPA Routing System
+// ============================================================
+function initSpaRouter() {
+  function handleRoute(route, pushState = true) {
+    const validRoutes = ["dashboard", "courses", "schedule", "achievements", "profile"];
+    const targetRoute = validRoutes.includes(route) ? route : "dashboard";
+
+    // 1. Скрываем все страницы
+    document.querySelectorAll(".page-view").forEach((view) => {
+      view.hidden = true;
+    });
+
+    // 2. Отображаем активную страницу с плавной анимацией fade/slide (0.2s)
+    const targetEl = document.getElementById(`page-${targetRoute}`);
+    if (targetEl) {
+      targetEl.hidden = false;
+      targetEl.style.animation = "none";
+      void targetEl.offsetWidth; // trigger reflow
+      targetEl.style.animation = "pageFadeSlideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards";
+    }
+
+    // 3. Подсвечиваем активный пункт в вертикальном сайдбаре
+    document.querySelectorAll(".sidebar-nav-item[data-route]").forEach((item) => {
+      const isCurrent = item.getAttribute("data-route") === targetRoute;
+      item.classList.toggle("is-active", isCurrent);
+    });
+
+    // 4. Обновляем данные страниц при переходе
+    if (targetRoute === "profile") {
+      renderProfilePage();
+    } else if (targetRoute === "courses") {
+      renderCourses();
+    } else if (targetRoute === "schedule") {
+      loadAndRenderAllScheduleAndStats();
+    }
+
+    // 5. Обновляем URL в адресной строке без перезагрузки всей страницы
+    if (pushState) {
+      if (window.location.hash !== `#/${targetRoute}`) {
+        history.pushState({ route: targetRoute }, "", `#/${targetRoute}`);
+      }
+    }
+
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }
+
+  function getRouteFromUrl() {
+    const hash = window.location.hash.replace(/^#\/?/, "").trim();
+    if (hash) {
+      const clean = hash.split("/")[0].split("?")[0];
+      if (["dashboard", "courses", "schedule", "achievements", "profile"].includes(clean)) {
+        return clean;
+      }
+    }
+    const params = new URLSearchParams(window.location.search);
+    const p = params.get("page");
+    if (p && ["dashboard", "courses", "schedule", "achievements", "profile"].includes(p)) {
+      return p;
+    }
+    return "dashboard";
+  }
+
+  // Перехватываем клики по ссылкам с data-route (SPA переход)
+  document.addEventListener("click", (e) => {
+    const routeTrigger = e.target.closest("[data-route]");
+    if (routeTrigger) {
+      e.preventDefault();
+      const route = routeTrigger.getAttribute("data-route");
+      handleRoute(route, true);
+    }
+  });
+
+  // Обработка кнопок Вперёд / Назад браузера (popstate и hashchange)
+  window.addEventListener("hashchange", () => {
+    handleRoute(getRouteFromUrl(), false);
+  });
+  window.addEventListener("popstate", () => {
+    handleRoute(getRouteFromUrl(), false);
+  });
+
+  // Запуск начального роута
+  handleRoute(getRouteFromUrl(), false);
+}
+
+// Рендеринг и логика страницы профиля
+function renderProfilePage() {
+  let profile = null;
+  try {
+    const accountKey = getAccountProfileKey();
+    const raw = localStorage.getItem(accountKey) || localStorage.getItem(USER_PROFILE_KEY);
+    if (raw) profile = JSON.parse(raw);
+  } catch (e) {}
+
+  if (!profile) {
+    profile = {
+      name: "Матвей",
+      role: "Ученик",
+      grade: "11 класс",
+      subject: "Алгебра",
+      email: "matvey.student@gmail.com",
+    };
+  }
+
+  const avatarEl = document.getElementById("profile-page-avatar");
+  const nameEl = document.getElementById("profile-page-name");
+  const rolePill = document.getElementById("profile-page-role-pill");
+  const gradeSubjEl = document.getElementById("profile-page-grade-subject");
+  const emailEl = document.getElementById("profile-page-email");
+  const inputName = document.getElementById("profile-input-name");
+  const selectGrade = document.getElementById("profile-select-grade");
+  const selectSubj = document.getElementById("profile-select-subject");
+  const greetingEl = document.getElementById("dashboard-user-greeting");
+
+  const initials = (profile.name || "Матвей").slice(0, 2).toUpperCase();
+  if (avatarEl) avatarEl.textContent = initials;
+  if (nameEl) nameEl.textContent = profile.name || "Матвей";
+  if (greetingEl) greetingEl.textContent = `Привет, ${profile.name || "Матвей"}! 👋`;
+  if (rolePill) rolePill.textContent = `Роль: ${profile.role || "Ученик"}`;
+  if (gradeSubjEl) gradeSubjEl.textContent = `${profile.grade || "11 класс"} · ${profile.subject || "Алгебра"}`;
+  if (emailEl) emailEl.textContent = profile.email || "matvey.student@gmail.com";
+
+  if (inputName) inputName.value = profile.name || "Матвей";
+  if (selectGrade && profile.grade) selectGrade.value = profile.grade;
+  if (selectSubj && profile.subject) selectSubj.value = profile.subject;
+}
+
+function initProfilePage() {
+  renderProfilePage();
+
+  const editForm = document.getElementById("profile-edit-form");
+  if (editForm && !editForm.dataset.bound) {
+    editForm.dataset.bound = "true";
+    editForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const inputName = document.getElementById("profile-input-name");
+      const selectGrade = document.getElementById("profile-select-grade");
+      const selectSubj = document.getElementById("profile-select-subject");
+
+      let currentProfile = {};
+      try {
+        const raw = localStorage.getItem(USER_PROFILE_KEY);
+        if (raw) currentProfile = JSON.parse(raw);
+      } catch (err) {}
+
+      const updated = {
+        ...currentProfile,
+        name: inputName ? inputName.value.trim() : "Матвей",
+        grade: selectGrade ? selectGrade.value : "11 класс",
+        subject: selectSubj ? selectSubj.value : "Алгебра",
+      };
+
+      localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(updated));
+      const accountKey = getAccountProfileKey();
+      localStorage.setItem(accountKey, JSON.stringify(updated));
+
+      renderProfilePage();
+      updateRoleUI();
+      showToast("Профиль успешно обновлён!", "success");
+    });
+  }
+
+  const profileLogoutBtn = document.getElementById("profile-page-logout-btn");
+  if (profileLogoutBtn && !profileLogoutBtn.dataset.bound) {
+    profileLogoutBtn.dataset.bound = "true";
+    profileLogoutBtn.addEventListener("click", async () => {
+      if (confirm("Вы действительно хотите выйти из аккаунта?")) {
+        if (window.SupabaseService && typeof window.SupabaseService.signOut === "function") {
+          await window.SupabaseService.signOut();
+        } else {
+          sessionStorage.removeItem("mentorProfile");
+          window.location.href = "../главный%20экран/index.html";
+        }
+      }
+    });
+  }
+}
+
 // Главная функция инициализации приложения
 async function initApp() {
   if (window.SupabaseService) {
@@ -1581,6 +1751,8 @@ async function initApp() {
   }
 
   updateRoleUI();
+  initSpaRouter();
+  initProfilePage();
   initProgramFilters();
   renderCourses();
   initDynamicWeek();
