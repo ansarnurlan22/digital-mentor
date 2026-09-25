@@ -161,43 +161,43 @@
             <div class="dashboard-stats-grid">
               <div class="stat-summary-card">
                 <span class="stat-summary-label">Активные программы</span>
-                <span class="stat-summary-val">2 курса</span>
-                <span class="stat-summary-note">СОР/СОЧ Prep + 1-на-1</span>
+                <span class="stat-summary-val" id="dash-stat-courses">0 курсов</span>
+                <span class="stat-summary-note" id="dash-stat-courses-note">Синхронизация...</span>
               </div>
               <div class="stat-summary-card">
                 <span class="stat-summary-label">Уроков на неделе</span>
-                <span class="stat-summary-val">4 созвона</span>
-                <span class="stat-summary-note">Ближайший: Четверг, 17:00</span>
+                <span class="stat-summary-val" id="dash-stat-lessons">0 уроков</span>
+                <span class="stat-summary-note" id="dash-stat-lessons-note">Ближайший: расчет...</span>
               </div>
               <div class="stat-summary-card">
                 <span class="stat-summary-label">Продуктивность с Ment</span>
-                <span class="stat-summary-val">14.5 ч</span>
-                <span class="stat-summary-note">+3.2 ч за 7 дней</span>
+                <span class="stat-summary-val" id="dash-stat-ment">0.0 ч</span>
+                <span class="stat-summary-note" id="dash-stat-ment-note">+0.0 ч за 7 дней</span>
               </div>
               <div class="stat-summary-card">
                 <span class="stat-summary-label">Посещаемость</span>
-                <span class="stat-summary-val">100%</span>
-                <span class="stat-summary-note">Без единого пропуска</span>
+                <span class="stat-summary-val" id="dash-stat-attendance">100%</span>
+                <span class="stat-summary-note" id="dash-stat-attendance-note">Без пропусков</span>
               </div>
             </div>
 
             <!-- Ближайший онлайн-урок -->
-            <div class="next-meeting-card">
+            <div class="next-meeting-card" id="dash-next-meeting-card">
               <div class="next-meeting-left">
                 <div class="next-meeting-icon" aria-hidden="true">📹</div>
                 <div>
-                  <div style="font-size: 11px; font-weight: 700; color: #38bdf8; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.05em;">
-                    Ближайшая онлайн-встреча · Четверг, 17:00
+                  <div id="dash-next-meeting-tag" style="font-size: 11px; font-weight: 700; color: #38bdf8; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.05em;">
+                    Ближайшая онлайн-встреча
                   </div>
-                  <h3 class="next-meeting-title">Алгебра 11 класс · Подготовка к СОР №2 (Логарифмы)</h3>
-                  <div style="font-size: 13px; color: var(--muted);">
-                    Ментор: <strong>Айбек С.</strong> (Призёр олимпиад) • Длительность: 60 мин
+                  <h3 class="next-meeting-title" id="dash-next-meeting-title">Загрузка расписания...</h3>
+                  <div id="dash-next-meeting-mentor" style="font-size: 13px; color: var(--muted);">
+                    Ментор: <strong>Определяется</strong> • Длительность: 60 мин
                   </div>
                 </div>
               </div>
               <div class="next-meeting-actions">
                 <a href="#/schedule" data-route="schedule" class="btn-meet-secondary">Расписание</a>
-                <a href="https://meet.google.com" target="_blank" rel="noopener noreferrer" class="btn-meet-primary">Войти в Google Meet →</a>
+                <a href="https://meet.google.com" target="_blank" rel="noopener noreferrer" class="btn-meet-primary" id="dash-next-meeting-btn">Войти в Google Meet →</a>
               </div>
             </div>
 

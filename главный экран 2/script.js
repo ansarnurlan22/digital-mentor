@@ -112,15 +112,16 @@ function getUserRole() {
 function getCourses() {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
-    if (data) {
+    if (data !== null) {
       const parsed = JSON.parse(data);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         return parsed;
       }
     }
   } catch (e) {
     console.error("Ошибка чтения localStorage", e);
   }
+  saveCourses(DEFAULT_COURSES);
   return DEFAULT_COURSES;
 }
 
@@ -300,17 +301,15 @@ function renderCourses() {
           </div>
         `;
 
-        // Кнопка удаления (только для ментора)
-        const deleteButtonHtml = isMentor
-          ? `
-              <button class="btn-card-delete" onclick="removeCourse(event, '${course.id}')" type="button" title="Удалить курс" aria-label="Удалить курс">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-            `
-          : "";
+        // Кнопка удаления курса
+        const deleteButtonHtml = `
+          <button class="btn-card-delete" onclick="removeCourse(event, '${course.id}')" type="button" title="Удалить курс" aria-label="Удалить курс">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        `;
 
         // Кнопка действия (Ментор: Посмотреть расписание, Ученик: Зарегистрироваться)
         const actionButtonText = isMentor
@@ -380,6 +379,9 @@ function renderCourses() {
       })
       .join("");
   }
+  if (typeof updateDashboardDynamicStats === "function") {
+    updateDashboardDynamicStats();
+  }
 }
 
 // Обработка клика по кнопке действия курса
@@ -390,18 +392,26 @@ window.handleCourseAction = function (courseId) {
     return;
   }
 
-  // Роль: Ученик -> Регистрация на курс
+  // Роль: Ученик -> Регистрация на курс или отмена
   const enrolledKey = `digitalMentor_enrolled_${courseId}`;
   const isEnrolled = localStorage.getItem(enrolledKey) === "true";
 
   if (isEnrolled) {
-    showToast("Вы уже зарегистрированы на этот курс!", "info");
+    localStorage.removeItem(enrolledKey);
+    showToast("Вы отменили регистрацию на курс.", "info");
+    renderCourses();
+    if (typeof updateDashboardDynamicStats === "function") {
+      updateDashboardDynamicStats();
+    }
     return;
   }
 
   localStorage.setItem(enrolledKey, "true");
   showToast("Вы успешно зарегистрировались на курс! Ментор свяжется с вами.", "success");
   renderCourses();
+  if (typeof updateDashboardDynamicStats === "function") {
+    updateDashboardDynamicStats();
+  }
 };
 
 // Инициализация фильтров учебных программ (Schoolhouse/SAT)
@@ -459,22 +469,217 @@ function escapeHtml(str) {
     .replace(/'/g, "&#039;");
 }
 
-// Удаление курса (только для ментора)
+// ============================================================
+// Динамический расчёт взаимосвязанных метрик Дашборда (Dynamic Interconnected Dashboard)
+// ============================================================
+
+function isLessonEnded(lesson) {
+  if (!lesson) return false;
+  if (lesson.status === "completed") return true;
+  if (!lesson.lesson_date) return false;
+  const timeStr = lesson.end_time || lesson.start_time || "23:59";
+  const endDateTime = new Date(`${lesson.lesson_date}T${timeStr.length === 5 ? timeStr + ':00' : timeStr}`);
+  return !isNaN(endDateTime.getTime()) && endDateTime < new Date();
+}
+
+function updateDashboardDynamicStats() {
+  const allCourses = getCourses();
+  const isMentor = getUserRole() === "Ментор";
+
+  // 1. Активные программы и курсы
+  const enrolledCourses = allCourses.filter(
+    (c) => localStorage.getItem(`digitalMentor_enrolled_${c.id}`) === "true"
+  );
+  const activeCount = isMentor
+    ? allCourses.length
+    : enrolledCourses.length > 0
+    ? enrolledCourses.length
+    : allCourses.length;
+
+  const dashCoursesVal = document.getElementById("dash-stat-courses");
+  const dashCoursesNote = document.getElementById("dash-stat-courses-note");
+
+  if (dashCoursesVal) {
+    dashCoursesVal.textContent = pluralizeCourses(activeCount);
+  }
+  if (dashCoursesNote) {
+    if (activeCount === 0) {
+      dashCoursesNote.textContent = "Нет активных курсов";
+    } else if (!isMentor && enrolledCourses.length > 0) {
+      const names = enrolledCourses.map((c) => c.name.split(" ")[0]).slice(0, 2).join(" + ");
+      dashCoursesNote.textContent = names + (enrolledCourses.length > 2 ? ` (+${enrolledCourses.length - 2})` : "");
+    } else {
+      const progs = [...new Set(allCourses.map((c) => c.programName || "Курсы"))].slice(0, 2).join(" + ");
+      dashCoursesNote.textContent = progs || "Активная подготовка";
+    }
+  }
+
+  // 2. Уроки на неделе и Ближайший онлайн-урок (зависит от расписания)
+  const lessons = Array.isArray(currentLessonsData) ? currentLessonsData : [];
+  const now = new Date();
+
+  // Границы текущей недели (Понедельник - Воскресенье)
+  let curDay = now.getDay();
+  if (curDay === 0) curDay = 7;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - curDay + 1);
+  monday.setHours(0, 0, 0, 0);
+
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  sunday.setHours(23, 59, 59, 999);
+
+  const weeklyLessons = lessons.filter((l) => {
+    if (!l.lesson_date) return false;
+    const lDate = new Date(l.lesson_date + "T00:00:00");
+    return lDate >= monday && lDate <= sunday;
+  });
+
+  const dashLessonsVal = document.getElementById("dash-stat-lessons");
+  const dashLessonsNote = document.getElementById("dash-stat-lessons-note");
+
+  function pluralizeLessonsCount(count) {
+    const mod10 = count % 10;
+    const mod100 = count % 100;
+    if (mod100 >= 11 && mod100 <= 19) return `${count} уроков`;
+    if (mod10 === 1) return `${count} урок`;
+    if (mod10 >= 2 && mod10 <= 4) return `${count} урока`;
+    return `${count} уроков`;
+  }
+
+  // Ближайший предстоящий урок (еще не завершенный)
+  const upcomingLessons = lessons
+    .filter((l) => {
+      if (l.status === "completed") return false;
+      if (!l.lesson_date) return false;
+      const timeStr = l.start_time || "23:59";
+      const dt = new Date(`${l.lesson_date}T${timeStr.length === 5 ? timeStr + ':00' : timeStr}`);
+      return dt >= new Date(now.getTime() - 45 * 60 * 1000);
+    })
+    .sort((a, b) => {
+      const dtA = new Date(`${a.lesson_date}T${a.start_time || '00:00'}`);
+      const dtB = new Date(`${b.lesson_date}T${b.start_time || '00:00'}`);
+      return dtA - dtB;
+    });
+
+  const nearestLesson = upcomingLessons[0] || null;
+
+  if (dashLessonsVal) {
+    dashLessonsVal.textContent = pluralizeLessonsCount(weeklyLessons.length);
+  }
+  if (dashLessonsNote) {
+    if (nearestLesson) {
+      const dayKey = nearestLesson.day_key || getDayKeyFromDate(nearestLesson.lesson_date);
+      const dayNames = { mon: "Пн", tue: "Вт", wed: "Ср", thu: "Чт", fri: "Пт", sat: "Сб", sun: "Вс" };
+      dashLessonsNote.textContent = `Ближайший: ${dayNames[dayKey] || "Скоро"}, ${nearestLesson.start_time || '17:00'}`;
+    } else if (weeklyLessons.length > 0) {
+      dashLessonsNote.textContent = "Все уроки недели завершены";
+    } else {
+      dashLessonsNote.textContent = "Нет уроков на этой неделе";
+    }
+  }
+
+  // Карточка "Ближайший онлайн-урок"
+  const meetTag = document.getElementById("dash-next-meeting-tag");
+  const meetTitle = document.getElementById("dash-next-meeting-title");
+  const meetMentor = document.getElementById("dash-next-meeting-mentor");
+  const meetBtn = document.getElementById("dash-next-meeting-btn");
+
+  if (nearestLesson) {
+    const dayKey = nearestLesson.day_key || getDayKeyFromDate(nearestLesson.lesson_date);
+    const formattedDate = formatLessonDateText(nearestLesson.lesson_date, dayKey);
+    if (meetTag) meetTag.textContent = `Ближайшая онлайн-встреча · ${formattedDate}, ${nearestLesson.start_time || '17:00'}`;
+    if (meetTitle) meetTitle.textContent = `${nearestLesson.subject || 'Предмет'} ${nearestLesson.grade ? nearestLesson.grade + ' класс' : ''} · ${nearestLesson.title || 'Тематическое занятие'}`;
+    if (meetMentor) meetMentor.innerHTML = `Ментор: <strong>${escapeHtml(nearestLesson.mentor_name || 'Волонтёр')}</strong> · Длительность: ${nearestLesson.duration_hours || 1} ч`;
+    if (meetBtn) {
+      meetBtn.href = nearestLesson.meet_url || "https://meet.google.com";
+      meetBtn.textContent = "Войти в Google Meet →";
+    }
+  } else {
+    if (meetTag) meetTag.textContent = "Онлайн-сессии завершены";
+    if (meetTitle) meetTitle.textContent = "Нет предстоящих уроков в расписании";
+    if (meetMentor) meetMentor.innerHTML = "Запланируйте новое занятие в разделе <strong>Расписание</strong>.";
+    if (meetBtn) {
+      meetBtn.href = "#/schedule";
+      meetBtn.textContent = "Перейти к расписанию →";
+    }
+  }
+
+  // 3. Продуктивность с Ment (динамические часы занятий)
+  let mentMinutes = parseInt(localStorage.getItem("digitalMentor_mentMinutes"), 10);
+  if (isNaN(mentMinutes) || mentMinutes < 60) {
+    mentMinutes = 120;
+    localStorage.setItem("digitalMentor_mentMinutes", String(mentMinutes));
+  }
+  const mentHours = (mentMinutes / 60).toFixed(1);
+  const dashMentVal = document.getElementById("dash-stat-ment");
+  const dashMentNote = document.getElementById("dash-stat-ment-note");
+
+  if (dashMentVal) {
+    dashMentVal.textContent = `${mentHours} ч`;
+  }
+  if (dashMentNote) {
+    const weeklyAdd = Math.min((mentMinutes / 60) * 0.4, 4.8).toFixed(1);
+    dashMentNote.textContent = `+${weeklyAdd} ч за 7 дней`;
+  }
+
+  // 4. Посещаемость (строго зависит от расписания и того, закончился ли урок)
+  const endedLessons = lessons.filter((l) => isLessonEnded(l));
+  const completedLessons = lessons.filter((l) => l.status === "completed");
+
+  const dashAttendanceVal = document.getElementById("dash-stat-attendance");
+  const dashAttendanceNote = document.getElementById("dash-stat-attendance-note");
+
+  let attendancePercent = 100;
+  let attendanceNoteText = "Все уроки впереди · Без пропусков";
+
+  if (endedLessons.length > 0) {
+    attendancePercent = Math.round((completedLessons.length / endedLessons.length) * 100);
+    if (attendancePercent > 100) attendancePercent = 100;
+
+    if (attendancePercent === 100) {
+      attendanceNoteText = `Завершено ${completedLessons.length} из ${endedLessons.length} уроков`;
+    } else {
+      attendanceNoteText = `Посещено ${completedLessons.length} из ${endedLessons.length} завершённых`;
+    }
+  } else if (lessons.length === 0) {
+    attendancePercent = 100;
+    attendanceNoteText = "Расписание формируется";
+  }
+
+  if (dashAttendanceVal) {
+    dashAttendanceVal.textContent = `${attendancePercent}%`;
+  }
+  if (dashAttendanceNote) {
+    dashAttendanceNote.textContent = attendanceNoteText;
+  }
+}
+window.updateDashboardDynamicStats = updateDashboardDynamicStats;
+
+// Слушатель активности с ИИ Ment для мгновенного обновления продуктивности
+window.addEventListener("ment-activity", () => {
+  updateDashboardDynamicStats();
+});
+
+// Удаление курса (мгновенно и перманентно)
 window.removeCourse = function (event, id) {
   if (event) {
     if (typeof event.stopPropagation === "function") event.stopPropagation();
     if (typeof event.preventDefault === "function") event.preventDefault();
   }
 
-  if (getUserRole() !== "Ментор") {
-    alert("Удаление курсов доступно только менторам.");
-    return;
-  }
-
   const targetId = String(id);
-  const courses = getCourses().filter((c) => String(c.id) !== targetId);
+  const current = getCourses();
+  const courses = current.filter((c) => String(c.id) !== targetId);
   saveCourses(courses);
+
+  try {
+    localStorage.removeItem(`digitalMentor_enrolled_${targetId}`);
+  } catch (e) {}
+
   renderCourses();
+  updateDashboardDynamicStats();
+  showToast("Курс успешно удалён", "info");
 };
 
 // Элементы модального окна
@@ -771,14 +976,12 @@ if (addLessonForm) {
   });
 }
 
-// Завершение урока ментором и начисление часов (привязано к ID ментора урока)
+// Завершение урока и отметка посещения (привязано к ID ментора урока)
 window.handleCompleteLesson = async function (event, lessonId, durationHours, lessonMentorId) {
   if (event) {
     if (typeof event.stopPropagation === "function") event.stopPropagation();
     if (typeof event.preventDefault === "function") event.preventDefault();
   }
-
-  if (getUserRole() !== "Ментор") return;
 
   const duration = parseFloat(durationHours) || 1.0;
 
@@ -795,6 +998,10 @@ window.handleCompleteLesson = async function (event, lessonId, durationHours, le
     }
     // Бесшовное мгновенное обновление расписания и волонтёрских часов
     await loadAndRenderAllScheduleAndStats();
+    if (typeof updateDashboardDynamicStats === "function") {
+      updateDashboardDynamicStats();
+    }
+    showToast("Урок завершён / посещение зафиксировано!", "success");
   } catch (err) {
     console.error("Ошибка при начислении часов:", err);
     if (clickedBtn) {
@@ -816,11 +1023,6 @@ window.handleDeleteLesson = async function (event, lessonId) {
     if (typeof event.preventDefault === "function") event.preventDefault();
   }
 
-  if (getUserRole() !== "Ментор") {
-    alert("Удаление занятий доступно только менторам.");
-    return;
-  }
-
   const confirmed = confirm("Вы действительно хотите отменить и удалить этот урок из расписания?");
   if (!confirmed) return;
 
@@ -837,7 +1039,10 @@ window.handleDeleteLesson = async function (event, lessonId) {
     // Мгновенное удаление из локального списка на экране
     currentLessonsData = currentLessonsData.filter((l) => String(l.id) !== String(lessonId));
     renderScheduleLessons(currentLessonsData);
-
+    if (typeof updateDashboardDynamicStats === "function") {
+      updateDashboardDynamicStats();
+    }
+    showToast("Урок удален из расписания", "info");
   } catch (err) {
     console.error("Ошибка при удалении урока:", err);
     alert("Не удалось удалить урок: " + (err.message || err));
@@ -966,7 +1171,14 @@ function renderScheduleLessons(lessons) {
               <span>Завершить урок</span>
             </button>
           `
-          : "";
+          : `
+            <button class="btn-complete-lesson" onclick="handleCompleteLesson(event, '${lesson.id}', ${lesson.duration_hours || 1.0}, '${lesson.mentor_id || ''}')" type="button" title="Отметить посещение занятия">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>Я посетил(а)</span>
+            </button>
+          `;
 
         const deleteBtnHtml = isMentor
           ? `
@@ -1037,6 +1249,10 @@ function renderScheduleLessons(lessons) {
       alert("📚 Презентация и методические материалы к уроку открыты для скачивания.");
     });
   });
+
+  if (typeof updateDashboardDynamicStats === "function") {
+    updateDashboardDynamicStats();
+  }
 }
 
 // Обновление UI волонтёрских часов и достижений в реальном времени
@@ -1206,6 +1422,9 @@ async function loadAndRenderAllScheduleAndStats() {
 
     if (stats) {
       updateVolunteerStatsUI(stats);
+    }
+    if (typeof updateDashboardDynamicStats === "function") {
+      updateDashboardDynamicStats();
     }
   } catch (err) {
     console.error("Ошибка обновления расписания и часов:", err);
@@ -1762,6 +1981,9 @@ async function initApp() {
   await loadAndRenderAllScheduleAndStats();
   initOnboarding();
   await checkFirstTimeUser();
+  if (typeof updateDashboardDynamicStats === "function") {
+    updateDashboardDynamicStats();
+  }
 }
 
 // Инициализация при загрузке страницы (единственное место вызова)
@@ -1792,9 +2014,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Синхронизация между вкладками при изменении профиля (только UI, без перезагрузки данных)
 window.addEventListener("storage", (e) => {
-  if (e.key === USER_PROFILE_KEY || e.key === STORAGE_KEY || (e.key && e.key.startsWith("digitalMentor_profile_"))) {
+  if (
+    e.key === USER_PROFILE_KEY ||
+    e.key === STORAGE_KEY ||
+    (e.key && e.key.startsWith("digitalMentor_profile_")) ||
+    e.key === "digitalMentor_mentMinutes" ||
+    e.key === "dm_cloud_lessons_cache"
+  ) {
     updateRoleUI();
     renderCourses();
+    if (typeof updateDashboardDynamicStats === "function") {
+      updateDashboardDynamicStats();
+    }
   }
 });
 

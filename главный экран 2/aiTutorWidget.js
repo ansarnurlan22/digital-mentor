@@ -140,12 +140,29 @@
       }
 
       currentLesson = data;
+      trackMentMinutes(25);
     } catch (err) {
       console.error('[Ment Client Error]:', err);
       alert('Ошибка при генерации урока: ' + (err.message || err));
     } finally {
       isLoading = false;
       renderDrawerContent();
+    }
+  }
+
+  // Фиксация продуктивности и минут занятий с Ment
+  function trackMentMinutes(minutes = 20) {
+    try {
+      let cur = parseInt(localStorage.getItem('digitalMentor_mentMinutes'), 10);
+      if (isNaN(cur)) cur = 120;
+      const updated = cur + minutes;
+      localStorage.setItem('digitalMentor_mentMinutes', String(updated));
+      window.dispatchEvent(new CustomEvent('ment-activity', { detail: { minutes, total: updated } }));
+      if (typeof window.updateDashboardDynamicStats === 'function') {
+        window.updateDashboardDynamicStats();
+      }
+    } catch (e) {
+      console.warn('Ошибка сохранения времени с Ment:', e);
     }
   }
 
@@ -531,6 +548,7 @@
     });
 
     document.getElementById('ai-quiz-finish-btn')?.addEventListener('click', () => {
+      trackMentMinutes(15);
       alert(`Квиз завершен: ${correctCount} из ${totalQ} верно! Возвращаемся к конспекту.`);
       activeTab = 'theory';
       renderDrawerContent();

@@ -21,7 +21,79 @@ try {
 }
 
 // Начальные демо-уроки на случай первого запуска с пустой базой
-const INITIAL_DEMO_LESSONS = [];
+function getInitialDemoLessons() {
+  const now = new Date();
+  const formatYMD = (d) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const getDayKey = (d) => {
+    const map = { 0: "sun", 1: "mon", 2: "tue", 3: "wed", 4: "thu", 5: "fri", 6: "sat" };
+    return map[d.getDay()] || "mon";
+  };
+
+  const pastDate = new Date(now);
+  pastDate.setDate(now.getDate() - 1);
+
+  const nextDate1 = new Date(now);
+  nextDate1.setDate(now.getDate() + 1);
+
+  const nextDate2 = new Date(now);
+  nextDate2.setDate(now.getDate() + 3);
+
+  return [
+    {
+      id: "lesson-demo-1",
+      subject: "Алгебра",
+      grade: "11",
+      title: "Логарифмические неравенства и ОДЗ",
+      mentor_name: "Айбек С. (Олимпиадник)",
+      mentor_id: "mentor-aibek",
+      day_key: getDayKey(pastDate),
+      lesson_date: formatYMD(pastDate),
+      start_time: "16:00",
+      end_time: "17:00",
+      duration_hours: 1.0,
+      meet_url: "https://meet.google.com",
+      status: "completed"
+    },
+    {
+      id: "lesson-demo-2",
+      subject: "Алгебра",
+      grade: "11",
+      title: "Подготовка к СОР №2 (Показательные уравнения)",
+      mentor_name: "Айбек С. (Олимпиадник)",
+      mentor_id: "mentor-aibek",
+      day_key: getDayKey(nextDate1),
+      lesson_date: formatYMD(nextDate1),
+      start_time: "17:00",
+      end_time: "18:00",
+      duration_hours: 1.0,
+      meet_url: "https://meet.google.com",
+      status: "scheduled"
+    },
+    {
+      id: "lesson-demo-3",
+      subject: "Информатика",
+      grade: "9-11",
+      title: "Олимпиадные алгоритмы на Python: Графы и DFS",
+      mentor_name: "Арман Т. (Разработчик)",
+      mentor_id: "mentor-arman",
+      day_key: getDayKey(nextDate2),
+      lesson_date: formatYMD(nextDate2),
+      start_time: "15:00",
+      end_time: "16:30",
+      duration_hours: 1.5,
+      meet_url: "https://meet.google.com",
+      status: "scheduled"
+    }
+  ];
+}
+
+const INITIAL_DEMO_LESSONS = getInitialDemoLessons();
 
 window.SupabaseService = {
   client: supabaseClient,
@@ -304,9 +376,15 @@ window.SupabaseService = {
   getLocalLessons() {
     try {
       const cached = localStorage.getItem("dm_cloud_lessons_cache");
-      return cached ? JSON.parse(cached) : INITIAL_DEMO_LESSONS;
+      if (cached !== null) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed)) return parsed;
+      }
+      const initial = getInitialDemoLessons();
+      localStorage.setItem("dm_cloud_lessons_cache", JSON.stringify(initial));
+      return initial;
     } catch (e) {
-      return INITIAL_DEMO_LESSONS;
+      return getInitialDemoLessons();
     }
   },
 

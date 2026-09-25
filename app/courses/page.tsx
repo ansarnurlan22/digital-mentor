@@ -82,14 +82,41 @@ const COURSES: CourseItem[] = [
 export default function CoursesPage() {
   const { user } = useUser();
   const [selectedProgram, setSelectedProgram] = useState<ProgramFilter>('sor-soch');
+  const [coursesList, setCoursesList] = useState<CourseItem[]>(COURSES);
   const [enrolledIds, setEnrolledIds] = useState<string[]>([]);
   const [toastText, setToastText] = useState<string | null>(null);
 
   const isMentor = user.role === 'Ментор';
 
+  React.useEffect(() => {
+    try {
+      const data = localStorage.getItem('digitalMentor_activeCourses');
+      if (data !== null) {
+        const parsed = JSON.parse(data);
+        if (Array.isArray(parsed)) {
+          setCoursesList(parsed);
+          return;
+        }
+      }
+      localStorage.setItem('digitalMentor_activeCourses', JSON.stringify(COURSES));
+    } catch (e) {}
+  }, []);
+
   const filtered = selectedProgram === 'all'
-    ? COURSES
-    : COURSES.filter((c) => c.program === selectedProgram);
+    ? coursesList
+    : coursesList.filter((c) => c.program === selectedProgram);
+
+  const handleDeleteCourse = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updated = coursesList.filter((c) => String(c.id) !== String(id));
+    setCoursesList(updated);
+    try {
+      localStorage.setItem('digitalMentor_activeCourses', JSON.stringify(updated));
+      localStorage.removeItem(`digitalMentor_enrolled_${id}`);
+    } catch (e) {}
+    setToastText('Курс успешно удалён');
+    setTimeout(() => setToastText(null), 2500);
+  };
 
   const handleEnroll = (id: string) => {
     if (isMentor) {
@@ -97,11 +124,18 @@ export default function CoursesPage() {
       return;
     }
     if (enrolledIds.includes(id)) {
-      setToastText('Вы уже записаны на данный курс');
+      setEnrolledIds((prev) => prev.filter((item) => item !== id));
+      try {
+        localStorage.removeItem(`digitalMentor_enrolled_${id}`);
+      } catch (e) {}
+      setToastText('Вы отменили запись на данный курс');
       setTimeout(() => setToastText(null), 3000);
       return;
     }
     setEnrolledIds((prev) => [...prev, id]);
+    try {
+      localStorage.setItem(`digitalMentor_enrolled_${id}`, 'true');
+    } catch (e) {}
     setToastText('Вы успешно зарегистрировались на курс! Ментор свяжется с вами.');
     setTimeout(() => setToastText(null), 3500);
   };
@@ -310,13 +344,34 @@ export default function CoursesPage() {
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                       <span style={{ fontSize: '11px', fontWeight: 700, padding: '4px 10px', borderRadius: '999px', background: 'rgba(2, 132, 199, 0.2)', color: '#38BDF8', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
                         {course.grade} класс
                       </span>
                       <span style={{ fontSize: '11px', fontWeight: 700, padding: '4px 10px', borderRadius: '999px', background: 'rgba(148, 163, 184, 0.1)', color: '#94A3B8', border: '1px solid rgba(148, 163, 184, 0.2)' }}>
                         {course.programName}
                       </span>
+                      <button
+                        type="button"
+                        onClick={(e) => handleDeleteCourse(course.id, e)}
+                        title="Удалить курс"
+                        aria-label="Удалить курс"
+                        style={{
+                          width: '28px',
+                          height: '28px',
+                          borderRadius: '8px',
+                          background: 'rgba(239, 68, 68, 0.15)',
+                          border: '1px solid rgba(239, 68, 68, 0.3)',
+                          color: '#F87171',
+                          display: 'grid',
+                          placeItems: 'center',
+                          cursor: 'pointer',
+                          padding: 0,
+                          fontSize: '14px',
+                        }}
+                      >
+                        ✕
+                      </button>
                     </div>
                   </div>
 
