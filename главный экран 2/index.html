@@ -802,10 +802,29 @@
                   <div class="form-group-dark">
                     <label for="profile-select-subject">Основная дисциплина</label>
                     <select id="profile-select-subject" class="input-dark">
-                      <option value="Алгебра" selected>Алгебра</option>
-                      <option value="Геометрия">Геометрия</option>
-                      <option value="Физика">Физика</option>
-                      <option value="Информатика">Информатика & Python</option>
+                      <optgroup label="Математика & Анализ">
+                        <option value="Алгебра" selected>Алгебра & Анализ</option>
+                        <option value="Геометрия">Геометрия & Стереометрия</option>
+                        <option value="SAT Math">Digital SAT Math</option>
+                        <option value="Олимпиадная математика">Олимпиадная математика</option>
+                      </optgroup>
+                      <optgroup label="Естественные науки (STEM)">
+                        <option value="Физика">Физика (Механика & Квантовая)</option>
+                        <option value="Химия">Химия (Органическая & Неорганическая)</option>
+                        <option value="Биология">Биология (Генетика & Молекулярная)</option>
+                      </optgroup>
+                      <optgroup label="IT, Программирование & AI">
+                        <option value="Информатика & Python">Информатика & Python</option>
+                        <option value="Алгоритмы и структуры данных">Алгоритмы & Олимпиадный код</option>
+                        <option value="Web-разработка">Web-разработка (Frontend/JS)</option>
+                        <option value="Data Science & AI">Data Science & AI</option>
+                      </optgroup>
+                      <optgroup label="Языки & Гуманитарные науки">
+                        <option value="Английский язык">Английский язык (IELTS / SAT)</option>
+                        <option value="Казахский язык">Казахский язык & Литература</option>
+                        <option value="Русский язык">Русский язык & Грамотность чтения</option>
+                        <option value="История">История Казахстана & Всемирная</option>
+                      </optgroup>
                     </select>
                   </div>
                 </div>
@@ -814,6 +833,50 @@
                   <button type="submit" class="btn-meet-primary">Сохранить изменения</button>
                 </div>
               </form>
+            </div>
+
+            <!-- Внешний вид и выбор темы оформления -->
+            <div class="profile-settings-card">
+              <h3 style="margin: 0 0 6px; font-size: 18px; font-weight: 800; color: #ffffff;">Тема оформления</h3>
+              <p style="margin: 0 0 18px; font-size: 13.5px; color: var(--muted);">Выберите светлую или тёмную цветовую схему для комфортной учебы и работы с платформой.</p>
+              
+              <div class="theme-selector-grid">
+                <!-- Тёмная тема -->
+                <div class="theme-option-card active" id="theme-card-dark" role="button" tabindex="0" title="Включить тёмную тему">
+                  <div class="theme-option-preview theme-preview--dark">
+                    <div class="theme-preview-sidebar"></div>
+                    <div class="theme-preview-content">
+                      <div class="theme-preview-line"></div>
+                      <div class="theme-preview-card"></div>
+                    </div>
+                  </div>
+                  <div class="theme-option-info">
+                    <div class="theme-option-title">
+                      <span>🌙 Тёмная тема</span>
+                      <span class="theme-check-icon">✓</span>
+                    </div>
+                    <div class="theme-option-desc">Глубокие темно-синие тона #080E1E и #0F172A — снижение усталости глаз.</div>
+                  </div>
+                </div>
+
+                <!-- Светлая тема -->
+                <div class="theme-option-card" id="theme-card-light" role="button" tabindex="0" title="Включить светлую тему">
+                  <div class="theme-option-preview theme-preview--light">
+                    <div class="theme-preview-sidebar"></div>
+                    <div class="theme-preview-content">
+                      <div class="theme-preview-line"></div>
+                      <div class="theme-preview-card"></div>
+                    </div>
+                  </div>
+                  <div class="theme-option-info">
+                    <div class="theme-option-title">
+                      <span>☀️ Светлая тема</span>
+                      <span class="theme-check-icon">✓</span>
+                    </div>
+                    <div class="theme-option-desc">Чистый белый #FFFFFF и мягкий дневной фон #F8FAFC с высокой контрастностью.</div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- Активные сессии -->
@@ -854,9 +917,29 @@
               <div class="select-wrapper">
                 <select id="course-name-select" required>
                   <option value="" disabled selected>Выберите предмет из списка</option>
-                  <option value="Алгебра">Алгебра</option>
-                  <option value="Английский язык">Английский язык</option>
-                  <option value="Информатика">Информатика</option>
+                  <optgroup label="Математика & Анализ">
+                    <option value="Алгебра">Алгебра & Анализ</option>
+                    <option value="Геометрия">Геометрия & Стереометрия</option>
+                    <option value="SAT Math">Digital SAT Math Prep</option>
+                    <option value="Олимпиадная математика">Олимпиадная математика</option>
+                  </optgroup>
+                  <optgroup label="Естественные науки (STEM)">
+                    <option value="Физика">Физика</option>
+                    <option value="Химия">Химия</option>
+                    <option value="Биология">Биология</option>
+                  </optgroup>
+                  <optgroup label="IT & Программирование">
+                    <option value="Информатика">Информатика & Python</option>
+                    <option value="Алгоритмы">Алгоритмы & Структуры данных</option>
+                    <option value="Web-разработка">Web-разработка</option>
+                    <option value="Data Science & AI">Data Science & AI</option>
+                  </optgroup>
+                  <optgroup label="Языки & Экзамены">
+                    <option value="Английский язык">Английский язык (IELTS / SAT)</option>
+                    <option value="Казахский язык">Казахский язык & Литература</option>
+                    <option value="Русский язык">Русский язык & Грамотность чтения</option>
+                    <option value="История">История Казахстана & Всемирная</option>
+                  </optgroup>
                 </select>
               </div>
             </label>
@@ -920,9 +1003,29 @@
               <div class="select-wrapper">
                 <select id="lesson-subject-select" required>
                   <option value="" disabled selected>Выберите предмет</option>
-                  <option value="Информатика">Информатика</option>
-                  <option value="Алгебра">Алгебра</option>
-                  <option value="Английский язык">Английский язык</option>
+                  <optgroup label="Математика & Анализ">
+                    <option value="Алгебра">Алгебра & Анализ</option>
+                    <option value="Геометрия">Геометрия & Стереометрия</option>
+                    <option value="SAT Math">Digital SAT Math</option>
+                    <option value="Олимпиадная математика">Олимпиадная математика</option>
+                  </optgroup>
+                  <optgroup label="Естественные науки (STEM)">
+                    <option value="Физика">Физика</option>
+                    <option value="Химия">Химия</option>
+                    <option value="Биология">Биология</option>
+                  </optgroup>
+                  <optgroup label="IT & Программирование">
+                    <option value="Информатика">Информатика & Python</option>
+                    <option value="Алгоритмы">Алгоритмы & Структуры данных</option>
+                    <option value="Web-разработка">Web-разработка</option>
+                    <option value="Data Science & AI">Data Science & AI</option>
+                  </optgroup>
+                  <optgroup label="Языки & Экзамены">
+                    <option value="Английский язык">Английский язык (IELTS / SAT)</option>
+                    <option value="Казахский язык">Казахский язык & Литература</option>
+                    <option value="Русский язык">Русский язык & Грамотность чтения</option>
+                    <option value="История">История Казахстана & Всемирная</option>
+                  </optgroup>
                 </select>
               </div>
             </label>
@@ -1055,11 +1158,29 @@
                 <div class="select-wrapper">
                   <select id="onboarding-subject-select" required>
                     <option value="" disabled selected>Выберите предмет</option>
-                    <option value="Информатика">Информатика</option>
-                    <option value="Алгебра">Алгебра</option>
-                    <option value="Английский язык">Английский язык</option>
-                    <option value="Физика">Физика</option>
-                    <option value="Химия">Химия</option>
+                    <optgroup label="Математика & Анализ">
+                      <option value="Алгебра">Алгебра & Анализ</option>
+                      <option value="Геометрия">Геометрия & Стереометрия</option>
+                      <option value="SAT Math">Digital SAT Math</option>
+                      <option value="Олимпиадная математика">Олимпиадная математика</option>
+                    </optgroup>
+                    <optgroup label="Естественные науки (STEM)">
+                      <option value="Физика">Физика</option>
+                      <option value="Химия">Химия</option>
+                      <option value="Биология">Биология</option>
+                    </optgroup>
+                    <optgroup label="IT & Программирование">
+                      <option value="Информатика & Python">Информатика & Python</option>
+                      <option value="Алгоритмы">Алгоритмы & Олимпиадный код</option>
+                      <option value="Web-разработка">Web-разработка</option>
+                      <option value="Data Science & AI">Data Science & AI</option>
+                    </optgroup>
+                    <optgroup label="Языки & Экзамены">
+                      <option value="Английский язык">Английский язык (IELTS / SAT)</option>
+                      <option value="Казахский язык">Казахский язык & Литература</option>
+                      <option value="Русский язык">Русский язык & Грамотность чтения</option>
+                      <option value="История">История Казахстана & Всемирная</option>
+                    </optgroup>
                   </select>
                 </div>
               </label>

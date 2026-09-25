@@ -1,3 +1,40 @@
+// ============================================================
+// Управление цветовой темой интерфейса (Dark / Light Theme)
+// ============================================================
+const THEME_KEY = "digitalMentor_theme";
+
+function getSavedTheme() {
+  return localStorage.getItem(THEME_KEY) || "dark";
+}
+
+function applyTheme(theme) {
+  const finalTheme = theme === "light" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", finalTheme);
+  if (document.body) {
+    document.body.classList.toggle("light-theme", finalTheme === "light");
+  }
+  
+  const darkCard = document.getElementById("theme-card-dark");
+  const lightCard = document.getElementById("theme-card-light");
+  if (darkCard && lightCard) {
+    darkCard.classList.toggle("active", finalTheme === "dark");
+    lightCard.classList.toggle("active", finalTheme === "light");
+  }
+}
+
+function setTheme(theme) {
+  localStorage.setItem(THEME_KEY, theme);
+  applyTheme(theme);
+  if (typeof showToast === "function") {
+    showToast(`Тема интерфейса: ${theme === "light" ? "Светлая" : "Тёмная"}`, "info");
+  }
+}
+
+// Применяем тему немедленно при инициализации скрипта
+try {
+  applyTheme(getSavedTheme());
+} catch (e) {}
+
 // Начальные демонстрационные курсы в стиле Schoolhouse/SAT
 const DEFAULT_COURSES = [
   {
@@ -31,6 +68,21 @@ const DEFAULT_COURSES = [
     startDate: "2026-10-05"
   },
   {
+    id: "course-sat-chem-10",
+    name: "Химия 10 класс (Органическая химия & СОР/СОЧ)",
+    grade: "10",
+    program: "sor-soch",
+    programName: "СОР/СОЧ Prep",
+    mentor: "Камила Р. · Призёр Менделеевской олимпиады",
+    description: "Углеводороды, механизмы органических реакций, составление уравнений и расчетные задачи повышенной сложности к четвертным срезам.",
+    topics: ["Алканы и алкены", "Изомерия", "Химическое равновесие", "СОР/СОЧ тренинг"],
+    durationWeeks: "4 недели",
+    frequency: "2 раза в неделю",
+    lessonDuration: "60 минут",
+    maxStudents: 5,
+    startDate: "2026-10-08"
+  },
+  {
     id: "course-sat-phys-11",
     name: "Физика 10–11 класс (1-на-1 Наставничество)",
     grade: "10-11",
@@ -46,6 +98,36 @@ const DEFAULT_COURSES = [
     startDate: "2026-10-03"
   },
   {
+    id: "course-sat-bio-11",
+    name: "Биология 11 класс (Генетика & Молекулярная)",
+    grade: "11",
+    program: "mentoring",
+    programName: "1-на-1 Наставничество",
+    mentor: "Амина Б. · Выпускница РФМШ / Ментор",
+    description: "Индивидуальный разбор молекулярных механизмов биосинтеза белка, законов Менделя и генетических задач к выпускным экзаменам.",
+    topics: ["ДНК и РНК", "Сцепленное наследование", "Генетические карты", "Эволюция"],
+    durationWeeks: "6 недель",
+    frequency: "1–2 раза в неделю",
+    lessonDuration: "60 минут",
+    maxStudents: 1,
+    startDate: "2026-10-07"
+  },
+  {
+    id: "course-sat-digital-math",
+    name: "Digital SAT Math: Hard Module & Desmos Prep",
+    grade: "10-11",
+    program: "mentoring",
+    programName: "1-на-1 Наставничество",
+    mentor: "Ернар Н. · SAT Math 800 / Ментор",
+    description: "Стратегии сдачи Digital SAT: скрытые функции калькулятора Desmos, задачи 2-го сложного модуля, Advanced Math и Geometry & Trig.",
+    topics: ["Desmos Regression & Sliders", "Quadratic & Exponential", "Circle Theorems", "Pacing & Timing"],
+    durationWeeks: "6 недель",
+    frequency: "2 раза в неделю",
+    lessonDuration: "75 минут",
+    maxStudents: 1,
+    startDate: "2026-10-12"
+  },
+  {
     id: "course-sat-cs-workshop",
     name: "Информатика & Python (Практический Воркшоп)",
     grade: "9-11",
@@ -59,6 +141,36 @@ const DEFAULT_COURSES = [
     lessonDuration: "90 минут",
     maxStudents: 12,
     startDate: "2026-10-10"
+  },
+  {
+    id: "course-sat-ai-data",
+    name: "Data Science & Введение в AI (Интерактивный буткемп)",
+    grade: "9-11",
+    program: "workshops",
+    programName: "Воркшоп",
+    mentor: "Султан Ж. · AI Researcher",
+    description: "Практический воркшоп по машинному обучению: анализ реальных датасетов с Pandas, визуализация данных и работа с нейросетями.",
+    topics: ["Pandas & NumPy", "Data Visualization", "Machine Learning основы", "Проект с Ment AI"],
+    durationWeeks: "3 недели",
+    frequency: "2 раза в неделю",
+    lessonDuration: "90 минут",
+    maxStudents: 10,
+    startDate: "2026-10-15"
+  },
+  {
+    id: "course-sat-ielts",
+    name: "English Academic Writing & IELTS Speaking (Воркшоп)",
+    grade: "10-11",
+    program: "workshops",
+    programName: "Воркшоп",
+    mentor: "Мадина К. · IELTS 8.5 / Ментор",
+    description: "Интенсивный тренинг академического английского: структура эссе Task 2, беглость разговорной речи и разбор типовых ошибок.",
+    topics: ["Academic Essay Writing", "Speaking Fluency", "Vocabulary Boost", "Peer Reviews"],
+    durationWeeks: "3 недели",
+    frequency: "3 раза в неделю",
+    lessonDuration: "75 минут",
+    maxStudents: 8,
+    startDate: "2026-10-14"
   }
 ];
 
@@ -201,34 +313,99 @@ function updateRoleUI() {
 
 // Иконки и оформление для каждого предмета
 function getSubjectIcon(name) {
-  switch (name) {
-    case "Алгебра":
-      return `
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="4" y1="19" x2="20" y2="19"></line>
-          <line x1="4" y1="5" x2="20" y2="5"></line>
-          <line x1="18" y1="5" x2="6" y2="19"></line>
-        </svg>`;
-    case "Английский язык":
-      return `
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="2" y1="12" x2="22" y2="12"></line>
-          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-        </svg>`;
-    case "Информатика":
-      return `
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="16 18 22 12 16 6"></polyline>
-          <polyline points="8 6 2 12 8 18"></polyline>
-        </svg>`;
-    default:
-      return `
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-        </svg>`;
+  const n = (name || "").toLowerCase();
+  if (n.includes("информ") || n.includes("python") || n.includes("код") || n.includes("web") || n.includes("алгоритм")) {
+    return `
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="16 18 22 12 16 6"></polyline>
+        <polyline points="8 6 2 12 8 18"></polyline>
+      </svg>`;
   }
+  if (n.includes("data") || n.includes("ai") || n.includes("ии") || n.includes("интеллект")) {
+    return `
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+        <rect x="9" y="9" width="6" height="6"></rect>
+        <line x1="9" y1="1" x2="9" y2="4"></line>
+        <line x1="15" y1="1" x2="15" y2="4"></line>
+        <line x1="9" y1="20" x2="9" y2="23"></line>
+        <line x1="15" y1="20" x2="15" y2="23"></line>
+        <line x1="20" y1="9" x2="23" y2="9"></line>
+        <line x1="20" y1="14" x2="23" y2="14"></line>
+        <line x1="1" y1="9" x2="4" y2="9"></line>
+        <line x1="1" y1="14" x2="4" y2="14"></line>
+      </svg>`;
+  }
+  if (n.includes("физик")) {
+    return `
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="2"></circle>
+        <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"></path>
+        <path d="M4.93 4.93c4.24 4.24 9.9 4.24 14.14 0"></path>
+        <path d="M19.07 19.07c-4.24-4.24-9.9-4.24-14.14 0"></path>
+      </svg>`;
+  }
+  if (n.includes("хим")) {
+    return `
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 2v7.31L4.2 19.34A2 2 0 0 0 5.92 22h12.16a2 2 0 0 0 1.72-2.66L14 9.31V2"></path>
+        <line x1="8" y1="2" x2="16" y2="2"></line>
+        <line x1="6.8" y1="15" x2="17.2" y2="15"></line>
+      </svg>`;
+  }
+  if (n.includes("биолог")) {
+    return `
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 22s5.5-2.5 8-8 12-6 12-6-2.5 5.5-8 8-12 6-12 6z"></path>
+        <path d="M10 14L4 8"></path>
+      </svg>`;
+  }
+  if (n.includes("англ") || n.includes("ielts") || n.includes("english")) {
+    return `
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="2" y1="12" x2="22" y2="12"></line>
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+      </svg>`;
+  }
+  if (n.includes("геометр")) {
+    return `
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="12 2 2 22 22 22"></polygon>
+      </svg>`;
+  }
+  if (n.includes("sat") || n.includes("алгебр") || n.includes("матем")) {
+    return `
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="4" y1="19" x2="20" y2="19"></line>
+        <line x1="4" y1="5" x2="20" y2="5"></line>
+        <line x1="18" y1="5" x2="6" y2="19"></line>
+      </svg>`;
+  }
+  if (n.includes("язык") || n.includes("литератур") || n.includes("чтени")) {
+    return `
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+      </svg>`;
+  }
+  if (n.includes("истор")) {
+    return `
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="21" x2="21" y2="21"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+        <polyline points="12 3 2 10 22 10 12 3"></polyline>
+        <line x1="6" y1="10" x2="6" y2="21"></line>
+        <line x1="10" y1="10" x2="10" y2="21"></line>
+        <line x1="14" y1="10" x2="14" y2="21"></line>
+        <line x1="18" y1="10" x2="18" y2="21"></line>
+      </svg>`;
+  }
+  return `
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+    </svg>`;
 }
 
 // Склонение слова «курс»
@@ -1918,10 +2095,29 @@ function renderProfilePage() {
   if (inputName) inputName.value = profile.name || "Матвей";
   if (selectGrade && profile.grade) selectGrade.value = profile.grade;
   if (selectSubj && profile.subject) selectSubj.value = profile.subject;
+
+  // Обновляем визуальное выделение карточек тем в профиле
+  const currentTheme = getSavedTheme();
+  const darkCard = document.getElementById("theme-card-dark");
+  const lightCard = document.getElementById("theme-card-light");
+  if (darkCard) darkCard.classList.toggle("active", currentTheme === "dark");
+  if (lightCard) lightCard.classList.toggle("active", currentTheme === "light");
 }
 
 function initProfilePage() {
   renderProfilePage();
+
+  // Привязка переключателя тем оформления
+  const darkCard = document.getElementById("theme-card-dark");
+  const lightCard = document.getElementById("theme-card-light");
+  if (darkCard && !darkCard.dataset.bound) {
+    darkCard.dataset.bound = "true";
+    darkCard.addEventListener("click", () => setTheme("dark"));
+  }
+  if (lightCard && !lightCard.dataset.bound) {
+    lightCard.dataset.bound = "true";
+    lightCard.addEventListener("click", () => setTheme("light"));
+  }
 
   const editForm = document.getElementById("profile-edit-form");
   if (editForm && !editForm.dataset.bound) {
