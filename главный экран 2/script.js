@@ -174,8 +174,8 @@ const DEFAULT_COURSES = [
   }
 ];
 
-// Текущий фильтр программы (по умолчанию 'sor-soch' согласно спецификации)
-let currentProgramFilter = "sor-soch";
+// Текущий фильтр программы (по умолчанию 'all' — отображаются все 9 курсов на всех устройствах)
+let currentProgramFilter = "all";
 
 const STORAGE_KEY = "digitalMentor_activeCourses";
 const USER_PROFILE_KEY = "digitalMentor_userProfile";
@@ -258,29 +258,55 @@ function getUserRole() {
   return "Администратор"; // По умолчанию в среде разработки предоставляем роль Администратора
 }
 
-// Получить курсы из localStorage или вернуть дефолтные
+// Получить курсы из localStorage или вернуть дефолтные 9 курсов
 function getCourses() {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
     if (data !== null) {
       const parsed = JSON.parse(data);
-      if (Array.isArray(parsed)) {
+      // Возвращаем только если массив не пустой!
+      if (Array.isArray(parsed) && parsed.length > 0) {
         return parsed;
       }
     }
   } catch (e) {
-    console.error("Ошибка чтения localStorage", e);
+    console.error("Ошибка чтения localStorage курсов", e);
   }
+  // Всегда сохраняем и гарантированно возвращаем полный каталог из 9 курсов
   saveCourses(DEFAULT_COURSES);
   return DEFAULT_COURSES;
 }
 
-// Сохранить курсы в localStorage
+// Сохранить курсы в localStorage и синхронизировать с облаком Supabase
 function saveCourses(courses) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(courses));
+    const listToSave = Array.isArray(courses) && courses.length > 0 ? courses : DEFAULT_COURSES;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(listToSave));
+    if (window.SupabaseService && typeof window.SupabaseService.saveCloudCourses === "function") {
+      window.SupabaseService.saveCloudCourses(listToSave);
+    }
   } catch (e) {
     console.error("Ошибка записи в localStorage", e);
+  }
+}
+
+// Синхронизация курсов из облака Supabase (гарантирует одинаковое отображение на всех компьютерах)
+async function syncCoursesFromCloud() {
+  if (window.SupabaseService && typeof window.SupabaseService.getCloudCourses === "function") {
+    try {
+      const cloudCourses = await window.SupabaseService.getCloudCourses();
+      if (Array.isArray(cloudCourses) && cloudCourses.length > 0) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudCourses));
+        if (typeof renderCourses === "function") {
+          renderCourses();
+        }
+      } else {
+        // Если в облаке пусто, отправляем 9 дефолтных курсов
+        await window.SupabaseService.saveCloudCourses(DEFAULT_COURSES);
+      }
+    } catch (e) {
+      console.warn("syncCoursesFromCloud error:", e);
+    }
   }
 }
 
@@ -665,6 +691,10 @@ function initProgramFilters() {
       c.classList.toggle("is-active", isSelected);
     });
 
+    if (allBtn) {
+      allBtn.classList.toggle("is-active", progId === "all");
+    }
+
     if (progId === "sor-soch") {
       if (filterLabel) filterLabel.textContent = "Фильтр: Подготовка к СОР/СОЧ";
       if (headingLabel) headingLabel.textContent = "Курсы: Подготовка к СОР/СОЧ";
@@ -694,6 +724,9 @@ function initProgramFilters() {
       setProgram("all");
     });
   }
+
+  // Устанавливаем изначальное состояние (по умолчанию - Все курсы)
+  setProgram(currentProgramFilter || "all");
 }
 
 // Защита от XSS
@@ -1925,6 +1958,11 @@ function initOnboarding() {
         localStorage.setItem(getAccountProfileKey(currentUser.id), JSON.stringify(newProfile));
       }
 
+      // Немедленная синхронизация профиля в Supabase Cloud (чтобы администратор видел нового пользователя)
+      if (window.SupabaseService && typeof window.SupabaseService.syncCloudProfile === "function") {
+        window.SupabaseService.syncCloudProfile(newProfile).catch(console.warn);
+      }
+
       if (confirmOverlay) {
         confirmOverlay.style.display = "none";
       }
@@ -1973,8 +2011,25 @@ async function checkFirstTimeUser() {
     };
     localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(adminProfile));
     localStorage.setItem(getAccountProfileKey(currentUser.id), JSON.stringify(adminProfile));
+    if (window.SupabaseService && typeof window.SupabaseService.syncCloudProfile === "function") {
+      window.SupabaseService.syncCloudProfile(adminProfile).catch(console.warn);
+    }
     updateRoleUI();
     return;
+  }
+
+  // При любом входе через Google сразу фиксируем пользователя в Supabase Cloud (друг сразу появляется в панели админа)
+  if (currentUser && currentUser.email && window.SupabaseService && typeof window.SupabaseService.syncCloudProfile === "function") {
+    const cloudSyncPayload = {
+      name: (currentUser.user_metadata && (currentUser.user_metadata.full_name || currentUser.user_metadata.name)) || profile?.name || currentUser.email.split("@")[0],
+      email: currentUser.email,
+      google_id: currentUser.id,
+      role: profile?.role || "Ученик",
+      grade: profile?.grade || "10 класс",
+      subject: profile?.subject || "Алгебра",
+      status: "active"
+    };
+    window.SupabaseService.syncCloudProfile(cloudSyncPayload).catch(console.warn);
   }
 
   // Если профиль уже настроен и роль зафиксирована — никогда не открываем онбординг повторно!
@@ -2099,6 +2154,9 @@ function initSpaRouter() {
     } else if (targetRoute === "schedule") {
       loadAndRenderAllScheduleAndStats();
     } else if (targetRoute === "admin") {
+      if (typeof syncAdminUsersFromCloud === "function") {
+        syncAdminUsersFromCloud();
+      }
       if (typeof renderAdminDashboard === "function") {
         renderAdminDashboard();
       }
@@ -2281,6 +2339,14 @@ async function initApp() {
     } catch (e) {}
   }
 
+  // Облачная синхронизация курсов и пользователей Supabase
+  if (typeof syncCoursesFromCloud === "function") {
+    await syncCoursesFromCloud();
+  }
+  if (typeof syncAdminUsersFromCloud === "function") {
+    syncAdminUsersFromCloud();
+  }
+
   updateRoleUI();
   initSpaRouter();
   initAdminDashboard();
@@ -2310,6 +2376,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (window.SupabaseService) {
     window.SupabaseService.subscribe(() => {
       loadAndRenderAllScheduleAndStats();
+      if (typeof syncCoursesFromCloud === "function") syncCoursesFromCloud();
+      if (typeof syncAdminUsersFromCloud === "function") syncAdminUsersFromCloud();
     });
 
     if (typeof window.SupabaseService.onAuthStateChange === "function") {
@@ -2623,41 +2691,49 @@ const INITIAL_ADMIN_HOURS = [
 ];
 
 function getAdminUsers() {
+  let list = [];
   try {
     const data = localStorage.getItem(ADMIN_USERS_STORAGE_KEY);
     if (data) {
-      let parsed = JSON.parse(data);
+      const parsed = JSON.parse(data);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        // Гарантируем, что ansarnurlan2@gmail.com всегда присутствует со статусом Администратора
-        const ansarUser = parsed.find(
-          (u) => u.email && u.email.toLowerCase().trim() === "ansarnurlan2@gmail.com"
-        );
-        if (ansarUser) {
-          ansarUser.role = "Администратор";
-          ansarUser.status = "active";
-        } else {
-          parsed.unshift({
-            id: "usr-admin-ansar",
-            name: "Ансар Нурлан",
-            email: "ansarnurlan2@gmail.com",
-            role: "Администратор",
-            grade: "11 класс",
-            subject: "SAT Math & Руководитель проекта",
-            hours: 180,
-            mentor: "",
-            loginDate: "Сегодня, 18:00",
-            status: "active"
-          });
-        }
-        saveAdminUsers(parsed);
-        return parsed;
+        list = parsed;
       }
     }
   } catch (e) {
     console.error("Ошибка чтения пользователей админки", e);
   }
-  saveAdminUsers(INITIAL_ADMIN_USERS);
-  return INITIAL_ADMIN_USERS;
+
+  if (list.length === 0) {
+    list = [...INITIAL_ADMIN_USERS];
+  }
+
+  // Гарантируем, что ansarnurlan2@gmail.com всегда присутствует со статусом Администратора
+  const ansarIdx = list.findIndex(
+    (u) => u.email && u.email.toLowerCase().trim() === "ansarnurlan2@gmail.com"
+  );
+  if (ansarIdx !== -1) {
+    list[ansarIdx].role = "Администратор";
+    list[ansarIdx].status = "active";
+    const ansarUser = list.splice(ansarIdx, 1)[0];
+    list.unshift(ansarUser);
+  } else {
+    list.unshift({
+      id: "usr-admin-ansar",
+      name: "Ансар Нурлан",
+      email: "ansarnurlan2@gmail.com",
+      role: "Администратор",
+      grade: "11 класс",
+      subject: "SAT Math & Руководитель проекта",
+      hours: 180,
+      mentor: "",
+      loginDate: "Сегодня, 18:00",
+      status: "active"
+    });
+  }
+
+  saveAdminUsers(list);
+  return list;
 }
 
 function saveAdminUsers(users) {
@@ -2665,6 +2741,43 @@ function saveAdminUsers(users) {
     localStorage.setItem(ADMIN_USERS_STORAGE_KEY, JSON.stringify(users));
   } catch (e) {
     console.error("Ошибка записи пользователей админки", e);
+  }
+}
+
+// Загрузка и живая синхронизация пользователей из Supabase Cloud (Google Auth)
+async function syncAdminUsersFromCloud() {
+  if (window.SupabaseService && typeof window.SupabaseService.getCloudUsers === "function") {
+    try {
+      const cloudUsers = await window.SupabaseService.getCloudUsers();
+      if (Array.isArray(cloudUsers) && cloudUsers.length > 0) {
+        const currentList = getAdminUsers();
+        let changed = false;
+
+        cloudUsers.forEach((cu) => {
+          if (!cu.email) return;
+          const cleanEmail = cu.email.toLowerCase().trim();
+          const existingIdx = currentList.findIndex(
+            (u) => u.email && u.email.toLowerCase().trim() === cleanEmail
+          );
+          if (existingIdx !== -1) {
+            currentList[existingIdx] = { ...currentList[existingIdx], ...cu };
+            changed = true;
+          } else {
+            // Новый пользователь (зарегистрировался друг под Google)!
+            currentList.push(cu);
+            changed = true;
+          }
+        });
+
+        if (changed) {
+          saveAdminUsers(currentList);
+          if (typeof renderAdminUsers === "function") renderAdminUsers();
+          if (typeof renderAdminOverview === "function") renderAdminOverview();
+        }
+      }
+    } catch (e) {
+      console.warn("syncAdminUsersFromCloud error:", e);
+    }
   }
 }
 
@@ -2709,9 +2822,13 @@ function initAdminDashboard() {
         activePane.classList.add("is-active");
       }
 
-      if (targetTab === "overview") renderAdminOverview();
-      else if (targetTab === "users") renderAdminUsers();
-      else if (targetTab === "hours") renderAdminHours();
+      if (targetTab === "overview") {
+        if (typeof syncAdminUsersFromCloud === "function") syncAdminUsersFromCloud();
+        renderAdminOverview();
+      } else if (targetTab === "users") {
+        if (typeof syncAdminUsersFromCloud === "function") syncAdminUsersFromCloud();
+        renderAdminUsers();
+      } else if (targetTab === "hours") renderAdminHours();
       else if (targetTab === "courses") renderAdminCourses();
     });
   });
@@ -2854,6 +2971,9 @@ function initAdminDashboard() {
   }
 
   // Первоначальный рендер данных админки
+  if (typeof syncAdminUsersFromCloud === "function") {
+    syncAdminUsersFromCloud();
+  }
   renderAdminDashboard();
 }
 

@@ -463,6 +463,149 @@ window.SupabaseService = {
     }
   },
 
+  // 6. Облачная синхронизация профилей пользователей для панели администратора
+  async syncCloudProfile(userProfile) {
+    if (!supabaseClient || !userProfile || !userProfile.email) return;
+    try {
+      const email = userProfile.email.toLowerCase().trim();
+      const profileId = "usr_" + email.replace(/[^a-zA-Z0-9_-]/g, "_");
+      const payload = {
+        id: profileId,
+        google_id: userProfile.google_id || userProfile.id || "",
+        name: userProfile.name || (email.split("@")[0]),
+        email: email,
+        role: userProfile.role || "Ученик",
+        grade: userProfile.grade || "10 класс",
+        subject: userProfile.subject || "Алгебра",
+        mentor: userProfile.mentor || "",
+        status: userProfile.status || "active",
+        hours: Number(userProfile.hours) || 0,
+        loginDate: userProfile.loginDate || new Date().toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
+      };
+
+      await supabaseClient
+        .from("mentor_stats")
+        .upsert(
+          [
+            {
+              id: profileId,
+              mentor_name: JSON.stringify(payload),
+              volunteer_hours: Number(userProfile.hours) || 0,
+              lessons_completed: 0,
+              students_count: 0,
+              rating: 5.0
+            }
+          ],
+          { onConflict: "id" }
+        );
+      console.log("☁️ Профиль пользователя успешно синхронизирован с Supabase:", email);
+    } catch (e) {
+      console.warn("syncCloudProfile error:", e);
+    }
+  },
+
+  // Получить всех пользователей, зарегистрированных через Google или сохранённых в облаке
+  async getCloudUsers() {
+    if (!supabaseClient) return [];
+    try {
+      const { data, error } = await supabaseClient
+        .from("mentor_stats")
+        .select("*");
+
+      if (error || !Array.isArray(data)) return [];
+
+      const users = [];
+      data.forEach((row) => {
+        if (!row.id || !row.mentor_name) return;
+        if (row.id === "global_active_courses" || row.id.startsWith("global_")) return;
+
+        try {
+          const parsed = JSON.parse(row.mentor_name);
+          if (parsed && (parsed.email || parsed.name)) {
+            users.push({
+              id: parsed.id || row.id,
+              name: parsed.name || "Пользователь",
+              email: parsed.email || (row.id.includes("@") ? row.id : `${row.id.slice(0, 8)}@google.user`),
+              role: parsed.role || "Ученик",
+              grade: parsed.grade || "10 класс",
+              subject: parsed.subject || "Алгебра",
+              mentor: parsed.mentor || "",
+              hours: typeof parsed.hours === "number" ? parsed.hours : (Number(row.volunteer_hours) || 0),
+              status: parsed.status || "active",
+              loginDate: parsed.loginDate || (row.updated_at ? new Date(row.updated_at).toLocaleDateString("ru-RU") : "Недавно")
+            });
+            return;
+          }
+        } catch (e) {}
+
+        if (row.mentor_name && row.mentor_name.trim() && !row.mentor_name.startsWith("{") && !row.mentor_name.startsWith("[")) {
+          users.push({
+            id: row.id,
+            name: row.mentor_name,
+            email: row.id.includes("@") ? row.id : `${row.id.slice(0, 8)}@google.user`,
+            role: Number(row.volunteer_hours) > 0 ? "Ментор" : "Ученик",
+            grade: "10 класс",
+            subject: "Общий курс",
+            mentor: "",
+            hours: Number(row.volunteer_hours) || 0,
+            status: "active",
+            loginDate: row.updated_at ? new Date(row.updated_at).toLocaleDateString("ru-RU") : "Недавно"
+          });
+        }
+      });
+      return users;
+    } catch (e) {
+      console.warn("getCloudUsers error:", e);
+      return [];
+    }
+  },
+
+  // 7. Облачная синхронизация курсов между всеми устройствами
+  async saveCloudCourses(courses) {
+    if (!supabaseClient || !Array.isArray(courses)) return;
+    try {
+      await supabaseClient
+        .from("mentor_stats")
+        .upsert(
+          [
+            {
+              id: "global_active_courses",
+              mentor_name: JSON.stringify(courses),
+              volunteer_hours: courses.length,
+              lessons_completed: 0,
+              students_count: 0,
+              rating: 5.0
+            }
+          ],
+          { onConflict: "id" }
+        );
+      console.log("☁️ Все курсы синхронизированы в облако Supabase:", courses.length);
+    } catch (e) {
+      console.warn("saveCloudCourses error:", e);
+    }
+  },
+
+  async getCloudCourses() {
+    if (!supabaseClient) return null;
+    try {
+      const { data, error } = await supabaseClient
+        .from("mentor_stats")
+        .select("mentor_name")
+        .eq("id", "global_active_courses")
+        .maybeSingle();
+
+      if (!error && data && data.mentor_name) {
+        const parsed = JSON.parse(data.mentor_name);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn("getCloudCourses error:", e);
+    }
+    return null;
+  },
+
   // Выход из аккаунта
   async signOut() {
     if (supabaseClient) {

@@ -599,6 +599,13 @@ body {
   border-color: #38bdf8;
 }
 
+.btn-filter-all.is-active {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: #38bdf8;
+  color: #38bdf8;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+}
+
 .badge-count {
   display: inline-flex;
   align-items: center;
@@ -3788,6 +3795,13 @@ body.light-theme {
   background: #F8FAFC !important;
   border-color: #94A3B8 !important;
   color: #0F172A !important;
+}
+
+[data-theme="light"] .btn-filter-all.is-active {
+  background: #EFF6FF !important;
+  border-color: #3B82F6 !important;
+  color: #1D4ED8 !important;
+  box-shadow: 0 1px 4px rgba(59, 130, 246, 0.2) !important;
 }
 
 [data-theme="light"] .btn-calendar-filter.is-active,
