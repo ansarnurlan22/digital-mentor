@@ -46,6 +46,26 @@
             <span class="sidebar-tooltip">Дашборд</span>
           </a>
 
+          <!-- 1.1. Практика 70/30 -->
+          <a href="../practice" class="sidebar-nav-item" id="nav-item-practice" title="Практика (70/30 AI)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="16 18 22 12 16 6"></polyline>
+              <polyline points="8 6 2 12 8 18"></polyline>
+            </svg>
+            <span class="sidebar-tooltip">Практика (70/30)</span>
+          </a>
+
+          <!-- 1.2. Очередь тикетов -->
+          <a href="../mentors/tickets" class="sidebar-nav-item" id="nav-item-tickets" title="Очередь волонтеров">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <span class="sidebar-tooltip">Очередь волонтеров</span>
+          </a>
+
           <!-- 2. Курсы -->
           <a href="#/courses" data-route="courses" class="sidebar-nav-item" id="nav-item-courses" title="Курсы">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -206,6 +226,37 @@
               <div class="next-meeting-actions">
                 <a href="#/schedule" data-route="schedule" class="btn-meet-secondary">Расписание</a>
                 <a href="https://meet.google.com" target="_blank" rel="noopener noreferrer" class="btn-meet-primary" id="dash-next-meeting-btn">Войти в Google Meet →</a>
+              </div>
+            </div>
+
+            <!-- Карточка практики: 70% ИИ / 30% Волонтеры -->
+            <div class="next-meeting-card" style="border: 1px solid rgba(59, 130, 246, 0.4); background: linear-gradient(135deg, rgba(14, 29, 61, 0.95) 0%, rgba(9, 10, 15, 0.98) 100%); margin-bottom: 28px;">
+              <div class="next-meeting-left">
+                <div class="next-meeting-icon" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3);">⚡</div>
+                <div>
+                  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                    <span style="font-size: 11px; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(56, 189, 248, 0.15); padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(56, 189, 248, 0.3);">
+                      Гибрид 70% ИИ / 30% Волонтеры
+                    </span>
+                    <span style="font-size: 11px; font-weight: 700; color: #10b981; background: rgba(16, 185, 129, 0.15); padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(16, 185, 129, 0.3);">
+                      +40 XP
+                    </span>
+                  </div>
+                  <h3 class="next-meeting-title" style="margin-bottom: 4px;">
+                    Поиск вершины параболы (Vertex Form) — SAT Math & СОР/СОЧ
+                  </h3>
+                  <div style="font-size: 13px; color: var(--muted); line-height: 1.4;">
+                    Интерактивная практика в терминале. 70% шагов курирует Socratic AI; при 3 ошибках открывается передача микро-тикета ментору-волонтеру (+15 мин в сертификат).
+                  </div>
+                </div>
+              </div>
+              <div class="next-meeting-actions">
+                <a href="../practice" class="btn-meet-primary" style="background: #2563eb; border: 1px solid #3b82f6;">
+                  Студия практики →
+                </a>
+                <a href="../mentors/tickets" class="btn-meet-secondary" style="border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981;">
+                  Очередь волонтеров
+                </a>
               </div>
             </div>
 

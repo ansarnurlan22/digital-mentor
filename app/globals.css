@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #090a0f;
+  --foreground: #ffffff;
+  --surface: #0e121b;
+  --surface-raised: #131825;
+  --border: #1f2430;
+  --border-subtle: #2a2f3d;
+  --primary: #3b82f6;
+  --primary-hover: #60a5fa;
+  --primary-muted: rgba(59, 130, 246, 0.15);
+  --mint: #10b981;
+  --mint-bright: #34d399;
+  --mint-subtle: rgba(16, 185, 129, 0.12);
+  --muted: #94a3b8;
+  --muted-foreground: #64748b;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+}
+
+[data-theme="light"],
+.light {
+  --background: #ffffff;
+  --foreground: #090a0f;
+  --surface: #f8fafc;
+  --surface-raised: #ffffff;
+  --border: #e2e8f0;
+  --border-subtle: #cbd5e1;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-muted: rgba(37, 99, 235, 0.1);
+  --mint: #10b981;
+  --mint-bright: #059669;
+  --mint-subtle: rgba(16, 185, 129, 0.1);
+  --muted: #475569;
+  --muted-foreground: #64748b;
+  --danger: #dc2626;
+  --warning: #d97706;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Geist Sans", "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+/* Custom Minimalist Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+/* Strict Monospace Code Blocks */
+pre, code, kbd, samp {
+  font-family: "JetBrains Mono", "Geist Mono", "Menlo", monospace;
+}
+
+/* Subtle flat border utilities */
+.border-subtle {
+  border: 1px solid var(--border);
+}
+
+.border-subtle-hover:hover {
+  border-color: var(--border-subtle);
+}
+
+/* Linear-style pulse dot */
+.status-dot-pulse {
+  position: relative;
+}
+.status-dot-pulse::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 50%;
+  background: inherit;
+  opacity: 0.4;
+  animation: pulse 2s infinite ease-out;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.4; }
+  100% { transform: scale(2.2); opacity: 0; }
+}

@@ -4,6 +4,16 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '../../context/UserContext';
+import {
+  LayoutDashboard,
+  Code2,
+  Users,
+  BookOpen,
+  Calendar,
+  Award,
+  User,
+  LogOut,
+} from 'lucide-react';
 
 interface NavItem {
   name: string;
@@ -15,56 +25,37 @@ const NAV_ITEMS: NavItem[] = [
   {
     name: 'Дашборд',
     href: '/dashboard',
-    icon: (active) => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
-        <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
-        <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
-        <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
-      </svg>
-    ),
+    icon: (active) => <LayoutDashboard className="w-5 h-5" />,
+  },
+  {
+    name: 'Практика (70/30 AI)',
+    href: '/practice',
+    icon: (active) => <Code2 className="w-5 h-5 text-blue-400" />,
+  },
+  {
+    name: 'Очередь волонтеров',
+    href: '/mentors/tickets',
+    icon: (active) => <Users className="w-5 h-5 text-emerald-400" />,
   },
   {
     name: 'Курсы',
     href: '/courses',
-    icon: (active) => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-      </svg>
-    ),
+    icon: (active) => <BookOpen className="w-5 h-5" />,
   },
   {
     name: 'Расписание',
     href: '/schedule',
-    icon: (active) => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-        <line x1="16" y1="2" x2="16" y2="6"></line>
-        <line x1="8" y1="2" x2="8" y2="6"></line>
-        <line x1="3" y1="10" x2="21" y2="10"></line>
-      </svg>
-    ),
+    icon: (active) => <Calendar className="w-5 h-5" />,
   },
   {
     name: 'Достижения',
     href: '/achievements',
-    icon: (active) => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="8" r="6"></circle>
-        <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"></path>
-      </svg>
-    ),
+    icon: (active) => <Award className="w-5 h-5" />,
   },
   {
     name: 'Профиль',
     href: '/profile',
-    icon: (active) => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-        <circle cx="12" cy="7" r="4"></circle>
-      </svg>
-    ),
+    icon: (active) => <User className="w-5 h-5" />,
   },
 ];
 
@@ -81,47 +72,20 @@ export const Sidebar: React.FC = () => {
 
   return (
     <aside
-      style={{
-        width: '76px',
-        backgroundColor: '#0F172A',
-        borderRight: '1px solid rgba(148, 163, 184, 0.12)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        padding: '24px 0',
-        gap: '20px',
-        position: 'sticky',
-        top: 0,
-        height: '100vh',
-        boxSizing: 'border-box',
-        zIndex: 50,
-      }}
+      className="w-16 border-r border-[var(--border)] bg-[var(--surface)] flex flex-col items-center py-5 gap-4 sticky top-0 h-screen z-40 transition-colors"
       aria-label="Главная навигация"
     >
       {/* Brand Icon */}
       <Link
         href="/dashboard"
-        style={{
-          width: '44px',
-          height: '44px',
-          borderRadius: '13px',
-          background: 'linear-gradient(135deg, #0284C7 0%, #38BDF8 100%)',
-          display: 'grid',
-          placeItems: 'center',
-          fontWeight: 800,
-          fontSize: '20px',
-          color: '#FFFFFF',
-          textDecoration: 'none',
-          boxShadow: '0 0 20px rgba(56, 189, 248, 0.4)',
-          marginBottom: '16px',
-        }}
+        className="w-10 h-10 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm flex items-center justify-center transition-all shadow-subtle mb-2"
         title="Digital Mentor"
       >
-        D
+        DM
       </Link>
 
       {/* Nav List */}
-      <nav style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: 1, width: '100%', alignItems: 'center' }}>
+      <nav className="flex flex-col gap-2 flex-1 w-full items-center">
         {NAV_ITEMS.map((item) => {
           const active = isCurrentRoute(item.href);
           return (
@@ -129,31 +93,11 @@ export const Sidebar: React.FC = () => {
               key={item.href}
               href={item.href}
               title={item.name}
-              style={{
-                width: '46px',
-                height: '46px',
-                borderRadius: '14px',
-                display: 'grid',
-                placeItems: 'center',
-                backgroundColor: active ? '#0284C7' : 'transparent',
-                color: active ? '#FFFFFF' : '#94A3B8',
-                boxShadow: active ? '0 0 18px rgba(56, 189, 248, 0.45)' : 'none',
-                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                textDecoration: 'none',
-                position: 'relative',
-              }}
-              onMouseEnter={(e) => {
-                if (!active) {
-                  e.currentTarget.style.color = '#FFFFFF';
-                  e.currentTarget.style.backgroundColor = 'rgba(56, 189, 248, 0.08)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!active) {
-                  e.currentTarget.style.color = '#94A3B8';
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }
-              }}
+              className={`w-10 h-10 rounded-md flex items-center justify-center transition-all ${
+                active
+                  ? 'bg-[var(--surface-raised)] text-[var(--foreground)] border border-[var(--border-subtle)] shadow-subtle'
+                  : 'text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-raised)] border border-transparent'
+              }`}
             >
               {item.icon(active)}
             </Link>
@@ -170,32 +114,9 @@ export const Sidebar: React.FC = () => {
           }
         }}
         title="Выйти из аккаунта"
-        style={{
-          width: '44px',
-          height: '44px',
-          borderRadius: '12px',
-          background: 'transparent',
-          border: 'none',
-          color: '#64748B',
-          cursor: 'pointer',
-          display: 'grid',
-          placeItems: 'center',
-          transition: 'all 0.2s ease',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.color = '#EF4444';
-          e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.12)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.color = '#64748B';
-          e.currentTarget.style.backgroundColor = 'transparent';
-        }}
+        className="w-10 h-10 rounded-md flex items-center justify-center text-[var(--muted)] hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-          <polyline points="16 17 21 12 16 7"></polyline>
-          <line x1="21" y1="12" x2="9" y2="12"></line>
-        </svg>
+        <LogOut className="w-5 h-5" />
       </button>
     </aside>
   );
