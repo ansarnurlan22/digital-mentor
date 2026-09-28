@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
       message: `Волонтёрские часы (+${reqItem.duration} ч.) начислены ментору ${reqItem.mentorName}`,
       req: reqItem
     });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 400 });
+  } catch (e: unknown) {
+    return NextResponse.json({ error: (e instanceof Error ? e.message : String(e)) }, { status: 400 });
   }
 }

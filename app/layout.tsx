@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { ThemeProvider } from '../src/components/ThemeProvider';
+import { UserProvider } from '../src/context/UserContext';
 
 export const metadata: Metadata = {
-  title: 'Digital Mentor — Платформа 70/30 ИИ + Волонтеры',
-  description: 'Швейцарский минимализм, микро-тикеты и интерактивные карточки практики для подготовки к SAT Math и СОР/СОЧ.',
+  title: 'Digital Mentor — Академическая платформа',
+  description: 'Интерактивная практика, менторская поддержка и верифицированные волонтерские часы в строгом минималистичном стиле.',
 };
 
 export default function RootLayout({
@@ -14,9 +15,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ru" suppressHydrationWarning>
-      <body className="bg-[#090A0F] text-[#FFFFFF] antialiased min-h-screen font-sans">
-        <ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem={false}>
-          {children}
+      <body className="bg-[var(--background)] text-[var(--foreground)] antialiased min-h-screen font-sans">
+        <ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem>
+          <UserProvider>
+            {children}
+          </UserProvider>
         </ThemeProvider>
       </body>
     </html>

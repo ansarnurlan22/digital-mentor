@@ -1,3 +1,5 @@
+'use client';
+
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { SkillNode, MicroTicket } from '../supabase/types';
@@ -166,7 +168,7 @@ export const usePracticeStore = create<PracticeState>()(
           }
 
           return result;
-        } catch (err: any) {
+        } catch (err: unknown) {
           // Client-side fallback evaluation in case API route is offline
           const isBasicallyCorrect = userCode.includes('-b') && userCode.includes('2') && (userCode.includes('4*a') || userCode.includes('4 * a'));
           const nextAttempts = attempts + 1;
@@ -240,7 +242,7 @@ export const usePracticeStore = create<PracticeState>()(
 
           addLog('ai', `✓ Микро-тикет #${ticket.id.slice(0, 8)} успешно создан! Волонтер возьмет его в течение 2-5 минут (начисление 15 мин).`);
           return ticket;
-        } catch (e: any) {
+        } catch (e: unknown) {
           const localTicket: MicroTicket = {
             id: `ticket-local-${Date.now()}`,
             student_id: studentId || 'local-student',

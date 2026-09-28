@@ -94,7 +94,7 @@ export default function VerificationPage() {
             <div className="p-4 rounded-lg border border-[var(--border)] bg-[var(--background)] space-y-2 text-xs text-[var(--muted)] leading-relaxed">
               <div className="flex items-center gap-2 text-[var(--foreground)] font-semibold font-mono text-[11px] uppercase">
                 <FileText className="w-3.5 h-3.5 text-blue-400" />
-                <span>Методология начисления часов (70/30 Hybrid)</span>
+                <span>Методология начисления волонтёрских часов</span>
               </div>
               <p>
                 Часы начислены за разрешение академических микро-тикетов в рамках открытой образовательной платформы Digital Mentor. Каждый закрытый тикет представляет собой индивидуальный разбор математического решения ученика и тарифицируется по 15 минут академического волонтерского вклада.

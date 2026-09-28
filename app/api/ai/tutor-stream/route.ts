@@ -54,7 +54,7 @@ ${context?.userCode || 'Нет кода'}`;
     const answer = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Давай разберем текущий шаг. Какая часть формулы вызывает сомнение?';
 
     return NextResponse.json({ content: answer });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Tutor stream error:', error);
     return NextResponse.json(
       { content: 'Кажется, возникла задержка связи с ИИ-тьютором. Проверь свой код на соответствие приоритету математических операций.' },

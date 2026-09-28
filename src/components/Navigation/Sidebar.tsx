@@ -28,7 +28,7 @@ const NAV_ITEMS: NavItem[] = [
     icon: (active) => <LayoutDashboard className="w-5 h-5" />,
   },
   {
-    name: 'Практика (70/30 AI)',
+    name: 'Практика',
     href: '/practice',
     icon: (active) => <Code2 className="w-5 h-5 text-blue-400" />,
   },

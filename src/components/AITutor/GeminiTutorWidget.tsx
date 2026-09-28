@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -98,7 +100,7 @@ export const GeminiTutorWidget: React.FC<GeminiTutorWidgetProps> = ({
 
       setLessonData(json);
       setTopicInput('');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[Ment Widget Error]:', err);
       setError(err.message || 'Не удалось сформировать урок. Проверьте соединение.');
     } finally {

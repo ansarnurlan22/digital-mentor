@@ -20,14 +20,14 @@ interface UserContextType {
 }
 
 const DEFAULT_USER: UserProfile = {
-  name: 'Матвей',
-  role: 'Ученик',
+  name: 'Ансар Нурлан',
+  role: 'Ментор',
   grade: '11 класс',
-  subject: 'Алгебра',
-  email: 'matvey.student@gmail.com',
-  avatarText: 'МК',
-  volunteerHours: 24,
-  rating: 4.95,
+  subject: 'SAT Math',
+  email: 'ansarnurlan2@gmail.com',
+  avatarText: 'АН',
+  volunteerHours: 14.5,
+  rating: 4.98,
 };
 
 const UserContext = createContext<UserContextType>({

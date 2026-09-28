@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { Search, HelpCircle, Copy, Check } from 'lucide-react';
 import { ALGEBRA_THEORY_CHEATSHEET } from './mockTheoryData';

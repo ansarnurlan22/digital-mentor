@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
 
     const validationResult = TutorRequestSchema.safeParse(rawBody);
     if (!validationResult.success) {
-      const errorMessages = validationResult.error.errors.map((e) => e.message);
+      const errorMessages = validationResult.error.errors.map((e) => (e instanceof Error ? e.message : String(e)));
       return NextResponse.json(
         {
           error: 'Ошибка валидации входных данных.',
@@ -155,7 +155,7 @@ export async function POST(req: NextRequest) {
           const errText = await response.text();
           lastError = new Error(`Model ${model} returned ${response.status}: ${errText}`);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         lastError = err;
       }
     }
@@ -197,9 +197,9 @@ export async function POST(req: NextRequest) {
         'X-RateLimit-Remaining': String(rateLimit.remaining),
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Никогда не возвращаем сырые стеки ошибок или API-ключи клиенту
-    console.error('[API ERROR /api/tutor]:', error.message || error);
+    console.error('[API ERROR /api/tutor]:', (error instanceof Error ? error.message : String(error)) || error);
     return NextResponse.json(
       {
         error: 'Внутренняя ошибка сервиса AI-тьютора. Пожалуйста, повторите попытку позже.',

@@ -70,7 +70,7 @@ ${userCode}
     const parsed = JSON.parse(cleaned);
 
     return NextResponse.json(parsed);
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Card evaluator error:', err);
     return NextResponse.json({
       passed: false,

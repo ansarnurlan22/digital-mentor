@@ -156,8 +156,8 @@ export async function POST(request: NextRequest) {
     };
     mockUsers.unshift(newUser);
     return NextResponse.json({ success: true, user: newUser }, { status: 201 });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 400 });
+  } catch (e: unknown) {
+    return NextResponse.json({ error: (e instanceof Error ? e.message : String(e)) }, { status: 400 });
   }
 }
 
@@ -174,8 +174,8 @@ export async function PUT(request: NextRequest) {
     }
     mockUsers[index] = { ...mockUsers[index], ...body };
     return NextResponse.json({ success: true, user: mockUsers[index] });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 400 });
+  } catch (e: unknown) {
+    return NextResponse.json({ error: (e instanceof Error ? e.message : String(e)) }, { status: 400 });
   }
 }
 
