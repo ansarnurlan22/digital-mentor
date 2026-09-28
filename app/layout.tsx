@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { ThemeProvider } from '../src/components/ThemeProvider';
-import { AppLayout } from '../src/components/Layout/AppLayout';
 
 export const metadata: Metadata = {
   title: 'Digital Mentor — Платформа 70/30 ИИ + Волонтеры',
@@ -15,9 +14,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ru" suppressHydrationWarning>
-      <body className="bg-[var(--background)] text-[var(--foreground)] antialiased min-h-screen">
+      <body className="bg-[#090A0F] text-[#FFFFFF] antialiased min-h-screen font-sans">
         <ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem={false}>
-          <AppLayout>{children}</AppLayout>
+          {children}
         </ThemeProvider>
       </body>
     </html>

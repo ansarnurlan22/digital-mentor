@@ -2107,7 +2107,7 @@ function initHeaderControls() {
 // ============================================================
 function initSpaRouter() {
   function handleRoute(route, pushState = true) {
-    const validRoutes = ["dashboard", "courses", "schedule", "achievements", "profile", "admin"];
+    const validRoutes = ["dashboard", "courses", "schedule", "achievements", "profile", "admin", "practice", "mentor-queue", "certificate"];
     const targetRoute = validRoutes.includes(route) ? route : "dashboard";
 
     // 0. Контроль доступа и безопасность (RBAC Middleware):
@@ -2120,7 +2120,6 @@ function initSpaRouter() {
           `403 Forbidden: Доступ запрещён. Вы авторизованы со статусом «${getUserRole()}». Раздел администратора доступен исключительно администраторам платформы.`,
           "error"
         );
-        // Неавторизованных пользователей или обычных учеников/менторов перенаправляем на / (dashboard)
         handleRoute("dashboard", pushState);
         return;
       }
@@ -2146,6 +2145,21 @@ function initSpaRouter() {
       item.classList.toggle("is-active", isCurrent);
     });
 
+    // 3.1. Подсвечиваем активную вкладку Dev Bar (Role Switcher)
+    document.querySelectorAll(".btn-dev-tab").forEach((tab) => {
+      const devRole = tab.getAttribute("data-dev-role");
+      const isMatch =
+        (targetRoute === "practice" && devRole === "student") ||
+        (targetRoute === "mentor-queue" && devRole === "mentor") ||
+        (targetRoute === "certificate" && devRole === "verifier");
+      tab.style.background = isMatch
+        ? devRole === "mentor"
+          ? "#10B981"
+          : "#2563EB"
+        : "transparent";
+      tab.style.color = isMatch ? "#FFFFFF" : "#94A3B8";
+    });
+
     // 4. Обновляем данные страниц при переходе
     if (targetRoute === "profile") {
       renderProfilePage();
@@ -2160,6 +2174,12 @@ function initSpaRouter() {
       if (typeof renderAdminDashboard === "function") {
         renderAdminDashboard();
       }
+    } else if (targetRoute === "practice") {
+      if (typeof renderPracticeView === "function") renderPracticeView();
+    } else if (targetRoute === "mentor-queue") {
+      if (typeof renderMentorQueueView === "function") renderMentorQueueView();
+    } else if (targetRoute === "certificate") {
+      if (typeof renderCertificateView === "function") renderCertificateView();
     }
 
     // 5. Обновляем URL в адресной строке без перезагрузки всей страницы
@@ -2176,13 +2196,13 @@ function initSpaRouter() {
     const hash = window.location.hash.replace(/^#\/?/, "").trim();
     if (hash) {
       const clean = hash.split("/")[0].split("?")[0];
-      if (["dashboard", "courses", "schedule", "achievements", "profile", "admin"].includes(clean)) {
+      if (["dashboard", "courses", "schedule", "achievements", "profile", "admin", "practice", "mentor-queue", "certificate"].includes(clean)) {
         return clean;
       }
     }
     const params = new URLSearchParams(window.location.search);
     const p = params.get("page");
-    if (p && ["dashboard", "courses", "schedule", "achievements", "profile", "admin"].includes(p)) {
+    if (p && ["dashboard", "courses", "schedule", "achievements", "profile", "admin", "practice", "mentor-queue", "certificate"].includes(p)) {
       return p;
     }
     return "dashboard";
@@ -2208,6 +2228,381 @@ function initSpaRouter() {
 
   // Запуск начального роута
   handleRoute(getRouteFromUrl(), false);
+}
+
+// ============================================================
+// 70/30 HYBRID AI & VOLUNTEERS ENGINE (SHARED REACTIVE STATE)
+// ============================================================
+const SHARED_STORE_KEY = "digital_mentor_shared_state_v2";
+
+function getSharedState() {
+  try {
+    const raw = localStorage.getItem(SHARED_STORE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.state) return parsed.state;
+      return parsed;
+    }
+  } catch (e) {}
+  return {
+    hearts: 3,
+    xp: 120,
+    streak: 5,
+    activeLessonStep: 1,
+    volunteerMinutes: 75,
+    resolvedTicketsCount: 5,
+    tickets: [
+      {
+        id: "TK-842",
+        studentName: "Алихан Сейткали (10 класс)",
+        taskTitle: "Поиск вершины параболы (Vertex Form) — SAT Math",
+        codeSnippet: "def find_vertex(a, b, c):\n    h = -b / 2 * a\n    k = c - (b**2) / (4*a)\n    return (h, k)",
+        question: "Почему при a=1, b=-2 тесты возвращают (-4.0, 1.0) вместо правильного h=1.0?",
+        aiHint: "Socratic AI: Приоритет операций в Python. Операторы / и * равноправны. Скобки (2*a) обязательны.",
+        status: "open",
+        timestamp: "5 минут назад"
+      },
+      {
+        id: "TK-841",
+        studentName: "Дана Кенес (11 класс)",
+        taskTitle: "Оптимизация траектории (Capstone Boss)",
+        codeSnippet: "import math\ndef trajectory(v0, deg):\n    return (v0**2 * math.sin(deg)) / 9.8",
+        question: "Функция math.sin ожидает радианы, а я передаю градусы. Как конвертировать?",
+        aiHint: "Socratic AI: Используйте math.radians(deg).",
+        status: "claimed",
+        timestamp: "18 минут назад"
+      },
+      {
+        id: "TK-840",
+        studentName: "Тимур Ибраев (9 класс)",
+        taskTitle: "Разложение на множители СОР/СОЧ",
+        codeSnippet: "def factorize(a, b, c):\n    d = b**2 - 4*a*c\n    return (-b + d**0.5)/(2*a), (-b - d**0.5)/(2*a)",
+        question: "Как обработать случай, когда дискриминант меньше нуля?",
+        aiHint: "Socratic AI: Добавьте проверку `if d < 0: return None`.",
+        status: "resolved",
+        mentorResponse: "Отличный вопрос! Добавь условие `if d < 0:` и возвращай пустой кортеж `()` или `None`, чтобы избежать ошибки комплексных чисел в float.",
+        timestamp: "42 минуты назад"
+      }
+    ]
+  };
+}
+
+function saveSharedState(st) {
+  try {
+    localStorage.setItem(SHARED_STORE_KEY, JSON.stringify({ state: st, version: 0 }));
+  } catch (e) {}
+}
+
+function renderPracticeView() {
+  const st = getSharedState();
+  const heartsContainer = document.getElementById("practice-hearts-container");
+  const heartsText = document.getElementById("practice-hearts-text");
+  const xpVal = document.getElementById("practice-xp-val");
+  const stepNum = document.getElementById("practice-step-num");
+  const escalationBanner = document.getElementById("practice-escalation-banner");
+
+  if (xpVal) xpVal.textContent = st.xp || 120;
+  if (stepNum) stepNum.textContent = st.activeLessonStep || 1;
+  if (heartsText) heartsText.textContent = `${st.hearts}/3 жизней`;
+
+  for (let i = 1; i <= 3; i++) {
+    const h = document.getElementById(`heart-${i}`);
+    if (h) {
+      h.style.opacity = i <= st.hearts ? "1" : "0.2";
+      h.style.transform = i <= st.hearts ? "scale(1)" : "scale(0.85)";
+    }
+  }
+
+  if (escalationBanner) {
+    escalationBanner.style.display = st.hearts <= 1 ? "block" : "none";
+  }
+}
+
+function renderMentorQueueView() {
+  const st = getSharedState();
+  const feed = document.getElementById("mentor-tickets-feed");
+  const hoursVal = document.getElementById("mentor-stat-hours");
+  const countVal = document.getElementById("mentor-stat-tickets-count");
+
+  if (hoursVal) hoursVal.textContent = `${(st.volunteerMinutes / 60).toFixed(1)} ч`;
+  if (countVal) countVal.textContent = st.resolvedTicketsCount || 5;
+
+  // Update header badge
+  const openCount = (st.tickets || []).filter((t) => t.status === "open").length;
+  const badge = document.getElementById("dev-open-tickets-badge");
+  if (badge) {
+    badge.textContent = openCount;
+    badge.style.display = openCount > 0 ? "inline-block" : "none";
+  }
+
+  if (!feed) return;
+  feed.innerHTML = "";
+
+  (st.tickets || []).forEach((t) => {
+    const card = document.createElement("div");
+    card.style.background = "#0E121B";
+    card.style.border = "1px solid #1F2430";
+    card.style.borderRadius = "12px";
+    card.style.padding = "20px";
+    card.style.display = "flex";
+    card.style.flexDirection = "column";
+    card.style.gap = "14px";
+
+    const isOpen = t.status === "open";
+    const isClaimed = t.status === "claimed";
+    const isResolved = t.status === "resolved";
+
+    const statusBadge = isOpen
+      ? '<span style="background: rgba(245, 158, 11, 0.15); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.3); font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; font-family: monospace;">Ожидает волонтера</span>'
+      : isClaimed
+      ? '<span style="background: rgba(59, 130, 246, 0.15); color: #3B82F6; border: 1px solid rgba(59, 130, 246, 0.3); font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; font-family: monospace;">В работе</span>'
+      : '<span style="background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; font-family: monospace;">✓ Решено</span>';
+
+    card.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1F2430; padding-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
+          <span style="font-family: monospace; font-weight: 800; color: #FFF;">#${t.id}</span>
+          <span style="color: #64748B;">•</span>
+          <span style="font-weight: 700; color: #FFF;">${escapeHtml(t.studentName)}</span>
+          <span style="color: #64748B;">•</span>
+          <span style="color: #94A3B8; font-size: 11px; font-family: monospace;">${escapeHtml(t.taskTitle)}</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          ${statusBadge}
+          <span style="font-size: 12px; font-family: monospace; font-weight: 700; color: #10B981;">+15 мин</span>
+        </div>
+      </div>
+      <div>
+        <div style="font-size: 10px; font-family: monospace; text-transform: uppercase; color: #64748B; margin-bottom: 4px;">Вопрос ученика:</div>
+        <div style="font-size: 13px; color: #FFF; font-weight: 500; line-height: 1.4;">«${escapeHtml(t.question)}»</div>
+      </div>
+      <div style="background: #131825; border: 1px solid #1F2430; border-radius: 8px; padding: 10px; font-size: 11px; color: #94A3B8;">
+        <span style="color: #38BDF8; font-family: monospace; font-weight: 700;">Диагностика Socratic AI:</span> ${escapeHtml(t.aiHint || "")}
+      </div>
+      <div>
+        <div style="font-size: 10px; font-family: monospace; text-transform: uppercase; color: #64748B; margin-bottom: 4px;">Код ученика:</div>
+        <pre style="background: #090A0F; border: 1px solid #1F2430; border-radius: 6px; padding: 10px; font-family: monospace; font-size: 11px; color: #CBD5E1; margin: 0; overflow-x: auto;">${escapeHtml(t.codeSnippet || "")}</pre>
+      </div>
+      ${isResolved && t.mentorResponse ? `
+        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 12px; font-size: 12px;">
+          <div style="font-family: monospace; font-weight: 700; color: #10B981; margin-bottom: 4px;">Ответ ментора-волонтера (Ансар Нурлан):</div>
+          <div style="color: #FFF;">${escapeHtml(t.mentorResponse)}</div>
+        </div>
+      ` : ""}
+      <div style="display: flex; justify-content: flex-end; gap: 10px; padding-top: 6px;">
+        ${isOpen ? `
+          <button type="button" class="btn-claim-ticket" data-ticket-id="${t.id}" style="padding: 6px 14px; background: #2563EB; border: none; border-radius: 6px; color: #FFF; font-size: 12px; font-weight: 700; cursor: pointer;">
+            Взять тикет в работу
+          </button>
+        ` : ""}
+        ${isClaimed ? `
+          <button type="button" class="btn-resolve-ticket" data-ticket-id="${t.id}" style="padding: 6px 14px; background: #10B981; border: none; border-radius: 6px; color: #000; font-size: 12px; font-weight: 800; cursor: pointer;">
+            Ответить и начислить 15 мин
+          </button>
+        ` : ""}
+      </div>
+    `;
+
+    feed.appendChild(card);
+  });
+
+  // Bind actions
+  feed.querySelectorAll(".btn-claim-ticket").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-ticket-id");
+      const s = getSharedState();
+      s.tickets = s.tickets.map((x) => (x.id === id ? { ...x, status: "claimed" } : x));
+      saveSharedState(s);
+      renderMentorQueueView();
+      if (typeof showToast === "function") showToast(`Тикет #${id} взят вами в работу!`, "info");
+    });
+  });
+
+  feed.querySelectorAll(".btn-resolve-ticket").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-ticket-id");
+      const answer = prompt(
+        "Напишите пояснение ошибки для ученика:\n(После отправки вам будет начислено 15 минут в официальный сертификат)",
+        "Привет! Ошибка в приоритете операций: выражение h = -b / 2 * a выполняет деление на 2, а потом умножение на a. Обязательно изолируй знаменатель: h = -b / (2 * a)."
+      );
+      if (answer && answer.trim()) {
+        const s = getSharedState();
+        s.tickets = s.tickets.map((x) =>
+          x.id === id ? { ...x, status: "resolved", mentorResponse: answer.trim() } : x
+        );
+        s.volunteerMinutes = (s.volunteerMinutes || 75) + 15;
+        s.resolvedTicketsCount = (s.resolvedTicketsCount || 5) + 1;
+        saveSharedState(s);
+        renderMentorQueueView();
+        if (typeof showToast === "function") {
+          showToast(`✓ Тикет #${id} решен! Вам начислено +15 минут в сертификат верификации.`, "success");
+        }
+      }
+    });
+  });
+}
+
+function renderCertificateView() {
+  const st = getSharedState();
+  const hrs = document.getElementById("cert-hours-val");
+  const tkts = document.getElementById("cert-tickets-val");
+  if (hrs) hrs.textContent = `${(st.volunteerMinutes / 60).toFixed(1)} ч`;
+  if (tkts) tkts.textContent = `${st.volunteerMinutes} мин (${st.resolvedTicketsCount} тикетов)`;
+}
+
+// Инициализация обработчиков 70/30 студии практики и Dev Bar
+function initHybridPracticeEngine() {
+  // 1. Dev Bar Switcher
+  const btnDevStudent = document.getElementById("btn-dev-tab-student");
+  const btnDevMentor = document.getElementById("btn-dev-tab-mentor");
+  const btnDevVerifier = document.getElementById("btn-dev-tab-verifier");
+
+  if (btnDevStudent && !btnDevStudent.dataset.bound) {
+    btnDevStudent.dataset.bound = "true";
+    btnDevStudent.addEventListener("click", () => {
+      window.location.hash = "#/practice";
+    });
+  }
+
+  if (btnDevMentor && !btnDevMentor.dataset.bound) {
+    btnDevMentor.dataset.bound = "true";
+    btnDevMentor.addEventListener("click", () => {
+      window.location.hash = "#/mentor-queue";
+    });
+  }
+
+  if (btnDevVerifier && !btnDevVerifier.dataset.bound) {
+    btnDevVerifier.dataset.bound = "true";
+    btnDevVerifier.addEventListener("click", () => {
+      window.location.hash = "#/certificate";
+    });
+  }
+
+  // 2. Practice Code Run Button
+  const btnRun = document.getElementById("btn-run-practice-code");
+  const btnResetCode = document.getElementById("btn-reset-practice-code");
+  const codeInput = document.getElementById("practice-code-input");
+  const terminalBody = document.getElementById("practice-terminal-body");
+  const btnClearTerm = document.getElementById("btn-clear-terminal");
+  const btnOpenModal = document.getElementById("btn-open-ticket-modal");
+
+  function appendTerminal(text, color = "#94A3B8") {
+    if (!terminalBody) return;
+    const line = document.createElement("div");
+    line.style.color = color;
+    line.textContent = `[${new Date().toLocaleTimeString("ru-RU", { minute: "2-digit", second: "2-digit" })}] ${text}`;
+    terminalBody.appendChild(line);
+    terminalBody.scrollTop = terminalBody.scrollHeight;
+  }
+
+  if (btnClearTerm && !btnClearTerm.dataset.bound) {
+    btnClearTerm.dataset.bound = "true";
+    btnClearTerm.addEventListener("click", () => {
+      if (terminalBody) terminalBody.innerHTML = "";
+    });
+  }
+
+  if (btnResetCode && !btnResetCode.dataset.bound) {
+    btnResetCode.dataset.bound = "true";
+    btnResetCode.addEventListener("click", () => {
+      if (codeInput) {
+        codeInput.value = `def find_vertex(a, b, c):\n    # Задача: найти координаты вершины (h, k)\n    # Формулы: h = -b / (2*a), k = c - b^2 / (4*a)\n    h = -b / 2 * a    # Внимание: здесь скрыта ошибка приоритета!\n    k = c - (b**2) / (4*a)\n    return (h, k)`;
+      }
+      const st = getSharedState();
+      st.hearts = 3;
+      saveSharedState(st);
+      renderPracticeView();
+      appendTerminal("Код сброшен к начальному состоянию с ошибкой приоритета.", "#38BDF8");
+    });
+  }
+
+  if (btnRun && !btnRun.dataset.bound) {
+    btnRun.dataset.bound = "true";
+    btnRun.addEventListener("click", () => {
+      const code = codeInput ? codeInput.value : "";
+      appendTerminal("$ python3 -m test_runner --assert-math", "#FFF");
+
+      const hasPriorityBug =
+        code.includes("-b / 2 * a") ||
+        code.includes("-b/2*a") ||
+        code.includes("h=-b/2*a");
+
+      const hasCorrectDenominator =
+        code.includes("-b / (2 * a)") ||
+        code.includes("-b / (2*a)") ||
+        code.includes("-b/(2*a)") ||
+        code.includes("-(b) / (2 * a)");
+
+      const st = getSharedState();
+
+      if (hasPriorityBug && !hasCorrectDenominator) {
+        st.hearts = Math.max(0, (st.hearts || 3) - 1);
+        saveSharedState(st);
+        renderPracticeView();
+
+        appendTerminal("✗ Test Failed: find_vertex(a=2, b=4, c=5) => Вернул (-4.0, 3.0), Ожидалось (-1.0, 3.0)", "#F43F5E");
+        appendTerminal("Socratic AI (70%): Обратите внимание на порядок действий! В Python выражение -b / 2 * a вычисляется как (-b / 2) * a. Знаменатель 2*a необходимо взять в скобки: (2 * a).", "#38BDF8");
+
+        if (st.hearts <= 0) {
+          appendTerminal("⚡ Все 3 жизни исчерпаны! Активировано 30% волонтерское звено. Рекомендуется отправить микро-тикет ментору.", "#F59E0B");
+          if (typeof showToast === "function") {
+            showToast("Жизни исчерпаны! Передайте тикет в очередь волонтеров (+15 мин ментору).", "error");
+          }
+        }
+      } else if (hasCorrectDenominator) {
+        st.xp = (st.xp || 120) + 40;
+        st.hearts = 3;
+        saveSharedState(st);
+        renderPracticeView();
+
+        appendTerminal("✓ Test 1: find_vertex(1, -2, -3) => (1.0, -4.0) PASSED", "#10B981");
+        appendTerminal("✓ Test 2: find_vertex(2, 4, 5) => (-1.0, 3.0) PASSED", "#10B981");
+        appendTerminal("Socratic AI (70%): Идеально! Скобки (2*a) восстановили правильный приоритет операций. Начислено +40 XP!", "#10B981");
+
+        if (typeof showToast === "function") {
+          showToast("✓ Все тесты пройдены! Начислено +40 XP!", "success");
+        }
+      } else {
+        st.hearts = Math.max(0, (st.hearts || 3) - 1);
+        saveSharedState(st);
+        renderPracticeView();
+        appendTerminal("✗ Ошибка: Проверьте формулу k = c - b²/(4a).", "#F43F5E");
+      }
+    });
+  }
+
+  // 3. Open Ticket Modal
+  if (btnOpenModal && !btnOpenModal.dataset.bound) {
+    btnOpenModal.dataset.bound = "true";
+    btnOpenModal.addEventListener("click", () => {
+      const q = prompt(
+        "Создание микро-тикета для ментора-волонтера:\n(Опишите в чем именно возникла сложность, ваш код будет прикреплен автоматически)",
+        "Почему при расчете h = -b / 2 * a вершина смещается? В формуле же написано минус b делить на два а."
+      );
+      if (q && q.trim()) {
+        const st = getSharedState();
+        const newId = `TK-${Math.floor(100 + Math.random() * 900)}`;
+        const newTicket = {
+          id: newId,
+          studentName: "Вы (Ученик)",
+          taskTitle: "Поиск вершины параболы (Vertex Form) — SAT Math",
+          codeSnippet: codeInput ? codeInput.value : "",
+          question: q.trim(),
+          aiHint: "Socratic AI: Ученик исчерпал жизни. Требуется помощь ментора по изолированию знаменателя (2*a).",
+          status: "open",
+          timestamp: "только что"
+        };
+        st.tickets = [newTicket, ...(st.tickets || [])];
+        saveSharedState(st);
+        renderPracticeView();
+        renderMentorQueueView();
+        appendTerminal(`✓ Микро-тикет #${newId} создан и отправлен в очередь волонтеров! Переключитесь в «Вид Ментора», чтобы увидеть его.`, "#10B981");
+        if (typeof showToast === "function") {
+          showToast(`✓ Микро-тикет #${newId} отправлен волонтерам! (+15 мин ментору за разбор)`, "success");
+        }
+      }
+    });
+  }
 }
 
 // Рендеринг и логика страницы профиля
@@ -2349,6 +2744,7 @@ async function initApp() {
 
   updateRoleUI();
   initSpaRouter();
+  initHybridPracticeEngine();
   initAdminDashboard();
   initProfilePage();
   initProgramFilters();

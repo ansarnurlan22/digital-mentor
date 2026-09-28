@@ -140,6 +140,19 @@
           </div>
 
           <div class="app-header-right">
+            <!-- Dev Bar / Role Switcher (70% AI / 30% Volunteers) -->
+            <div class="dev-role-switcher" id="dev-role-switcher" style="display: flex; align-items: center; gap: 4px; background: #0E121B; padding: 3px; border-radius: 8px; border: 1px solid #1F2430; margin-right: 8px;">
+              <button type="button" class="btn-dev-tab is-active" data-dev-role="student" id="btn-dev-tab-student" style="padding: 5px 10px; font-size: 11px; font-weight: 700; border-radius: 6px; border: none; cursor: pointer; background: #2563EB; color: #FFFFFF; transition: all 0.2s;">
+                ⚡ Ученик (Practice)
+              </button>
+              <button type="button" class="btn-dev-tab" data-dev-role="mentor" id="btn-dev-tab-mentor" style="padding: 5px 10px; font-size: 11px; font-weight: 700; border-radius: 6px; border: none; cursor: pointer; background: transparent; color: #94A3B8; transition: all 0.2s;">
+                👥 Ментор (Queue)
+              </button>
+              <button type="button" class="btn-dev-tab" data-dev-role="verifier" id="btn-dev-tab-verifier" style="padding: 5px 10px; font-size: 11px; font-weight: 700; border-radius: 6px; border: none; cursor: pointer; background: transparent; color: #94A3B8; transition: all 0.2s;">
+                🛡️ Сертификат
+              </button>
+            </div>
+
             <!-- Роль пользователя -->
             <div class="role-pill" id="role-pill">
               <span class="role-pill-dot"></span>
@@ -1206,6 +1219,233 @@
                     </tbody>
                   </table>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======================================================== -->
+          <!-- СТРАНИЦА: ПРАКТИКА (ВИД УЧЕНИКА - 70% ИИ / 30% ВОЛОНТЕРЫ)-->
+          <!-- ======================================================== -->
+          <div class="page-view" id="page-practice" data-page="practice" hidden>
+            <!-- Game Stats Bar -->
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #0E121B; border: 1px solid #1F2430; padding: 12px 20px; border-radius: 12px; margin-bottom: 20px;">
+              <div style="display: flex; align-items: center; gap: 12px; font-size: 13px;">
+                <span style="font-family: monospace; color: #94A3B8;">Шаг <strong style="color: #FFF;" id="practice-step-num">1</strong> из 3</span>
+                <span style="color: #2A2F3D;">|</span>
+                <span style="font-weight: 700; color: #FFFFFF;">Поиск вершины параболы (Vertex Form) — SAT Math</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 20px; font-size: 13px;">
+                <!-- Hearts -->
+                <div style="display: flex; align-items: center; gap: 4px;" id="practice-hearts-container">
+                  <span id="heart-1" style="color: #F43F5E; font-size: 16px;">❤️</span>
+                  <span id="heart-2" style="color: #F43F5E; font-size: 16px;">❤️</span>
+                  <span id="heart-3" style="color: #F43F5E; font-size: 16px;">❤️</span>
+                  <span style="font-size: 12px; font-family: monospace; color: #94A3B8; margin-left: 4px;" id="practice-hearts-text">3/3 жизней</span>
+                </div>
+                <!-- XP -->
+                <div style="font-family: monospace; font-weight: 800; color: #38BDF8;">
+                  ⚡ <span id="practice-xp-val">120</span> XP
+                </div>
+                <!-- Streak -->
+                <div style="font-family: monospace; font-weight: 700; color: #10B981;">
+                  🔥 5 дней
+                </div>
+              </div>
+            </div>
+
+            <!-- Workspace Split Grid -->
+            <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 20px; min-height: 540px;">
+              <!-- Left: Problem & Socratic AI -->
+              <div style="background: #0E121B; border: 1px solid #1F2430; border-radius: 14px; padding: 24px; display: flex; flex-direction: column; gap: 18px;">
+                <div>
+                  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                    <span style="font-size: 10px; font-family: monospace; font-weight: 800; text-transform: uppercase; background: rgba(56, 189, 248, 0.15); color: #38BDF8; padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.3);">
+                      Step 01 · Interactive
+                    </span>
+                    <span style="font-size: 12px; color: #64748B; font-family: monospace;">SAT Math & СОР/СОЧ</span>
+                  </div>
+                  <h3 style="margin: 0; font-size: 18px; font-weight: 800; color: #FFF;">
+                    Вычисление вершины параболы y = ax² + bx + c
+                  </h3>
+                </div>
+
+                <div style="background: #131825; border: 1px solid #1F2430; border-radius: 10px; padding: 16px; font-size: 13px; color: #CBD5E1; line-height: 1.5;">
+                  <p style="margin: 0 0 10px 0;">
+                    В стандартной форме квадратного уравнения вершина параболы (h, k) выражается через формулы:
+                  </p>
+                  <div style="background: #090A0F; border: 1px solid #1F2430; border-radius: 6px; padding: 10px; font-family: monospace; font-size: 12px; color: #38BDF8;">
+                    <div>h = -b / (2 * a)</div>
+                    <div style="color: #34D399; margin-top: 4px;">k = c - (b ** 2) / (4 * a)</div>
+                  </div>
+                  <p style="margin: 10px 0 0 0; color: #94A3B8; font-size: 12px;">
+                    Исправьте ошибку приоритета операций в коде и нажмите «Проверить решение».
+                  </p>
+                </div>
+
+                <!-- 70/30 Escalation Banner -->
+                <div id="practice-escalation-banner" style="display: none; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 10px; padding: 14px;">
+                  <div style="font-size: 12px; font-weight: 800; color: #10B981; font-family: monospace; text-transform: uppercase; margin-bottom: 4px;">
+                    ⚡ Активация 30% волонтерского звена
+                  </div>
+                  <p style="margin: 0 0 10px 0; font-size: 12px; color: #94A3B8; line-height: 1.4;">
+                    Жизни исчерпаны. Передайте задачу в очередь менторов — волонтер разберет ваш код и получит 15 минут в официальный сертификат.
+                  </p>
+                  <button type="button" id="btn-open-ticket-modal" style="width: 100%; padding: 8px 14px; background: #10B981; border: none; border-radius: 6px; color: #000; font-size: 12px; font-weight: 800; cursor: pointer;">
+                    Позвать ментора-волонтера (+15 мин ментору)
+                  </button>
+                </div>
+
+                <!-- Socratic AI Box -->
+                <div style="background: #131825; border: 1px solid #1F2430; border-radius: 10px; padding: 14px; margin-top: auto;">
+                  <div style="font-size: 12px; font-family: monospace; font-weight: 800; color: #38BDF8; margin-bottom: 4px;">
+                    ✨ Socratic AI Tutor (70% Интеллектуальный слой)
+                  </div>
+                  <div style="font-size: 12px; color: #94A3B8; line-height: 1.4;" id="practice-ai-hint-text">
+                    Подсказка: В языке Python деление / и умножение * имеют равный приоритет. Выражение -b / 2 * a выполняет деление на 2, а затем умножает результат на a. Знаменатель нужно изолировать в скобки: (2 * a).
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right: Code Editor & Terminal -->
+              <div style="background: #090A0F; border: 1px solid #1F2430; border-radius: 14px; display: flex; flex-direction: column; overflow: hidden;">
+                <!-- Editor Toolbar -->
+                <div style="background: #0E121B; border-bottom: 1px solid #1F2430; padding: 8px 16px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-family: monospace;">
+                  <div style="color: #94A3B8;">
+                    <span style="color: #FFF; font-weight: 700;">solution.py</span> | Python 3.11
+                  </div>
+                  <div style="display: flex; gap: 8px;">
+                    <button type="button" id="btn-reset-practice-code" style="padding: 4px 10px; background: transparent; border: 1px solid #1F2430; border-radius: 6px; color: #94A3B8; font-size: 11px; cursor: pointer;">
+                      Сброс
+                    </button>
+                    <button type="button" id="btn-run-practice-code" style="padding: 6px 14px; background: #2563EB; border: none; border-radius: 6px; color: #FFF; font-weight: 700; font-size: 12px; cursor: pointer;">
+                      ▶ Проверить решение
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Code Textarea -->
+                <textarea id="practice-code-input" spellcheck="false" style="flex: 1; min-height: 240px; background: #090A0F; color: #FFF; font-family: monospace; font-size: 12px; line-height: 1.6; padding: 16px; border: none; outline: none; resize: none;">def find_vertex(a, b, c):
+    # Задача: найти координаты вершины (h, k)
+    # Формулы: h = -b / (2*a), k = c - b^2 / (4*a)
+    h = -b / 2 * a    # Внимание: здесь скрыта ошибка приоритета!
+    k = c - (b**2) / (4*a)
+    return (h, k)</textarea>
+
+                <!-- Terminal -->
+                <div style="height: 200px; background: #0E121B; border-top: 1px solid #1F2430; display: flex; flex-direction: column;">
+                  <div style="background: #131825; border-bottom: 1px solid #1F2430; padding: 6px 16px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-family: monospace;">
+                    <span style="font-weight: 700; color: #FFF;">TERMINAL OUTPUT</span>
+                    <button type="button" id="btn-clear-terminal" style="background: none; border: none; color: #64748B; cursor: pointer; font-size: 11px;">
+                      Очистить
+                    </button>
+                  </div>
+                  <div id="practice-terminal-body" style="flex: 1; padding: 12px 16px; overflow-y: auto; font-family: monospace; font-size: 11px; line-height: 1.5; color: #94A3B8;">
+                    <div>[система] Digital Mentor Runtime v2.4 initialized. Socratic AI ready.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======================================================== -->
+          <!-- СТРАНИЦА: ОЧЕРЕДЬ ТИКЕТОВ (ВИД МЕНТОРА - 30% ВОЛОНТЕРЫ)  -->
+          <!-- ======================================================== -->
+          <div class="page-view" id="page-mentor-queue" data-page="mentor-queue" hidden>
+            <!-- Stats -->
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #0E121B; border: 1px solid #1F2430; padding: 24px; border-radius: 14px; margin-bottom: 24px;">
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background: #10B981;"></span>
+                  <span style="font-size: 11px; font-family: monospace; font-weight: 800; text-transform: uppercase; color: #10B981;">
+                    Волонтерское звено онлайн
+                  </span>
+                </div>
+                <h2 style="margin: 0 0 6px 0; font-size: 22px; font-weight: 800; color: #FFF;">
+                  Очередь микро-тикетов Digital Mentor
+                </h2>
+                <p style="margin: 0; font-size: 13px; color: #94A3B8; max-width: 600px;">
+                  Сюда попадают только сложные математические кейсы после 3 неудачных попыток ученика. За каждый закрытый тикет начисляется 15 минут в официальный сертификат.
+                </p>
+              </div>
+
+              <div style="display: flex; gap: 14px;">
+                <div style="background: #131825; border: 1px solid #1F2430; border-radius: 10px; padding: 12px 20px; text-align: center; min-width: 110px;">
+                  <div style="font-size: 22px; font-weight: 800; font-family: monospace; color: #10B981;" id="mentor-stat-hours">1.5 ч</div>
+                  <div style="font-size: 10px; font-family: monospace; text-transform: uppercase; color: #64748B;">Подтверждено</div>
+                </div>
+                <div style="background: #131825; border: 1px solid #1F2430; border-radius: 10px; padding: 12px 20px; text-align: center; min-width: 110px;">
+                  <div style="font-size: 22px; font-weight: 800; font-family: monospace; color: #38BDF8;" id="mentor-stat-tickets-count">5</div>
+                  <div style="font-size: 10px; font-family: monospace; text-transform: uppercase; color: #64748B;">Решено тикетов</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Feed -->
+            <div id="mentor-tickets-feed" style="display: flex; flex-direction: column; gap: 16px;">
+              <!-- Динамически заполняется через script.js -->
+            </div>
+          </div>
+
+          <!-- ======================================================== -->
+          <!-- СТРАНИЦА: ВЕРИФИКАЦИЯ СЕРТИФИКАТА                       -->
+          <!-- ======================================================== -->
+          <div class="page-view" id="page-certificate" data-page="certificate" hidden>
+            <div style="max-width: 640px; margin: 20px auto; background: #0E121B; border: 1px solid #1F2430; border-radius: 16px; padding: 32px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+              <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1F2430; padding-bottom: 20px; margin-bottom: 24px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #10B981; display: grid; place-items: center; font-size: 20px;">
+                    🛡️
+                  </div>
+                  <div>
+                    <h2 style="margin: 0; font-size: 17px; font-weight: 800; color: #FFF;">
+                      Официальный сертификат академического волонтера
+                    </h2>
+                    <div style="font-size: 11px; font-family: monospace; color: #94A3B8;">
+                      Digital Mentor Academic Registry
+                    </div>
+                  </div>
+                </div>
+                <span style="font-size: 11px; font-family: monospace; font-weight: 800; background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 4px 10px; border-radius: 999px;">
+                  Verified 100%
+                </span>
+              </div>
+
+              <div style="background: #131825; border: 1px solid #1F2430; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                  <div>
+                    <span style="font-size: 10px; font-family: monospace; text-transform: uppercase; color: #64748B;">Волонтер-наставник</span>
+                    <div style="font-size: 18px; font-weight: 800; color: #FFF; margin-top: 2px;">Ансар Нурлан</div>
+                    <div style="font-size: 12px; font-family: monospace; color: #38BDF8; margin-top: 2px;">Старший академический ментор (SAT Math & СОР/СОЧ)</div>
+                  </div>
+                  <div style="text-align: right;">
+                    <span style="font-size: 10px; font-family: monospace; text-transform: uppercase; color: #64748B;">Подтверждено</span>
+                    <div style="font-size: 24px; font-weight: 800; font-family: monospace; color: #10B981;" id="cert-hours-val">1.5 ч</div>
+                    <div style="font-size: 11px; font-family: monospace; color: #94A3B8;" id="cert-tickets-val">90 мин (6 тикетов)</div>
+                  </div>
+                </div>
+
+                <div style="border-top: 1px solid #1F2430; padding-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 11px; font-family: monospace;">
+                  <div>
+                    <span style="color: #64748B; display: block; font-size: 10px; text-transform: uppercase;">Идентификатор токена:</span>
+                    <span style="font-weight: 700; color: #FFF;">DM-8F3A29-2609</span>
+                  </div>
+                  <div>
+                    <span style="color: #64748B; display: block; font-size: 10px; text-transform: uppercase;">Статус:</span>
+                    <span style="font-weight: 700; color: #10B981;">Активен (SHA-256 Valid)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style="background: #090A0F; border: 1px solid #1F2430; border-radius: 10px; padding: 14px; font-size: 12px; color: #94A3B8; line-height: 1.5; margin-bottom: 20px;">
+                <div style="font-weight: 700; color: #FFF; font-family: monospace; margin-bottom: 4px;">
+                  Методология начисления часов (70% ИИ / 30% Волонтеры)
+                </div>
+                Каждый зарегистрированный час подтвержден разрешением сложных академических кейсов. 70% типовых ошибок отсекает Socratic AI. Каждый закрытый микро-тикет равен 15 минутам волонтерского вклада.
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-family: monospace; color: #64748B;">
+                <span>Криптографический реестр Astana Academic Hub</span>
+                <a href="#/mentor-queue" data-route="mentor-queue" style="color: #38BDF8; text-decoration: none; font-weight: 700;">К очереди тикетов →</a>
               </div>
             </div>
           </div>
