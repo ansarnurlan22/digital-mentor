@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Digital Mentor — IT-платформа курсов и практики</title>
+  <style>
+    :root {
+      --bg: #090A0F;
+      --surface: #0E121B;
+      --surface-raised: #131825;
+      --border: #1F2430;
+      --text: #FFFFFF;
+      --muted: #94A3B8;
+      --primary: #2563EB;
+      --primary-hover: #1D4ED8;
+      --success: #10B981;
+      --danger: #EF4444;
+    }
+    [data-theme="light"] {
+      --bg: #FFFFFF;
+      --surface: #F8FAFC;
+      --surface-raised: #FFFFFF;
+      --border: #E2E8F0;
+      --text: #090A0F;
+      --muted: #64748B;
+      --primary: #2563EB;
+      --primary-hover: #1D4ED8;
+      --success: #10B981;
+      --danger: #EF4444;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.15s, color 0.15s;
+    }
+    /* Header (48px fixed) */
+    header {
+      height: 48px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-badge {
+      width: 28px;
+      height: 28px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: var(--surface-raised);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: monospace;
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.05em;
+    }
+    .brand-title {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    nav {
+      display: flex;
+      gap: 6px;
+    }
+    .nav-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .nav-btn:hover {
+      color: var(--text);
+    }
+    .nav-btn.active {
+      background: var(--border);
+      color: var(--text);
+      font-weight: 600;
+    }
+    .settings-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface-raised);
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .settings-btn:hover {
+      color: var(--text);
+      border-color: var(--muted);
+    }
+    /* Main Content */
+    main {
+      flex: 1;
+      max-width: 760px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 32px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .tab-pane {
+      display: none;
+      flex-direction: column;
+      gap: 24px;
+      width: 100%;
+    }
+    .tab-pane.active {
+      display: flex;
+    }
+    /* Cards & Containers */
+    .card {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      border-radius: 8px;
+      padding: 20px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 640px) {
+      .grid-3 {
+        grid-template-columns: 1fr;
+      }
+      .brand-title {
+        display: none;
+      }
+    }
+    .course-card {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      border-radius: 8px;
+      padding: 16px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s;
+    }
+    .course-card:hover {
+      border-color: var(--muted);
+    }
+    .course-card.active {
+      border-color: var(--primary);
+      background: rgba(37, 99, 235, 0.1);
+    }
+    .course-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .course-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+    }
+    .badge-active {
+      font-size: 10px;
+      font-family: monospace;
+      color: var(--primary);
+      background: rgba(37, 99, 235, 0.15);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+    }
+    .course-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .course-desc {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+    /* Player */
+    .player-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+    }
+    .progress-bar-wrap {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .step-pill {
+      height: 6px;
+      border-radius: 999px;
+      transition: all 0.2s;
+    }
+    .theory-box {
+      border: 1px solid var(--border);
+      background: var(--surface-raised);
+      border-radius: 6px;
+      padding: 14px;
+      margin-bottom: 20px;
+    }
+    .theory-title {
+      font-size: 11px;
+      font-family: monospace;
+      text-transform: uppercase;
+      color: var(--primary);
+      font-weight: 700;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .theory-text {
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--text);
+    }
+    .question-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+    .code-box {
+      border: 1px solid var(--border);
+      background: #06070B;
+      border-radius: 6px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 12px;
+      color: #CBD5E1;
+      margin-bottom: 18px;
+      white-space: pre;
+      overflow-x: auto;
+    }
+    [data-theme="light"] .code-box {
+      background: #0F172A;
+      color: #E2E8F0;
+    }
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .option-item {
+      border: 1px solid var(--border);
+      background: var(--surface-raised);
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-size: 12px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .option-item:hover {
+      border-color: var(--muted);
+    }
+    .option-item.selected {
+      border-color: var(--primary);
+      background: rgba(37, 99, 235, 0.1);
+      font-weight: 600;
+    }
+    .option-item.correct {
+      border-color: var(--success);
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+      font-weight: 600;
+    }
+    .option-item.wrong {
+      border-color: var(--danger);
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+    }
+    .btn-main {
+      width: 100%;
+      background: var(--primary);
+      color: #FFFFFF;
+      border: none;
+      padding: 11px 16px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.15s;
+    }
+    .btn-main:hover {
+      background: var(--primary-hover);
+    }
+    .btn-main:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .btn-success {
+      background: var(--success);
+    }
+    .btn-success:hover {
+      background: #059669;
+    }
+    .ai-hint-box {
+      border: 1px solid var(--border);
+      background: #06070B;
+      border-radius: 6px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 12px;
+      color: #E2E8F0;
+      display: none;
+      margin-top: 14px;
+      line-height: 1.5;
+    }
+    [data-theme="light"] .ai-hint-box {
+      background: #0F172A;
+      color: #F8FAFC;
+    }
+    .ai-hint-box.show {
+      display: block;
+    }
+    .ai-label {
+      color: #38BDF8;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    /* Profile Screen */
+    .user-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .user-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 15px;
+      font-family: monospace;
+    }
+    .user-name {
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .user-sub {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: monospace;
+      margin-top: 2px;
+    }
+    .metric-val {
+      font-size: 24px;
+      font-weight: 700;
+      font-family: monospace;
+      margin: 4px 0 2px;
+    }
+    .ach-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 12px;
+    }
+    @media (max-width: 640px) {
+      .ach-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .ach-card {
+      border: 1px solid var(--border);
+      background: var(--surface-raised);
+      border-radius: 6px;
+      padding: 14px;
+    }
+    .ach-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    .ach-title {
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .ach-desc {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+      line-height: 1.3;
+    }
+    .progress-track {
+      width: 100%;
+      height: 6px;
+      background: var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: var(--primary);
+      transition: width 0.3s;
+    }
+    .progress-fill.done {
+      background: var(--success);
+    }
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 16px;
+    }
+    .modal-backdrop.open {
+      display: flex;
+    }
+    .modal-box {
+      width: 100%;
+      max-width: 420px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    }
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+    .theme-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .theme-btn {
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface-raised);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: center;
+    }
+    .theme-btn.active {
+      border-color: var(--primary);
+      background: rgba(37, 99, 235, 0.1);
+      color: var(--primary);
+      font-weight: 600;
+    }
+    .switch-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+    }
+    .btn-logout {
+      width: 100%;
+      border: 1px solid var(--danger);
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-logout:hover {
+      background: rgba(239, 68, 68, 0.2);
+    }
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #111827;
+      border: 1px solid var(--success);
+      color: var(--success);
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      display: none;
+      z-index: 200;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    }
+    .toast.show {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. Header (Navbar 48px fixed) -->
+  <header>
+    <div class="brand">
+      <div class="logo-badge">DM</div>
+      <div class="brand-title">Digital Mentor</div>
+    </div>
+
+    <nav>
+      <button class="nav-btn active" id="tab-btn-practice" onclick="switchTab('practice')">Курсы и практика</button>
+      <button class="nav-btn" id="tab-btn-profile" onclick="switchTab('profile')">Профиль</button>
+    </nav>
+
+    <button class="settings-btn" onclick="openModal()" title="Настройки">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+    </button>
+  </header>
+
+  <!-- 2. Main Content -->
+  <main>
+    <!-- TAB 1: Курсы и практика -->
+    <section class="tab-pane active" id="pane-practice">
+      <div>
+        <div style="font-size: 11px; font-family: monospace; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; letter-spacing: 0.05em;">
+          Выберите направление
+        </div>
+        <div class="grid-3" id="course-selector">
+          <!-- Python -->
+          <div class="course-card active" onclick="selectCourse('python')">
+            <div class="course-top">
+              <div class="course-icon">🐍</div>
+              <span class="badge-active">Активен</span>
+            </div>
+            <div class="course-name">Python</div>
+            <div class="course-desc">Синтаксис, структуры данных, функции и логика</div>
+          </div>
+          <!-- Web -->
+          <div class="course-card" onclick="selectCourse('web')">
+            <div class="course-top">
+              <div class="course-icon">🌐</div>
+            </div>
+            <div class="course-name">Web-разработка</div>
+            <div class="course-desc">HTML5, flexbox-верстка, селекторы и DOM-события</div>
+          </div>
+          <!-- Algo -->
+          <div class="course-card" onclick="selectCourse('algo')">
+            <div class="course-top">
+              <div class="course-icon">⚡</div>
+            </div>
+            <div class="course-name">Алгоритмика</div>
+            <div class="course-desc">Оценка O(n), бинарный поиск и базовые структуры</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Lesson Player -->
+      <div class="card" id="lesson-player">
+        <div class="player-header">
+          <div style="font-size: 12px; font-family: monospace; color: var(--primary); font-weight: 700;">
+            <span id="player-course-title">PYTHON</span>
+            <span style="color: var(--muted); margin: 0 4px;">/</span>
+            <span style="color: var(--muted);" id="player-step-label">Шаг 1 из 5</span>
+          </div>
+          <div class="progress-bar-wrap" id="step-indicators"></div>
+        </div>
+
+        <div class="theory-box">
+          <div class="theory-title">
+            <span>📖</span>
+            <span>Краткая теория</span>
+          </div>
+          <div class="theory-text" id="theory-text"></div>
+        </div>
+
+        <div class="question-title" id="question-text"></div>
+        <div class="code-box" id="code-box"></div>
+
+        <div class="options-list" id="options-container"></div>
+
+        <button class="btn-main" id="btn-submit" onclick="handleSubmitAnswer()">
+          <span>Проверить</span>
+        </button>
+
+        <div class="ai-hint-box" id="ai-hint-box">
+          <div class="ai-label">[ИИ-подсказка]:</div>
+          <div id="ai-hint-text"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: Профиль -->
+    <section class="tab-pane" id="pane-profile">
+      <!-- User info -->
+      <div class="card user-header">
+        <div class="user-avatar">АН</div>
+        <div>
+          <div class="user-name">Ансар Нурлан</div>
+          <div class="user-sub">Ученик · Уровень 4 (Senior Trainee) · ansarnurlan2@gmail.com</div>
+        </div>
+      </div>
+
+      <!-- 3 Metrics in a row -->
+      <div class="grid-3">
+        <div class="card">
+          <div style="font-size: 11px; font-family: monospace; text-transform: uppercase; color: var(--muted);">Опыт (XP)</div>
+          <div class="metric-val" id="metric-xp" style="color: var(--text);">1,550 XP</div>
+          <div style="font-size: 11px; color: var(--muted);">Накоплено за практику</div>
+        </div>
+        <div class="card">
+          <div style="font-size: 11px; font-family: monospace; text-transform: uppercase; color: var(--muted);">Ударный режим</div>
+          <div class="metric-val" style="color: #F59E0B;">🔥 7 дней</div>
+          <div style="font-size: 11px; color: var(--muted);">Ежедневная серия</div>
+        </div>
+        <div class="card">
+          <div style="font-size: 11px; font-family: monospace; text-transform: uppercase; color: var(--muted);">Пройдено шагов</div>
+          <div class="metric-val" id="metric-lessons" style="color: var(--success);">14</div>
+          <div style="font-size: 11px; color: var(--success); font-weight: 600;">Успешный темп</div>
+        </div>
+      </div>
+
+      <!-- Unified Achievements Grid -->
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 14px;">
+          <div style="font-size: 14px; font-weight: 600;">Все академические достижения</div>
+          <div style="font-size: 11px; font-family: monospace; color: var(--muted);">4 из 6 разблокировано</div>
+        </div>
+
+        <div class="ach-grid">
+          <div class="ach-card">
+            <div class="ach-top">
+              <div>
+                <div class="ach-title">Первый шаг</div>
+                <div class="ach-desc">Успешно решен первый интерактивный шаг на платформе</div>
+              </div>
+              <span style="font-size: 10px; font-family: monospace; color: var(--success); background: rgba(16,185,129,0.15); padding: 2px 6px; border-radius: 4px;">100%</span>
+            </div>
+            <div class="progress-track"><div class="progress-fill done" style="width: 100%;"></div></div>
+          </div>
+
+          <div class="ach-card">
+            <div class="ach-top">
+              <div>
+                <div class="ach-title">Ударный режим</div>
+                <div class="ach-desc">7 дней непрерывных занятий без пауз и пропусков</div>
+              </div>
+              <span style="font-size: 10px; font-family: monospace; color: var(--success); background: rgba(16,185,129,0.15); padding: 2px 6px; border-radius: 4px;">100%</span>
+            </div>
+            <div class="progress-track"><div class="progress-fill done" style="width: 100%;"></div></div>
+          </div>
+
+          <div class="ach-card">
+            <div class="ach-top">
+              <div>
+                <div class="ach-title">Мастер кода</div>
+                <div class="ach-desc">15 практических задач решены с первой попытки</div>
+              </div>
+              <span style="font-size: 10px; font-family: monospace; color: var(--muted);">12 / 15</span>
+            </div>
+            <div class="progress-track"><div class="progress-fill" style="width: 80%;"></div></div>
+          </div>
+
+          <div class="ach-card">
+            <div class="ach-top">
+              <div>
+                <div class="ach-title">Алгоритмист</div>
+                <div class="ach-desc">Освоение базовых структур данных и оценки O(n)</div>
+              </div>
+              <span style="font-size: 10px; font-family: monospace; color: var(--muted);">3 / 5</span>
+            </div>
+            <div class="progress-track"><div class="progress-fill" style="width: 60%;"></div></div>
+          </div>
+
+          <div class="ach-card">
+            <div class="ach-top">
+              <div>
+                <div class="ach-title">Спринтер</div>
+                <div class="ach-desc">5 верных ответов подряд без подсказок ИИ</div>
+              </div>
+              <span style="font-size: 10px; font-family: monospace; color: var(--success); background: rgba(16,185,129,0.15); padding: 2px 6px; border-radius: 4px;">100%</span>
+            </div>
+            <div class="progress-track"><div class="progress-fill done" style="width: 100%;"></div></div>
+          </div>
+
+          <div class="ach-card">
+            <div class="ach-top">
+              <div>
+                <div class="ach-title">Архитектор систем</div>
+                <div class="ach-desc">Успешное прохождение нескольких направлений</div>
+              </div>
+              <span style="font-size: 10px; font-family: monospace; color: var(--muted);">2 / 3</span>
+            </div>
+            <div class="progress-track"><div class="progress-fill" style="width: 67%;"></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 3. Modal: Settings -->
+  <div class="modal-backdrop" id="settings-modal" onclick="handleBackdropClick(event)">
+    <div class="modal-box">
+      <div class="modal-head">
+        <span style="font-size: 14px; font-weight: 600;">Настройки аккаунта</span>
+        <button style="background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px;" onclick="closeModal()">✕</button>
+      </div>
+
+      <div>
+        <div style="font-size: 11px; font-family: monospace; text-transform: uppercase; color: var(--muted); margin-bottom: 8px;">
+          Тема интерфейса
+        </div>
+        <div class="theme-grid">
+          <button class="theme-btn" id="btn-theme-light" onclick="setAppTheme('light')">Светлая</button>
+          <button class="theme-btn active" id="btn-theme-dark" onclick="setAppTheme('dark')">Тёмная</button>
+          <button class="theme-btn" id="btn-theme-system" onclick="setAppTheme('system')">Системная</button>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 12px; border-top: 1px solid var(--border); padding-top: 14px;">
+        <label class="switch-row">
+          <span>Звуковые эффекты</span>
+          <input type="checkbox" checked />
+        </label>
+        <label class="switch-row">
+          <span>Уведомления о прогрессе</span>
+          <input type="checkbox" checked />
+        </label>
+      </div>
+
+      <div style="border-top: 1px solid var(--border); padding-top: 14px;">
+        <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px;">Почта аккаунта:</div>
+        <div style="font-size: 12px; font-family: monospace; font-weight: 600; margin-bottom: 16px;">ansarnurlan2@gmail.com</div>
+        <button class="btn-logout" onclick="logout()">Выйти из аккаунта</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">+50 XP! Ответ абсолютно верен.</div>
+
+  <script>
+    const COURSES = {
+      python: {
+        title: "PYTHON",
+        steps: [
+          {
+            theory: "В Python функция print() выводит данные в стандартный поток вывода, а строки записываются в кавычках.",
+            question: "Какая строчка кода корректно выводит значение текстовой переменной в консоль?",
+            code: 'msg = "Привет, мир!"\n# Выберите верную команду вывода',
+            options: ['print(msg)', 'echo msg', 'console.log(msg)', 'System.out.println(msg)'],
+            correct: 0,
+            hint: "В Python для печати используется функция print(). Команды echo или console.log характерны для Bash и JS."
+          },
+          {
+            theory: "Списки в Python индексируются с нуля. Первый элемент всегда имеет индекс [0], а последний [-1].",
+            question: "Какой индекс укажет на первый элемент списка nums = [10, 20, 30]?",
+            code: "nums = [10, 20, 30]\nfirst = nums[?]",
+            options: ['nums[0]', 'nums[1]', 'nums.first()', 'nums[-1]'],
+            correct: 0,
+            hint: "Индексация в Python начинается с 0. Индекс 1 вернет второй элемент списка."
+          },
+          {
+            theory: "Цикл for i in range(n) выполняет блок кода ровно n раз, проходя числа от 0 до n-1.",
+            question: "Сколько раз суммарно выполнится блок кода цикла for i in range(5)?",
+            code: "for i in range(5):\n    process(i)",
+            options: ['5 раз (0, 1, 2, 3, 4)', '4 раза', '6 раз', 'Бесконечно'],
+            correct: 0,
+            hint: "range(5) генерирует 5 чисел: 0, 1, 2, 3, 4. Это ровно 5 итераций."
+          },
+          {
+            theory: "Для логического сравнения на равенство применяется оператор ==, а одинарный знак = присваивает значение.",
+            question: "Какое выражение проверяет, что переменная score равна 100?",
+            code: 'if score ? 100:\n    print("Максимум!")',
+            options: ['score == 100', 'score = 100', 'score === 100', 'score equals 100'],
+            correct: 0,
+            hint: "Оператор = присваивает значение. Для проверки на равенство в Python используется ==."
+          },
+          {
+            theory: "Функции объявляются ключевым словом def, а для возврата значения вызывающему коду используется return.",
+            question: "Какое ключевое слово передает результат работы функции обратно в программу?",
+            code: "def multiply(a, b):\n    ? a * b",
+            options: ['return', 'yield', 'export', 'send'],
+            correct: 0,
+            hint: "Директива return завершает выполнение функции и возвращает результат."
+          }
+        ]
+      },
+      web: {
+        title: "WEB-РАЗРАБОТКА",
+        steps: [
+          {
+            theory: "HTML формирует семантический каркас: тег <h1> определяет главный заголовок, а <p> — абзац текста.",
+            question: "Какой HTML-тег обозначает основной заголовок первого уровня документа?",
+            code: "<h1>Заголовок</h1>\n<p>Параграф</p>",
+            options: ['<h1>', '<heading>', '<header>', '<title>'],
+            correct: 0,
+            hint: "В спецификации HTML заголовки нумеруются от <h1> до <h6>."
+          },
+          {
+            theory: "CSS Flexbox позволяет гибко позиционировать блоки: justify-content: center центрирует по главной оси.",
+            question: "Какое свойство CSS отвечает за выравнивание элементов по главной оси во flex-контейнере?",
+            code: ".box {\n  display: flex;\n  justify-content: center;\n}",
+            options: ['justify-content: center;', 'align-content: middle;', 'text-align: center;', 'float: center;'],
+            correct: 0,
+            hint: "justify-content управляет распределением пространства вдоль главной оси flex-контейнера."
+          },
+          {
+            theory: "В CSS классы выбираются через точку (.card), а идентификаторы — через решетку (#hero).",
+            question: "Какой селектор стилизует блок с class='btn-primary'?",
+            code: "/* CSS правило */\n.btn-primary {\n  background: #2563EB;\n}",
+            options: ['.btn-primary', '#btn-primary', 'btn-primary', '*btn-primary'],
+            correct: 0,
+            hint: "Классы в CSS всегда начинаются с точки."
+          },
+          {
+            theory: "Атрибут href тега <a> указывает URL-адрес для перехода пользователя по ссылке.",
+            question: "Какой атрибут тега <a> задает целевой адрес ссылки?",
+            code: '<a href="https://digital-mentor.org">Открыть</a>',
+            options: ['href', 'src', 'link', 'to'],
+            correct: 0,
+            hint: "Для гиперссылок используется атрибут href (Hypertext Reference)."
+          },
+          {
+            theory: "Метод addEventListener в JavaScript регистрирует обработчик события на DOM-элементе.",
+            question: "Как подписаться на событие клика по кнопке в современном JavaScript?",
+            code: "button.addEventListener('click', handler);",
+            options: ["button.addEventListener('click', handler)", "button.attach('click', handler)", 'button.onClick(handler)', 'button.trigger(handler)'],
+            correct: 0,
+            hint: "Стандартный современный метод — addEventListener."
+          }
+        ]
+      },
+      algo: {
+        title: "АЛГОРИТМИКА",
+        steps: [
+          {
+            theory: "Сложность O(1) описывает операцию, время выполнения которой не зависит от объема входных данных.",
+            question: "Какова алгоритмическая сложность доступа к элементу массива по его индексу?",
+            code: "item = array[42]  # Индекс известен",
+            options: ['O(1)', 'O(n)', 'O(log n)', 'O(n²)'],
+            correct: 0,
+            hint: "Так как элементы расположены последовательно, доступ по индексу занимает константное время O(1)."
+          },
+          {
+            theory: "Бинарный поиск делит область поиска пополам на каждом шаге, требуя логарифмическое время O(log n).",
+            question: "Какое условие обязательно для работы классического бинарного поиска?",
+            code: "# Бинарный поиск mid = (l + r) // 2",
+            options: ['Массив должен быть отсортирован', 'Числа должны быть положительными', 'Длина массива — степень двойки', 'Без дубликатов'],
+            correct: 0,
+            hint: "Бинарный поиск опирается на порядок элементов, чтобы отсекать половину на каждом шаге."
+          },
+          {
+            theory: "Стек (Stack) работает по принципу LIFO (Last In, First Out): последний вошедший извлекается первым.",
+            question: "Какой принцип лежит в основе структуры «Стек»?",
+            code: "stack.append(x)  # push\nstack.pop()      # pop",
+            options: ['LIFO (Last In, First Out)', 'FIFO (First In, First Out)', 'Random Access', 'Round Robin'],
+            correct: 0,
+            hint: "Стек похож на стопку тарелок: снять можно только верхнюю (LIFO)."
+          },
+          {
+            theory: "Очередь (Queue) работает по принципу FIFO (First In, First Out): первый пришедший обрабатывается первым.",
+            question: "Какая структура данных обрабатывает элементы строго в порядке их поступления?",
+            code: "# Первый вошел — первый обслужен",
+            options: ['Очередь (Queue - FIFO)', 'Стек (Stack - LIFO)', 'Бинарное дерево', 'Граф'],
+            correct: 0,
+            hint: "Очередь работает по правилу First In, First Out."
+          },
+          {
+            theory: "Хеш-таблица сопоставляет ключи со значениями через хеш-функцию за среднее время O(1).",
+            question: "Какова средняя сложность поиска по ключу в хеш-таблице (dict в Python)?",
+            code: 'val = cache.get("key")',
+            options: ['O(1)', 'O(n)', 'O(log n)', 'O(n log n)'],
+            correct: 0,
+            hint: "Хеш-функция вычисляет индекс ячейки напрямую, давая O(1) в среднем."
+          }
+        ]
+      }
+    };
+
+    let activeCourse = 'python';
+    let currentStep = 0;
+    let selectedOption = null;
+    let isChecked = false;
+    let xp = 1550;
+    let lessons = 14;
+
+    function renderPlayer() {
+      const course = COURSES[activeCourse];
+      const step = course.steps[currentStep];
+
+      document.getElementById('player-course-title').innerText = course.title;
+      document.getElementById('player-step-label').innerText = `Шаг ${currentStep + 1} из ${course.steps.length}`;
+
+      // Indicators
+      const indContainer = document.getElementById('step-indicators');
+      indContainer.innerHTML = '';
+      course.steps.forEach((_, i) => {
+        const pill = document.createElement('span');
+        pill.className = 'step-pill';
+        if (i === currentStep) {
+          pill.style.width = '24px';
+          pill.style.background = 'var(--primary)';
+        } else if (i < currentStep) {
+          pill.style.width = '8px';
+          pill.style.background = 'var(--success)';
+        } else {
+          pill.style.width = '8px';
+          pill.style.background = 'var(--border)';
+        }
+        indContainer.appendChild(pill);
+      });
+
+      // Theory & Question
+      document.getElementById('theory-text').innerText = step.theory;
+      document.getElementById('question-text').innerText = step.question;
+      document.getElementById('code-box').innerText = step.code;
+
+      // Options
+      const optContainer = document.getElementById('options-container');
+      optContainer.innerHTML = '';
+      selectedOption = null;
+      isChecked = false;
+
+      step.options.forEach((opt, idx) => {
+        const item = document.createElement('div');
+        item.className = 'option-item';
+        item.innerHTML = `<span><strong style="color:var(--muted); margin-right:8px;">${String.fromCharCode(65+idx)}.</strong>${opt}</span>`;
+        item.onclick = () => {
+          if (isChecked && selectedOption === step.correct) return;
+          selectedOption = idx;
+          document.querySelectorAll('.option-item').forEach((el, i) => {
+            el.className = 'option-item' + (i === idx ? ' selected' : '');
+          });
+          document.getElementById('ai-hint-box').className = 'ai-hint-box';
+        };
+        optContainer.appendChild(item);
+      });
+
+      // Reset button
+      const btn = document.getElementById('btn-submit');
+      btn.className = 'btn-main';
+      btn.innerText = 'Проверить';
+      btn.onclick = handleSubmitAnswer;
+      document.getElementById('ai-hint-box').className = 'ai-hint-box';
+    }
+
+    function selectCourse(cId) {
+      activeCourse = cId;
+      currentStep = 0;
+      document.querySelectorAll('.course-card').forEach(el => el.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      renderPlayer();
+    }
+
+    function handleSubmitAnswer() {
+      if (selectedOption === null) return;
+      const step = COURSES[activeCourse].steps[currentStep];
+      const optEls = document.querySelectorAll('.option-item');
+
+      isChecked = true;
+      if (selectedOption === step.correct) {
+        optEls[selectedOption].className = 'option-item correct';
+        document.getElementById('ai-hint-box').className = 'ai-hint-box';
+
+        // Add XP
+        xp += 50;
+        lessons += 1;
+        document.getElementById('metric-xp').innerText = xp.toLocaleString() + ' XP';
+        document.getElementById('metric-lessons').innerText = lessons;
+
+        // Change button to Next
+        const btn = document.getElementById('btn-submit');
+        btn.className = 'btn-main btn-success';
+        btn.innerHTML = '<span>Следующий шаг →</span>';
+        btn.onclick = handleNextStep;
+
+        showToast('+50 XP! Ответ абсолютно верен.');
+      } else {
+        optEls[selectedOption].className = 'option-item wrong';
+        document.getElementById('ai-hint-text').innerText = step.hint;
+        document.getElementById('ai-hint-box').className = 'ai-hint-box show';
+      }
+    }
+
+    function handleNextStep() {
+      const course = COURSES[activeCourse];
+      if (currentStep + 1 < course.steps.length) {
+        currentStep++;
+      } else {
+        showToast('Поздравляем! Курс успешно завершен.');
+        currentStep = 0;
+      }
+      renderPlayer();
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+
+      document.getElementById('pane-' + tabId).classList.add('active');
+      document.getElementById('tab-btn-' + tabId).classList.add('active');
+    }
+
+    function setAppTheme(t) {
+      document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
+      document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('btn-theme-' + t).classList.add('active');
+    }
+
+    function openModal() {
+      document.getElementById('settings-modal').classList.add('open');
+    }
+    function closeModal() {
+      document.getElementById('settings-modal').classList.remove('open');
+    }
+    function handleBackdropClick(e) {
+      if (e.target.id === 'settings-modal') closeModal();
+    }
+    function logout() {
+      closeModal();
+      window.location.reload();
+    }
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.innerText = msg;
+      t.className = 'toast show';
+      setTimeout(() => { t.className = 'toast'; }, 3000);
+    }
+
+    // Init
+    renderPlayer();
+  </script>
+</body>
+</html>
