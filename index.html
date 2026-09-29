@@ -3,1085 +3,1431 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Digital Mentor — IT-платформа курсов и практики</title>
+  <title>Digital Mentor — Академическое наставничество · Астана</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #090A0F;
-      --surface: #0E121B;
-      --surface-raised: #131825;
-      --border: #1F2430;
-      --text: #FFFFFF;
-      --muted: #94A3B8;
-      --primary: #2563EB;
-      --primary-hover: #1D4ED8;
-      --success: #10B981;
-      --danger: #EF4444;
+      --bg-0: #080E1E;
+      --bg-1: #0B1226;
+      --card: #0F172A;
+      --card-hover: #131E38;
+      --card-active: #0E1D3D;
+      --stroke: rgba(148, 163, 184, 0.12);
+      --stroke-glow: rgba(56, 189, 248, 0.35);
+      --text: #ffffff;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-deep: #0284c7;
+      --mint: #10b981;
+      --mint-glow: rgba(16, 185, 129, 0.25);
+      --danger: #ef4444;
+      --radius: 18px;
     }
-    [data-theme="light"] {
-      --bg: #FFFFFF;
-      --surface: #F8FAFC;
-      --surface-raised: #FFFFFF;
-      --border: #E2E8F0;
-      --text: #090A0F;
-      --muted: #64748B;
-      --primary: #2563EB;
-      --primary-hover: #1D4ED8;
-      --success: #10B981;
-      --danger: #EF4444;
-    }
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
     }
+
     body {
-      background-color: var(--bg);
+      background-color: var(--bg-0);
       color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       min-height: 100vh;
       display: flex;
-      flex-direction: column;
-      transition: background-color 0.15s, color 0.15s;
+      overflow-x: hidden;
+      user-select: none;
     }
-    /* Header (48px fixed) */
-    header {
-      height: 48px;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 16px;
+
+    /* Layout Structure */
+    .app-sidebar {
+      width: 76px;
+      min-width: 76px;
+      height: 100vh;
       position: sticky;
       top: 0;
-      z-index: 50;
-    }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .logo-badge {
-      width: 28px;
-      height: 28px;
-      border-radius: 4px;
-      border: 1px solid var(--border);
-      background: var(--surface-raised);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: monospace;
-      font-weight: 700;
-      font-size: 11px;
-      letter-spacing: 0.05em;
-    }
-    .brand-title {
-      font-size: 14px;
-      font-weight: 600;
-      letter-spacing: -0.01em;
-    }
-    nav {
-      display: flex;
-      gap: 6px;
-    }
-    .nav-btn {
-      background: transparent;
-      border: none;
-      color: var(--muted);
-      padding: 6px 14px;
-      font-size: 12px;
-      font-weight: 500;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .nav-btn:hover {
-      color: var(--text);
-    }
-    .nav-btn.active {
-      background: var(--border);
-      color: var(--text);
-      font-weight: 600;
-    }
-    .settings-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      background: var(--surface-raised);
-      color: var(--muted);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .settings-btn:hover {
-      color: var(--text);
-      border-color: var(--muted);
-    }
-    /* Main Content */
-    main {
-      flex: 1;
-      max-width: 760px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 32px 16px;
+      left: 0;
+      background: var(--bg-1);
+      border-right: 1px solid var(--stroke);
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 22px 0;
+      z-index: 100;
     }
-    .tab-pane {
-      display: none;
-      flex-direction: column;
-      gap: 24px;
-      width: 100%;
-    }
-    .tab-pane.active {
-      display: flex;
-    }
-    /* Cards & Containers */
-    .card {
-      border: 1px solid var(--border);
-      background: var(--surface);
-      border-radius: 8px;
-      padding: 20px;
-    }
-    .grid-3 {
+
+    .brand-mark {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      place-items: center;
+      font-size: 20px;
+      font-weight: 800;
+      color: #ffffff;
+      text-decoration: none;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .brand-mark:hover {
+      transform: scale(1.06);
+    }
+
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      align-items: center;
+      width: 100%;
+    }
+
+    .nav-item {
+      position: relative;
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      background: transparent;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .nav-item:hover {
+      color: #ffffff;
+      background: rgba(148, 163, 184, 0.08);
+      border-color: var(--stroke);
+    }
+    .nav-item.is-active {
+      background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
+      color: #ffffff;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.45);
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+    .nav-item.is-ment {
+      color: #38bdf8;
+    }
+    .nav-item.is-ment.is-active {
+      background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+      box-shadow: 0 0 25px rgba(56, 189, 248, 0.6);
+      border-color: #38bdf8;
+    }
+
+    .tooltip {
+      position: absolute;
+      left: calc(100% + 14px);
+      background: #0F172A;
+      border: 1px solid var(--stroke);
+      color: #ffffff;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(-6px);
+      transition: all 0.2s ease;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+      z-index: 1000;
+    }
+    .nav-item:hover .tooltip {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .logout-btn {
+      color: #ef4444;
+    }
+    .logout-btn:hover {
+      background: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    /* Main Area */
+    .app-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      background: var(--bg-0);
+    }
+
+    /* Header */
+    .app-header {
+      height: 72px;
+      position: sticky;
+      top: 0;
+      z-index: 90;
+      background: rgba(8, 14, 30, 0.85);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--stroke);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+    }
+
+    .header-logo {
+      display: flex;
+      align-items: center;
       gap: 12px;
     }
-    @media (max-width: 640px) {
-      .grid-3 {
-        grid-template-columns: 1fr;
-      }
-      .brand-title {
-        display: none;
-      }
+    .header-logo-mark {
+      width: 36px;
+      height: 36px;
+      border-radius: 11px;
+      background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+      color: #ffffff;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 17px;
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.3);
     }
-    .course-card {
-      border: 1px solid var(--border);
-      background: var(--surface);
-      border-radius: 8px;
-      padding: 16px;
-      cursor: pointer;
-      text-align: left;
-      transition: all 0.15s;
-    }
-    .course-card:hover {
-      border-color: var(--muted);
-    }
-    .course-card.active {
-      border-color: var(--primary);
-      background: rgba(37, 99, 235, 0.1);
-    }
-    .course-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-    .course-icon {
-      width: 28px;
-      height: 28px;
-      border-radius: 4px;
-      border: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-    }
-    .badge-active {
-      font-size: 10px;
-      font-family: monospace;
-      color: var(--primary);
-      background: rgba(37, 99, 235, 0.15);
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-weight: 700;
-    }
-    .course-name {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text);
-    }
-    .course-desc {
-      font-size: 11px;
-      color: var(--muted);
-      margin-top: 4px;
-      line-height: 1.4;
-    }
-    /* Player */
-    .player-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 12px;
-      margin-bottom: 16px;
-    }
-    .progress-bar-wrap {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-    }
-    .step-pill {
-      height: 6px;
-      border-radius: 999px;
-      transition: all 0.2s;
-    }
-    .theory-box {
-      border: 1px solid var(--border);
-      background: var(--surface-raised);
-      border-radius: 6px;
-      padding: 14px;
-      margin-bottom: 20px;
-    }
-    .theory-title {
-      font-size: 11px;
-      font-family: monospace;
-      text-transform: uppercase;
-      color: var(--primary);
-      font-weight: 700;
-      margin-bottom: 6px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .theory-text {
-      font-size: 12px;
-      line-height: 1.5;
-      color: var(--text);
-    }
-    .question-title {
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 12px;
-      line-height: 1.4;
-    }
-    .code-box {
-      border: 1px solid var(--border);
-      background: #06070B;
-      border-radius: 6px;
-      padding: 12px;
-      font-family: monospace;
-      font-size: 12px;
-      color: #CBD5E1;
-      margin-bottom: 18px;
-      white-space: pre;
-      overflow-x: auto;
-    }
-    [data-theme="light"] .code-box {
-      background: #0F172A;
-      color: #E2E8F0;
-    }
-    .options-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    .option-item {
-      border: 1px solid var(--border);
-      background: var(--surface-raised);
-      border-radius: 6px;
-      padding: 12px 14px;
-      font-size: 12px;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .option-item:hover {
-      border-color: var(--muted);
-    }
-    .option-item.selected {
-      border-color: var(--primary);
-      background: rgba(37, 99, 235, 0.1);
-      font-weight: 600;
-    }
-    .option-item.correct {
-      border-color: var(--success);
-      background: rgba(16, 185, 129, 0.1);
-      color: var(--success);
-      font-weight: 600;
-    }
-    .option-item.wrong {
-      border-color: var(--danger);
-      background: rgba(239, 68, 68, 0.1);
-      color: var(--danger);
-    }
-    .btn-main {
-      width: 100%;
-      background: var(--primary);
-      color: #FFFFFF;
-      border: none;
-      padding: 11px 16px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: background 0.15s;
-    }
-    .btn-main:hover {
-      background: var(--primary-hover);
-    }
-    .btn-main:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-    .btn-success {
-      background: var(--success);
-    }
-    .btn-success:hover {
-      background: #059669;
-    }
-    .ai-hint-box {
-      border: 1px solid var(--border);
-      background: #06070B;
-      border-radius: 6px;
-      padding: 12px;
-      font-family: monospace;
-      font-size: 12px;
-      color: #E2E8F0;
-      display: none;
-      margin-top: 14px;
-      line-height: 1.5;
-    }
-    [data-theme="light"] .ai-hint-box {
-      background: #0F172A;
-      color: #F8FAFC;
-    }
-    .ai-hint-box.show {
+    .header-logo-text strong {
+      font-size: 17px;
+      color: #ffffff;
+      letter-spacing: -0.02em;
       display: block;
     }
-    .ai-label {
-      color: #38BDF8;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-    /* Profile Screen */
-    .user-header {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-    .user-avatar {
-      width: 48px;
-      height: 48px;
-      border-radius: 8px;
-      background: var(--surface-raised);
-      border: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 15px;
-      font-family: monospace;
-    }
-    .user-name {
-      font-size: 16px;
-      font-weight: 700;
-    }
-    .user-sub {
-      font-size: 12px;
+    .header-logo-text span {
+      font-size: 11.5px;
       color: var(--muted);
-      font-family: monospace;
-      margin-top: 2px;
+      display: block;
     }
-    .metric-val {
-      font-size: 24px;
-      font-weight: 700;
-      font-family: monospace;
-      margin: 4px 0 2px;
-    }
-    .ach-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      margin-top: 12px;
-    }
-    @media (max-width: 640px) {
-      .ach-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-    .ach-card {
-      border: 1px solid var(--border);
-      background: var(--surface-raised);
-      border-radius: 6px;
-      padding: 14px;
-    }
-    .ach-top {
+
+    .header-actions {
       display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 8px;
+      align-items: center;
+      gap: 14px;
     }
-    .ach-title {
-      font-size: 12px;
+
+    .role-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 14px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--stroke);
+      font-size: 12.5px;
       font-weight: 600;
+      color: var(--text);
     }
-    .ach-desc {
-      font-size: 11px;
+    .role-pill-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    .icon-btn {
+      position: relative;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--stroke);
       color: var(--muted);
-      margin-top: 2px;
-      line-height: 1.3;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: all 0.2s;
     }
-    .progress-track {
+    .icon-btn:hover {
+      background: rgba(15, 23, 42, 0.95);
+      color: #ffffff;
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+    .icon-dot {
+      position: absolute;
+      top: 9px;
+      right: 9px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    .header-avatar {
+      position: relative;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #1e293b 0%, #0f172A 100%);
+      border: 1.5px solid rgba(56, 189, 248, 0.4);
+      color: #38bdf8;
+      font-weight: 700;
+      font-size: 13px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .header-avatar:hover {
+      border-color: #38bdf8;
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.35);
+    }
+    .avatar-status {
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--mint);
+      border: 2px solid var(--bg-0);
+    }
+
+    /* Content Area */
+    .main-viewport {
+      max-width: 1380px;
       width: 100%;
-      height: 6px;
-      background: var(--border);
-      border-radius: 999px;
-      overflow: hidden;
-      margin-top: 8px;
+      margin: 0 auto;
+      padding: 36px 40px 80px;
+      flex: 1;
     }
-    .progress-fill {
-      height: 100%;
-      border-radius: 999px;
-      background: var(--primary);
-      transition: width 0.3s;
-    }
-    .progress-fill.done {
-      background: var(--success);
-    }
-    /* Modal */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(4px);
+
+    /* View Panes */
+    .view-pane {
       display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      padding: 16px;
     }
-    .modal-backdrop.open {
-      display: flex;
+    .view-pane.active {
+      display: block;
+      animation: fadeIn 0.25s ease-out;
     }
-    .modal-box {
-      width: 100%;
-      max-width: 420px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 24px;
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Dashboard Elements */
+    .dash-hero {
+      margin-bottom: 32px;
+    }
+    .sat-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    .dash-hero h1 {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+    .dash-hero p {
+      font-size: 14px;
+      color: var(--muted);
+      max-width: 720px;
+      line-height: 1.5;
+    }
+
+    /* 4 Stat Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: 18px;
+      padding: 22px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      gap: 4px;
+      transition: border-color 0.2s;
     }
-    .modal-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 12px;
+    .stat-card:hover {
+      border-color: rgba(56, 189, 248, 0.35);
     }
-    .theme-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-    .theme-btn {
-      padding: 8px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      background: var(--surface-raised);
+    .stat-label {
+      font-size: 12px;
       color: var(--muted);
-      font-size: 11px;
       font-weight: 500;
-      cursor: pointer;
-      text-align: center;
     }
-    .theme-btn.active {
-      border-color: var(--primary);
-      background: rgba(37, 99, 235, 0.1);
-      color: var(--primary);
+    .stat-val {
+      font-size: 26px;
+      font-weight: 800;
+      color: #38bdf8;
+      letter-spacing: -0.02em;
+    }
+    .stat-note {
+      font-size: 11.5px;
+      color: #34d399;
       font-weight: 600;
     }
-    .switch-row {
+
+    /* Next Meeting Card */
+    .next-meeting-card {
+      background: linear-gradient(135deg, rgba(14, 29, 61, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 20px;
+      padding: 24px 28px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 12px;
+      flex-wrap: wrap;
+      gap: 20px;
+      box-shadow: 0 8px 32px rgba(0, 8, 30, 0.4);
+      margin-bottom: 36px;
     }
-    .btn-logout {
-      width: 100%;
-      border: 1px solid var(--danger);
-      background: rgba(239, 68, 68, 0.1);
-      color: var(--danger);
-      padding: 10px;
-      border-radius: 6px;
+    .next-meeting-left {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+    .next-meeting-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: #38bdf8;
+      display: grid;
+      place-items: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+    .next-meeting-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 2px 0 4px;
+    }
+    .next-meeting-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .btn-secondary {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid var(--stroke);
+      color: #cbd5e1;
+      padding: 11px 20px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover {
+      background: rgba(15, 23, 42, 1);
+      border-color: rgba(56, 189, 248, 0.4);
+      color: #ffffff;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+      color: #ffffff;
+      padding: 11px 22px;
+      border-radius: 12px;
+      font-size: 13.5px;
+      font-weight: 700;
+      border: none;
+      box-shadow: 0 4px 18px rgba(56, 189, 248, 0.35);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-primary:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+
+    /* Learning Directions Grid */
+    .tracks-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .tracks-heading h3 {
+      font-size: 20px;
+      font-weight: 800;
+    }
+    .tracks-heading p {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+    .link-all {
+      font-size: 13px;
+      font-weight: 700;
+      color: #38bdf8;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .link-all:hover {
+      text-decoration: underline;
+    }
+
+    .tracks-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 36px;
+    }
+    .track-card {
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: 20px;
+      padding: 24px;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .track-card:hover {
+      border-color: rgba(56, 189, 248, 0.35);
+      background: var(--card-hover);
+      transform: translateY(-2px);
+    }
+    .track-card.is-active {
+      border: 2px solid #38bdf8;
+      background: var(--card-active);
+      box-shadow: 0 0 25px rgba(56, 189, 248, 0.22);
+    }
+    .track-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .track-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 13px;
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+    }
+    .track-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.1);
+      color: #cbd5e1;
+      border: 1px solid var(--stroke);
+    }
+    .track-badge.neon {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border-color: rgba(56, 189, 248, 0.35);
+    }
+    .track-title {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .track-desc {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+    .track-footer {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #64748b;
+      padding-top: 10px;
+      border-top: 1px solid rgba(148, 163, 184, 0.08);
+    }
+
+    /* MENT AI View */
+    .ment-container {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+    .ment-search-card {
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+    }
+    .ment-input-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .ment-input {
+      flex: 1;
+      background: #080E1E;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 14px;
+      padding: 13px 18px;
+      color: #ffffff;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .ment-input:focus {
+      border-color: #38bdf8;
+    }
+    .ment-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .chip {
+      background: #080E1E;
+      border: 1px solid var(--stroke);
+      color: var(--muted);
+      padding: 6px 12px;
+      border-radius: 8px;
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
+      transition: all 0.15s;
     }
-    .btn-logout:hover {
-      background: rgba(239, 68, 68, 0.2);
+    .chip:hover, .chip.active {
+      color: #38bdf8;
+      border-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
     }
+
+    /* 3 Blocks of Ment AI */
+    .module-card {
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: 20px;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+    }
+    .block-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+    }
+    .block-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 7px;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+    }
+    .bullets-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .bullets-list li {
+      display: flex;
+      gap: 12px;
+      font-size: 13.5px;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+    .bullets-list li span.dot {
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      background: #080E1E;
+      border: 1px solid var(--stroke);
+      color: #38bdf8;
+      font-size: 10px;
+      font-weight: 800;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .code-box {
+      background: #080E1E;
+      border: 1px solid var(--stroke);
+      border-radius: 12px;
+      padding: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      color: #93c5fd;
+      white-space: pre-wrap;
+      line-height: 1.6;
+    }
+
+    /* Quiz Question */
+    .quiz-item {
+      background: #080E1E;
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      border-radius: 14px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .quiz-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .quiz-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .quiz-opt {
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 12.5px;
+      color: #cbd5e1;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .quiz-opt:hover {
+      border-color: rgba(56, 189, 248, 0.4);
+      color: #ffffff;
+    }
+    .quiz-opt.correct {
+      border-color: var(--mint);
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      font-weight: 700;
+    }
+    .quiz-opt.wrong {
+      border-color: var(--danger);
+      background: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
+    }
+    .quiz-explanation {
+      background: #060A14;
+      border: 1px solid var(--stroke);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #cbd5e1;
+      display: none;
+    }
+    .quiz-explanation.visible {
+      display: block;
+    }
+
+    /* Floating Ment Button */
+    .floating-ment {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      z-index: 999;
+      background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+      color: #ffffff;
+      padding: 12px 20px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: none;
+      box-shadow: 0 8px 30px rgba(56, 189, 248, 0.55);
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .floating-ment:hover {
+      transform: scale(1.05);
+      box-shadow: 0 10px 36px rgba(56, 189, 248, 0.7);
+    }
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 10px #10b981;
+    }
+
     /* Toast */
     .toast {
       position: fixed;
-      bottom: 24px;
+      top: 24px;
       right: 24px;
-      background: #111827;
-      border: 1px solid var(--success);
-      color: var(--success);
-      padding: 10px 18px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      display: none;
-      z-index: 200;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+      z-index: 10000;
+      background: #0E1D3D;
+      border: 1px solid #38bdf8;
+      padding: 14px 22px;
+      border-radius: 14px;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #e0f2fe;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+      transform: translateY(-40px);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .toast.show {
-      display: block;
+      transform: translateY(0);
+      opacity: 1;
     }
   </style>
 </head>
 <body>
 
-  <!-- 1. Header (Navbar 48px fixed) -->
-  <header>
-    <div class="brand">
-      <div class="logo-badge">DM</div>
-      <div class="brand-title">Digital Mentor</div>
-    </div>
+  <!-- Toast Element -->
+  <div id="toast" class="toast">Уведомление Digital Mentor</div>
 
-    <nav>
-      <button class="nav-btn active" id="tab-btn-practice" onclick="switchTab('practice')">Курсы и практика</button>
-      <button class="nav-btn" id="tab-btn-profile" onclick="switchTab('profile')">Профиль</button>
+  <!-- 1. LEFT VERTICAL SIDEBAR (76px) -->
+  <aside class="app-sidebar">
+    <div class="brand-mark" onclick="switchView('dashboard')" title="Digital Mentor">D</div>
+
+    <nav class="sidebar-nav">
+      <!-- Dashboard -->
+      <button class="nav-item is-active" id="nav-btn-dashboard" onclick="switchView('dashboard')" title="Дашборд">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        <span class="tooltip">Дашборд</span>
+      </button>
+
+      <!-- Ment AI (24/7) -->
+      <button class="nav-item is-ment" id="nav-btn-ment" onclick="switchView('ment')" title="Ment AI (24/7)">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+        </svg>
+        <span class="tooltip">⚡ Ment AI (24/7)</span>
+      </button>
+
+      <!-- Courses -->
+      <button class="nav-item" id="nav-btn-courses" onclick="switchView('courses')" title="Курсы">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+        </svg>
+        <span class="tooltip">Курсы</span>
+      </button>
+
+      <!-- Schedule -->
+      <button class="nav-item" id="nav-btn-schedule" onclick="switchView('schedule')" title="Расписание">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        <span class="tooltip">Расписание</span>
+      </button>
+
+      <!-- Profile -->
+      <button class="nav-item" id="nav-btn-profile" onclick="switchView('profile')" title="Профиль">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        <span class="tooltip">Профиль</span>
+      </button>
+
+      <!-- Admin -->
+      <button class="nav-item" id="nav-btn-admin" onclick="switchView('admin')" title="Админ-панель">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        </svg>
+        <span class="tooltip">Админ-панель</span>
+      </button>
     </nav>
 
-    <button class="settings-btn" onclick="openModal()" title="Настройки">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
-        <circle cx="12" cy="12" r="3"/>
+    <!-- Logout -->
+    <button class="nav-item logout-btn" onclick="showToast('Вы вошли как Ансар Нурлан (Superadmin).')" title="Выход">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+        <polyline points="16 17 21 12 16 7"></polyline>
+        <line x1="21" y1="12" x2="9" y2="12"></line>
       </svg>
+      <span class="tooltip">Выход</span>
     </button>
-  </header>
+  </aside>
 
-  <!-- 2. Main Content -->
-  <main>
-    <!-- TAB 1: Курсы и практика -->
-    <section class="tab-pane active" id="pane-practice">
-      <div>
-        <div style="font-size: 11px; font-family: monospace; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; letter-spacing: 0.05em;">
-          Выберите направление
-        </div>
-        <div class="grid-3" id="course-selector">
-          <!-- Python -->
-          <div class="course-card active" onclick="selectCourse('python')">
-            <div class="course-top">
-              <div class="course-icon">🐍</div>
-              <span class="badge-active">Активен</span>
-            </div>
-            <div class="course-name">Python</div>
-            <div class="course-desc">Синтаксис, структуры данных, функции и логика</div>
-          </div>
-          <!-- Web -->
-          <div class="course-card" onclick="selectCourse('web')">
-            <div class="course-top">
-              <div class="course-icon">🌐</div>
-            </div>
-            <div class="course-name">Web-разработка</div>
-            <div class="course-desc">HTML5, flexbox-верстка, селекторы и DOM-события</div>
-          </div>
-          <!-- Algo -->
-          <div class="course-card" onclick="selectCourse('algo')">
-            <div class="course-top">
-              <div class="course-icon">⚡</div>
-            </div>
-            <div class="course-name">Алгоритмика</div>
-            <div class="course-desc">Оценка O(n), бинарный поиск и базовые структуры</div>
-          </div>
+  <!-- 2. MAIN APPLICATION CONTAINER -->
+  <div class="app-main">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-logo">
+        <div class="header-logo-mark">D</div>
+        <div class="header-logo-text">
+          <strong>Digital Mentor</strong>
+          <span>Академическое наставничество · Астана</span>
         </div>
       </div>
 
-      <!-- Interactive Lesson Player -->
-      <div class="card" id="lesson-player">
-        <div class="player-header">
-          <div style="font-size: 12px; font-family: monospace; color: var(--primary); font-weight: 700;">
-            <span id="player-course-title">PYTHON</span>
-            <span style="color: var(--muted); margin: 0 4px;">/</span>
-            <span style="color: var(--muted);" id="player-step-label">Шаг 1 из 5</span>
-          </div>
-          <div class="progress-bar-wrap" id="step-indicators"></div>
+      <div class="header-actions">
+        <!-- Role Pill -->
+        <div class="role-pill">
+          <span class="role-pill-dot"></span>
+          <span>Роль: Администратор</span>
         </div>
 
-        <div class="theory-box">
-          <div class="theory-title">
-            <span>📖</span>
-            <span>Краткая теория</span>
-          </div>
-          <div class="theory-text" id="theory-text"></div>
-        </div>
-
-        <div class="question-title" id="question-text"></div>
-        <div class="code-box" id="code-box"></div>
-
-        <div class="options-list" id="options-container"></div>
-
-        <button class="btn-main" id="btn-submit" onclick="handleSubmitAnswer()">
-          <span>Проверить</span>
+        <!-- Bell -->
+        <button class="icon-btn" onclick="showToast('Все 8 академических сессий активны.')" title="Уведомления">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          <span class="icon-dot"></span>
         </button>
 
-        <div class="ai-hint-box" id="ai-hint-box">
-          <div class="ai-label">[ИИ-подсказка]:</div>
-          <div id="ai-hint-text"></div>
+        <!-- Chat -->
+        <button class="icon-btn" onclick="switchView('ment')" title="Чат с Ment (24/7)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        </button>
+
+        <!-- Avatar -->
+        <div class="header-avatar" onclick="switchView('profile')" title="Профиль Ансар Нурлан">
+          АН
+          <span class="avatar-status"></span>
         </div>
       </div>
-    </section>
+    </header>
 
-    <!-- TAB 2: Профиль -->
-    <section class="tab-pane" id="pane-profile">
-      <!-- User info -->
-      <div class="card user-header">
-        <div class="user-avatar">АН</div>
-        <div>
-          <div class="user-name">Ансар Нурлан</div>
-          <div class="user-sub">Ученик · Уровень 4 (Senior Trainee) · ansarnurlan2@gmail.com</div>
-        </div>
-      </div>
-
-      <!-- 3 Metrics in a row -->
-      <div class="grid-3">
-        <div class="card">
-          <div style="font-size: 11px; font-family: monospace; text-transform: uppercase; color: var(--muted);">Опыт (XP)</div>
-          <div class="metric-val" id="metric-xp" style="color: var(--text);">1,550 XP</div>
-          <div style="font-size: 11px; color: var(--muted);">Накоплено за практику</div>
-        </div>
-        <div class="card">
-          <div style="font-size: 11px; font-family: monospace; text-transform: uppercase; color: var(--muted);">Ударный режим</div>
-          <div class="metric-val" style="color: #F59E0B;">🔥 7 дней</div>
-          <div style="font-size: 11px; color: var(--muted);">Ежедневная серия</div>
-        </div>
-        <div class="card">
-          <div style="font-size: 11px; font-family: monospace; text-transform: uppercase; color: var(--muted);">Пройдено шагов</div>
-          <div class="metric-val" id="metric-lessons" style="color: var(--success);">14</div>
-          <div style="font-size: 11px; color: var(--success); font-weight: 600;">Успешный темп</div>
-        </div>
-      </div>
-
-      <!-- Unified Achievements Grid -->
-      <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 14px;">
-          <div style="font-size: 14px; font-weight: 600;">Все академические достижения</div>
-          <div style="font-size: 11px; font-family: monospace; color: var(--muted);">4 из 6 разблокировано</div>
+    <!-- Content Viewport -->
+    <main class="main-viewport">
+      <!-- VIEW 1: DASHBOARD -->
+      <section class="view-pane active" id="pane-dashboard">
+        <div class="dash-hero">
+          <span class="sat-tag">Обзорная панель</span>
+          <h1>Привет, Ансар Нурлан! 👋</h1>
+          <p>Сводка твоего учебного процесса, активные программы и ближайшие онлайн-сессии с напарниками.</p>
         </div>
 
-        <div class="ach-grid">
-          <div class="ach-card">
-            <div class="ach-top">
-              <div>
-                <div class="ach-title">Первый шаг</div>
-                <div class="ach-desc">Успешно решен первый интерактивный шаг на платформе</div>
-              </div>
-              <span style="font-size: 10px; font-family: monospace; color: var(--success); background: rgba(16,185,129,0.15); padding: 2px 6px; border-radius: 4px;">100%</span>
-            </div>
-            <div class="progress-track"><div class="progress-fill done" style="width: 100%;"></div></div>
+        <!-- 4 Stat Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-label">Активные программы</span>
+            <span class="stat-val">8 курсов</span>
+            <span class="stat-note">+2 за последний месяц</span>
           </div>
-
-          <div class="ach-card">
-            <div class="ach-top">
-              <div>
-                <div class="ach-title">Ударный режим</div>
-                <div class="ach-desc">7 дней непрерывных занятий без пауз и пропусков</div>
-              </div>
-              <span style="font-size: 10px; font-family: monospace; color: var(--success); background: rgba(16,185,129,0.15); padding: 2px 6px; border-radius: 4px;">100%</span>
-            </div>
-            <div class="progress-track"><div class="progress-fill done" style="width: 100%;"></div></div>
+          <div class="stat-card">
+            <span class="stat-label">Уроков на неделе</span>
+            <span class="stat-val">0 уроков</span>
+            <span class="stat-note">Следующий: Понедельник, 16:00</span>
           </div>
-
-          <div class="ach-card">
-            <div class="ach-top">
-              <div>
-                <div class="ach-title">Мастер кода</div>
-                <div class="ach-desc">15 практических задач решены с первой попытки</div>
-              </div>
-              <span style="font-size: 10px; font-family: monospace; color: var(--muted);">12 / 15</span>
-            </div>
-            <div class="progress-track"><div class="progress-fill" style="width: 80%;"></div></div>
+          <div class="stat-card">
+            <span class="stat-label">Продуктивность с Ment</span>
+            <span class="stat-val">2.0 ч</span>
+            <span class="stat-note">+45 мин за сегодня</span>
           </div>
-
-          <div class="ach-card">
-            <div class="ach-top">
-              <div>
-                <div class="ach-title">Алгоритмист</div>
-                <div class="ach-desc">Освоение базовых структур данных и оценки O(n)</div>
-              </div>
-              <span style="font-size: 10px; font-family: monospace; color: var(--muted);">3 / 5</span>
-            </div>
-            <div class="progress-track"><div class="progress-fill" style="width: 60%;"></div></div>
-          </div>
-
-          <div class="ach-card">
-            <div class="ach-top">
-              <div>
-                <div class="ach-title">Спринтер</div>
-                <div class="ach-desc">5 верных ответов подряд без подсказок ИИ</div>
-              </div>
-              <span style="font-size: 10px; font-family: monospace; color: var(--success); background: rgba(16,185,129,0.15); padding: 2px 6px; border-radius: 4px;">100%</span>
-            </div>
-            <div class="progress-track"><div class="progress-fill done" style="width: 100%;"></div></div>
-          </div>
-
-          <div class="ach-card">
-            <div class="ach-top">
-              <div>
-                <div class="ach-title">Архитектор систем</div>
-                <div class="ach-desc">Успешное прохождение нескольких направлений</div>
-              </div>
-              <span style="font-size: 10px; font-family: monospace; color: var(--muted);">2 / 3</span>
-            </div>
-            <div class="progress-track"><div class="progress-fill" style="width: 67%;"></div></div>
+          <div class="stat-card">
+            <span class="stat-label">Посещаемость</span>
+            <span class="stat-val">100%</span>
+            <span class="stat-note">Без пропусков</span>
           </div>
         </div>
-      </div>
-    </section>
-  </main>
 
-  <!-- 3. Modal: Settings -->
-  <div class="modal-backdrop" id="settings-modal" onclick="handleBackdropClick(event)">
-    <div class="modal-box">
-      <div class="modal-head">
-        <span style="font-size: 14px; font-weight: 600;">Настройки аккаунта</span>
-        <button style="background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px;" onclick="closeModal()">✕</button>
-      </div>
-
-      <div>
-        <div style="font-size: 11px; font-family: monospace; text-transform: uppercase; color: var(--muted); margin-bottom: 8px;">
-          Тема интерфейса
+        <!-- Next Meeting Card -->
+        <div class="next-meeting-card">
+          <div class="next-meeting-left">
+            <div class="next-meeting-icon">📹</div>
+            <div>
+              <div class="sat-tag">Ближайшая онлайн-встреча</div>
+              <h3 class="next-meeting-title">Онлайн-сессии завершены / Нет предстоящих уроков</h3>
+              <div style="font-size: 13px; color: var(--muted);">Все запланированные занятия на этой неделе проведены. Выберите курс в каталоге или задайте вопрос Ment.</div>
+            </div>
+          </div>
+          <div class="next-meeting-actions">
+            <button class="btn-secondary" onclick="switchView('schedule')">Расписание</button>
+            <button class="btn-primary" onclick="switchView('schedule')">Перейти к расписанию →</button>
+          </div>
         </div>
-        <div class="theme-grid">
-          <button class="theme-btn" id="btn-theme-light" onclick="setAppTheme('light')">Светлая</button>
-          <button class="theme-btn active" id="btn-theme-dark" onclick="setAppTheme('dark')">Тёмная</button>
-          <button class="theme-btn" id="btn-theme-system" onclick="setAppTheme('system')">Системная</button>
+
+        <!-- Learning Tracks Grid -->
+        <div class="tracks-heading">
+          <div>
+            <h3>Учебные направления платформы</h3>
+            <p>Выберите подходящий формат обучения для достижения целей</p>
+          </div>
+          <span class="link-all" onclick="switchView('courses')">Каталог курсов →</span>
         </div>
-      </div>
 
-      <div style="display: flex; flex-direction: column; gap: 12px; border-top: 1px solid var(--border); padding-top: 14px;">
-        <label class="switch-row">
-          <span>Звуковые эффекты</span>
-          <input type="checkbox" checked />
-        </label>
-        <label class="switch-row">
-          <span>Уведомления о прогрессе</span>
-          <input type="checkbox" checked />
-        </label>
-      </div>
+        <div class="tracks-grid">
+          <!-- 1. Наставничество -->
+          <div class="track-card" onclick="switchView('courses')">
+            <div class="track-header">
+              <div class="track-icon" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa;">👤</div>
+              <span class="track-badge">1-на-1</span>
+            </div>
+            <h4 class="track-title">Наставничество</h4>
+            <p class="track-desc">Индивидуальные регулярные онлайн-сессии со школьником-волонтёром для углублённого разбора тем.</p>
+            <div class="track-footer">Индивидуальный темп • 1–2 раза в нед.</div>
+          </div>
 
-      <div style="border-top: 1px solid var(--border); padding-top: 14px;">
-        <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px;">Почта аккаунта:</div>
-        <div style="font-size: 12px; font-family: monospace; font-weight: 600; margin-bottom: 16px;">ansarnurlan2@gmail.com</div>
-        <button class="btn-logout" onclick="logout()">Выйти из аккаунта</button>
-      </div>
-    </div>
+          <!-- 2. СОР / СОЧ -->
+          <div class="track-card is-active" onclick="switchView('courses')">
+            <div class="track-header">
+              <div class="track-icon" style="background: rgba(56, 189, 248, 0.16); color: #38bdf8;">🎯</div>
+              <span class="track-badge neon">СОР / СОЧ</span>
+            </div>
+            <h4 class="track-title">Подготовка к СОР/СОЧ</h4>
+            <p class="track-desc">Интенсивный разбор типовых заданий четверти, сложных математических формул и критериев оценивания.</p>
+            <div class="track-footer" style="color: #38bdf8;">Алгоритмы и формулы • Срезы знаний</div>
+          </div>
+
+          <!-- 3. Воркшопы -->
+          <div class="track-card" onclick="switchView('courses')">
+            <div class="track-header">
+              <div class="track-icon" style="background: rgba(168, 85, 247, 0.15); color: #c084fc;">⚡</div>
+              <span class="track-badge">Группы</span>
+            </div>
+            <h4 class="track-title">Воркшопы</h4>
+            <p class="track-desc">Интерактивные групповые мастер-классы, разборы олимпиадных задач и экспресс-тестирование.</p>
+            <div class="track-footer">Практикумы • Командный разбор</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 2: MENT AI (ON-DEMAND LEARNING ENGINE) -->
+      <section class="view-pane" id="pane-ment">
+        <div class="ment-container">
+          <div class="dash-hero">
+            <span class="sat-tag">AI MENTOR 24/7 · ON-DEMAND ENGINE</span>
+            <h1>Ment AI — Твой персональный наставник</h1>
+            <p>Мгновенная генерация интерактивного модуля по любой школьной или технической теме: краткая выжимка, микро-тест и персональный разбор.</p>
+          </div>
+
+          <!-- Search & Engine Bar -->
+          <div class="ment-search-card">
+            <div class="ment-input-row">
+              <input type="text" id="ment-search-input" class="ment-input" placeholder="Какую тему ты хочешь изучить? (например: Теорема Виета, Циклы for в Python, Восстание Кенесары Касымова)..." value="Теорема Виета" />
+              <button class="btn-primary" onclick="generateLesson()">⚡ Сгенерировать урок</button>
+            </div>
+            <div class="ment-chips">
+              <span style="font-size: 11px; font-weight: 700; color: var(--muted);">Быстрый выбор:</span>
+              <button class="chip active" onclick="pickChip('Теорема Виета')">Теорема Виета</button>
+              <button class="chip" onclick="pickChip('Циклы for в Python')">Циклы for в Python</button>
+              <button class="chip" onclick="pickChip('Закон Ома')">Закон Ома</button>
+              <button class="chip" onclick="pickChip('Восстание Кенесары Касымова')">Восстание Кенесары Касымова</button>
+              <button class="chip" onclick="pickChip('Тригонометрический круг')">Тригонометрический круг</button>
+              <button class="chip" onclick="pickChip('Flexbox верстка')">Flexbox верстка</button>
+            </div>
+          </div>
+
+          <!-- 3 Blocks in one seamless view -->
+          <!-- BLOCK 1: Theory -->
+          <div class="module-card">
+            <div class="block-header">
+              <span class="block-num">1</span>
+              <span>Блок 1: Выжимка теории (Bite-sized Theory)</span>
+            </div>
+            <h3 id="ment-module-title" style="font-size: 18px; font-weight: 700;">Суть темы: Теорема Виета</h3>
+            <ul class="bullets-list" id="ment-theory-bullets">
+              <!-- Dynamically populated -->
+            </ul>
+            <div class="code-box" id="ment-code-box">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- BLOCK 2: Quiz -->
+          <div class="module-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div class="block-header">
+                <span class="block-num">2</span>
+                <span>Блок 2: Интерактивный микро-тест (Practice Quiz)</span>
+              </div>
+              <div id="quiz-score-badge" style="font-size: 12px; font-weight: 700; color: #38bdf8;">
+                Баллы: 0 / 3 • +0 XP
+              </div>
+            </div>
+
+            <div id="quiz-container" style="display: flex; flex-direction: column; gap: 14px;">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- BLOCK 3: Feedback -->
+          <div class="module-card" style="border-color: rgba(56, 189, 248, 0.4); background: linear-gradient(135deg, #0F172A 0%, #0E1D3D 100%);">
+            <div class="block-header">
+              <span class="block-num">3</span>
+              <span>Блок 3: Персональный фидбек и разбор</span>
+            </div>
+            <h4 id="ment-feedback-title" style="font-size: 16px; font-weight: 700;">Анализ готовности от Ment AI</h4>
+            <p id="ment-feedback-summary" style="font-size: 13px; color: #cbd5e1; line-height: 1.5;"></p>
+            <div style="background: #080E1E; border: 1px solid var(--stroke); padding: 14px; border-radius: 12px; font-size: 12.5px; color: #e2e8f0;">
+              <strong style="color: #38bdf8;">Лайфхак для экзамена:</strong>
+              <span id="ment-feedback-tip"></span>
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-top: 6px; flex-wrap: wrap;">
+              <button class="btn-primary" style="background: #10b981;" onclick="showToast('⚡ Бонусная задача добавлена!')">⚡ Закрепить тему еще одной задачей</button>
+              <button class="btn-secondary" onclick="saveCurrentNote()">💾 Сохранить конспект в профиль</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 3: COURSES -->
+      <section class="view-pane" id="pane-courses">
+        <div class="dash-hero">
+          <span class="sat-tag">Каталог программ</span>
+          <h1>Академические программы и курсы</h1>
+          <p>Выберите курс для углубленной подготовки к экзаменам или наставничества.</p>
+        </div>
+        <div class="tracks-grid">
+          <div class="track-card" onclick="startCourse('Алгебра 9 класс')">
+            <div class="track-header"><span class="track-badge neon">СОР/СОЧ</span><span style="font-size: 12px; font-weight: 700; color: #10b981;">+80 XP</span></div>
+            <h4 class="track-title">Алгебра 9 класс (СОР/СОЧ)</h4>
+            <p class="track-desc">Квадратичная функция, системы уравнений, теорема Виета и неравенства.</p>
+            <button class="btn-primary" style="padding: 6px 14px; font-size: 11px;">Открыть в Ment AI →</button>
+          </div>
+          <div class="track-card" onclick="startCourse('Python с нуля')">
+            <div class="track-header"><span class="track-badge">Воркшоп</span><span style="font-size: 12px; font-weight: 700; color: #10b981;">+100 XP</span></div>
+            <h4 class="track-title">Python для школьников с нуля</h4>
+            <p class="track-desc">Синтаксис, списки, циклы for/while, словари и телеграм-боты.</p>
+            <button class="btn-primary" style="padding: 6px 14px; font-size: 11px;">Открыть в Ment AI →</button>
+          </div>
+          <div class="track-card" onclick="startCourse('Закон Ома')">
+            <div class="track-header"><span class="track-badge neon">Физика</span><span style="font-size: 12px; font-weight: 700; color: #10b981;">+70 XP</span></div>
+            <h4 class="track-title">Физика: Электродинамика и ток</h4>
+            <p class="track-desc">Закон Ома, соединение проводников, работа и мощность тока.</p>
+            <button class="btn-primary" style="padding: 6px 14px; font-size: 11px;">Открыть в Ment AI →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 4: SCHEDULE -->
+      <section class="view-pane" id="pane-schedule">
+        <div class="dash-hero">
+          <span class="sat-tag">Календарь</span>
+          <h1>Расписание онлайн-сессий</h1>
+          <p>Ближайшие синхронные занятия с менторами и расписание воркшопов на неделю.</p>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 14px; max-width: 800px;">
+          <div class="track-card" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 11px; font-weight: 700; color: #38bdf8;">Понедельник, 16:00 – 17:00</div>
+              <h4 style="font-size: 15px; margin: 4px 0;">Алгебра 9 класс: Разбор СОР 1</h4>
+              <div style="font-size: 12px; color: var(--muted);">Ментор: Дамир С. (НИШ) • 1-на-1 Онлайн</div>
+            </div>
+            <a href="https://meet.google.com" target="_blank" class="btn-primary" style="font-size: 12px; padding: 8px 16px;">Войти в Meet →</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 5: PROFILE -->
+      <section class="view-pane" id="pane-profile">
+        <div class="dash-hero">
+          <span class="sat-tag">Личный кабинет</span>
+          <h1>Профиль: Ансар Нурлан</h1>
+          <p>ansarnurlan2@gmail.com • Роль: Администратор платформы</p>
+        </div>
+        <div class="track-card" style="max-width: 600px; margin-bottom: 24px;">
+          <h4 style="font-size: 16px; margin-bottom: 12px;">Сохраненные конспекты Ment AI</h4>
+          <ul id="profile-saved-list" class="bullets-list">
+            <li><span class="dot">✓</span><span>Теорема Виета (Алгебра 9 класс)</span></li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- VIEW 6: ADMIN -->
+      <section class="view-pane" id="pane-admin">
+        <div class="dash-hero">
+          <span class="sat-tag">Superadmin</span>
+          <h1>Панель управления платформой</h1>
+          <p>Мониторинг пользователей, верификация сертификатов волонтеров.</p>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card"><span class="stat-label">Пользователей</span><span class="stat-val">1,420</span></div>
+          <div class="stat-card"><span class="stat-label">Волонтеров</span><span class="stat-val">84</span></div>
+          <div class="stat-card"><span class="stat-label">Часов волонтерства</span><span class="stat-val">312 ч</span></div>
+        </div>
+      </section>
+    </main>
   </div>
 
-  <div class="toast" id="toast">+50 XP! Ответ абсолютно верен.</div>
+  <!-- FLOATING MENT BUTTON (24/7) -->
+  <button class="floating-ment" onclick="switchView('ment')">
+    <span class="pulse-dot"></span>
+    <span>Ment · 24/7</span>
+  </button>
 
   <script>
-    const COURSES = {
-      python: {
-        title: "PYTHON",
-        steps: [
+    // Knowledge Base for Ment AI
+    const KNOWLEDGE_BASE = {
+      'Теорема Виета': {
+        title: 'Суть темы: Теорема Виета',
+        bullets: [
+          'Теорема связывает корни квадратного уравнения с коэффициентами без вычисления дискриминанта.',
+          'Для приведенного уравнения x² + px + q = 0: сумма корней x₁ + x₂ = -p.',
+          'Произведение корней приведенного квадратного уравнения строго равно x₁ · x₂ = q.',
+          'Для общего уравнения ax² + bx + c = 0 формулы масштабируются: x₁ + x₂ = -b/a, x₁ · x₂ = c/a.'
+        ],
+        code: 'Для x² + px + q = 0:\n  x₁ + x₂ = -p\n  x₁ · x₂ = q\n\nЛайфхак СОР: если a + b + c = 0, то x₁ = 1, x₂ = c/a.',
+        quiz: [
           {
-            theory: "В Python функция print() выводит данные в стандартный поток вывода, а строки записываются в кавычках.",
-            question: "Какая строчка кода корректно выводит значение текстовой переменной в консоль?",
-            code: 'msg = "Привет, мир!"\n# Выберите верную команду вывода',
-            options: ['print(msg)', 'echo msg', 'console.log(msg)', 'System.out.println(msg)'],
+            q: 'Чему равна сумма корней уравнения x² - 7x + 12 = 0?',
+            opts: ['7', '-7', '12', '-12'],
             correct: 0,
-            hint: "В Python для печати используется функция print(). Команды echo или console.log характерны для Bash и JS."
+            exp: 'Сумма корней равна -p = -(-7) = 7.'
           },
           {
-            theory: "Списки в Python индексируются с нуля. Первый элемент всегда имеет индекс [0], а последний [-1].",
-            question: "Какой индекс укажет на первый элемент списка nums = [10, 20, 30]?",
-            code: "nums = [10, 20, 30]\nfirst = nums[?]",
-            options: ['nums[0]', 'nums[1]', 'nums.first()', 'nums[-1]'],
+            q: 'Чему равно произведение корней уравнения 2x² + 8x - 10 = 0?',
+            opts: ['-5', '5', '-10', '4'],
             correct: 0,
-            hint: "Индексация в Python начинается с 0. Индекс 1 вернет второй элемент списка."
+            exp: 'Для ax² + bx + c = 0 произведение равно c/a = -10/2 = -5.'
           },
           {
-            theory: "Цикл for i in range(n) выполняет блок кода ровно n раз, проходя числа от 0 до n-1.",
-            question: "Сколько раз суммарно выполнится блок кода цикла for i in range(5)?",
-            code: "for i in range(5):\n    process(i)",
-            options: ['5 раз (0, 1, 2, 3, 4)', '4 раза', '6 раз', 'Бесконечно'],
+            q: 'Найдите корни x² - 5x + 6 = 0 подбором:',
+            opts: ['x₁ = 2, x₂ = 3', 'x₁ = -2, x₂ = -3', 'x₁ = 1, x₂ = 6', 'x₁ = 0, x₂ = 5'],
             correct: 0,
-            hint: "range(5) генерирует 5 чисел: 0, 1, 2, 3, 4. Это ровно 5 итераций."
-          },
-          {
-            theory: "Для логического сравнения на равенство применяется оператор ==, а одинарный знак = присваивает значение.",
-            question: "Какое выражение проверяет, что переменная score равна 100?",
-            code: 'if score ? 100:\n    print("Максимум!")',
-            options: ['score == 100', 'score = 100', 'score === 100', 'score equals 100'],
-            correct: 0,
-            hint: "Оператор = присваивает значение. Для проверки на равенство в Python используется ==."
-          },
-          {
-            theory: "Функции объявляются ключевым словом def, а для возврата значения вызывающему коду используется return.",
-            question: "Какое ключевое слово передает результат работы функции обратно в программу?",
-            code: "def multiply(a, b):\n    ? a * b",
-            options: ['return', 'yield', 'export', 'send'],
-            correct: 0,
-            hint: "Директива return завершает выполнение функции и возвращает результат."
+            exp: 'Сумма 2+3=5, произведение 2*3=6. Корни найдены мгновенно!'
           }
-        ]
+        ],
+        summary: 'Отличное понимание теоремы Виета! Ты экономишь до 90 секунд на каждой задаче, минуя вычисление длинного дискриминанта.',
+        tip: 'Помни: x₁² + x₂² = (x₁ + x₂)² - 2x₁x₂ = p² - 2q.'
       },
-      web: {
-        title: "WEB-РАЗРАБОТКА",
-        steps: [
+      'Циклы for в Python': {
+        title: 'Суть темы: Циклы for в Python',
+        bullets: [
+          'Цикл for в Python итерирует по последовательностям (range, списки, строки).',
+          'range(start, stop, step) генерирует числа от start до stop-1.',
+          'break прерывает цикл, а continue пропускает текущую итерацию.',
+          'enumerate() возвращает пару (индекс, значение) на каждом шаге.'
+        ],
+        code: '# Генератор списка (List Comprehension)\nsquares = [x**2 for x in range(1, 6)]  # [1, 4, 9, 16, 25]\n\nfor i in range(3):\n    print("Шаг", i)',
+        quiz: [
           {
-            theory: "HTML формирует семантический каркас: тег <h1> определяет главный заголовок, а <p> — абзац текста.",
-            question: "Какой HTML-тег обозначает основной заголовок первого уровня документа?",
-            code: "<h1>Заголовок</h1>\n<p>Параграф</p>",
-            options: ['<h1>', '<heading>', '<header>', '<title>'],
+            q: 'Сколько раз выполнится цикл for i in range(2, 8, 2)?',
+            opts: ['3 раза (2, 4, 6)', '4 раза', '6 раз', '2 раза'],
             correct: 0,
-            hint: "В спецификации HTML заголовки нумеруются от <h1> до <h6>."
+            exp: 'Значения: 2, 4, 6 — ровно 3 итерации.'
           },
           {
-            theory: "CSS Flexbox позволяет гибко позиционировать блоки: justify-content: center центрирует по главной оси.",
-            question: "Какое свойство CSS отвечает за выравнивание элементов по главной оси во flex-контейнере?",
-            code: ".box {\n  display: flex;\n  justify-content: center;\n}",
-            options: ['justify-content: center;', 'align-content: middle;', 'text-align: center;', 'float: center;'],
+            q: 'Что вернет выражение [x for x in range(4) if x % 2 == 0]?',
+            opts: ['[0, 2]', '[2, 4]', '[0, 1, 2, 3]', '[1, 3]'],
             correct: 0,
-            hint: "justify-content управляет распределением пространства вдоль главной оси flex-контейнера."
+            exp: 'Четные числа из range(4): 0 и 2.'
           },
           {
-            theory: "В CSS классы выбираются через точку (.card), а идентификаторы — через решетку (#hero).",
-            question: "Какой селектор стилизует блок с class='btn-primary'?",
-            code: "/* CSS правило */\n.btn-primary {\n  background: #2563EB;\n}",
-            options: ['.btn-primary', '#btn-primary', 'btn-primary', '*btn-primary'],
+            q: 'Какая команда досрочно завершает весь цикл?',
+            opts: ['break', 'continue', 'pass', 'return'],
             correct: 0,
-            hint: "Классы в CSS всегда начинаются с точки."
-          },
-          {
-            theory: "Атрибут href тега <a> указывает URL-адрес для перехода пользователя по ссылке.",
-            question: "Какой атрибут тега <a> задает целевой адрес ссылки?",
-            code: '<a href="https://digital-mentor.org">Открыть</a>',
-            options: ['href', 'src', 'link', 'to'],
-            correct: 0,
-            hint: "Для гиперссылок используется атрибут href (Hypertext Reference)."
-          },
-          {
-            theory: "Метод addEventListener в JavaScript регистрирует обработчик события на DOM-элементе.",
-            question: "Как подписаться на событие клика по кнопке в современном JavaScript?",
-            code: "button.addEventListener('click', handler);",
-            options: ["button.addEventListener('click', handler)", "button.attach('click', handler)", 'button.onClick(handler)', 'button.trigger(handler)'],
-            correct: 0,
-            hint: "Стандартный современный метод — addEventListener."
+            exp: 'break немедленно выходит из цикла.'
           }
-        ]
+        ],
+        summary: 'Отличный результат! Ты уверенно владеешь итерациями и генераторами списков в Python.',
+        tip: 'Не изменяй список во время цикла по нему — делай срез list[:] или генератор.'
       },
-      algo: {
-        title: "АЛГОРИТМИКА",
-        steps: [
+      'Закон Ома': {
+        title: 'Суть темы: Закон Ома',
+        bullets: [
+          'Сила тока I прямо пропорциональна напряжению U и обратно пропорциональна сопротивлению R.',
+          'Основная формула: I = U / R (Ампер = Вольт / Ом).',
+          'При последовательном соединении сопротивления складываются: R = R₁ + R₂.',
+          'При параллельном соединении постоянным остается напряжение: U = const.'
+        ],
+        code: 'Треугольник Ома:\n     [ U ]\n    /     \\\n  [ I ] * [ R ]\n\nМощность тока: P = U * I = I² * R',
+        quiz: [
           {
-            theory: "Сложность O(1) описывает операцию, время выполнения которой не зависит от объема входных данных.",
-            question: "Какова алгоритмическая сложность доступа к элементу массива по его индексу?",
-            code: "item = array[42]  # Индекс известен",
-            options: ['O(1)', 'O(n)', 'O(log n)', 'O(n²)'],
+            q: 'Напряжение 24 В, сопротивление 6 Ом. Какова сила тока?',
+            opts: ['4 А', '144 А', '0.25 А', '18 А'],
             correct: 0,
-            hint: "Так как элементы расположены последовательно, доступ по индексу занимает константное время O(1)."
+            exp: 'I = U / R = 24 / 6 = 4 А.'
           },
           {
-            theory: "Бинарный поиск делит область поиска пополам на каждом шаге, требуя логарифмическое время O(log n).",
-            question: "Какое условие обязательно для работы классического бинарного поиска?",
-            code: "# Бинарный поиск mid = (l + r) // 2",
-            options: ['Массив должен быть отсортирован', 'Числа должны быть положительными', 'Длина массива — степень двойки', 'Без дубликатов'],
+            q: 'Два резистора по 10 Ом соединены параллельно. Общее сопротивление:',
+            opts: ['5 Ом', '20 Ом', '10 Ом', '2.5 Ом'],
             correct: 0,
-            hint: "Бинарный поиск опирается на порядок элементов, чтобы отсекать половину на каждом шаге."
+            exp: 'R_общ = R / 2 = 10 / 2 = 5 Ом.'
           },
           {
-            theory: "Стек (Stack) работает по принципу LIFO (Last In, First Out): последний вошедший извлекается первым.",
-            question: "Какой принцип лежит в основе структуры «Стек»?",
-            code: "stack.append(x)  # push\nstack.pop()      # pop",
-            options: ['LIFO (Last In, First Out)', 'FIFO (First In, First Out)', 'Random Access', 'Round Robin'],
+            q: 'Если напряжение увеличить в 3 раза, сила тока:',
+            opts: ['Увеличится в 3 раза', 'Уменьшится в 3 раза', 'Не изменится', 'В 9 раз'],
             correct: 0,
-            hint: "Стек похож на стопку тарелок: снять можно только верхнюю (LIFO)."
-          },
-          {
-            theory: "Очередь (Queue) работает по принципу FIFO (First In, First Out): первый пришедший обрабатывается первым.",
-            question: "Какая структура данных обрабатывает элементы строго в порядке их поступления?",
-            code: "# Первый вошел — первый обслужен",
-            options: ['Очередь (Queue - FIFO)', 'Стек (Stack - LIFO)', 'Бинарное дерево', 'Граф'],
-            correct: 0,
-            hint: "Очередь работает по правилу First In, First Out."
-          },
-          {
-            theory: "Хеш-таблица сопоставляет ключи со значениями через хеш-функцию за среднее время O(1).",
-            question: "Какова средняя сложность поиска по ключу в хеш-таблице (dict в Python)?",
-            code: 'val = cache.get("key")',
-            options: ['O(1)', 'O(n)', 'O(log n)', 'O(n log n)'],
-            correct: 0,
-            hint: "Хеш-функция вычисляет индекс ячейки напрямую, давая O(1) в среднем."
+            exp: 'Ток прямо пропорционален напряжению (I ~ U).'
           }
-        ]
+        ],
+        summary: 'Основы электродинамики освоены на 100%! Ты легко рассчитываешь параметры участка цепи.',
+        tip: 'Всегда переводи миллиамперы в амперы: 500 мА = 0.5 А.'
       }
     };
 
-    let activeCourse = 'python';
-    let currentStep = 0;
-    let selectedOption = null;
-    let isChecked = false;
-    let xp = 1550;
-    let lessons = 14;
+    let currentTopic = 'Теорема Виета';
+    let currentScore = 0;
+    let savedNotesList = ['Теорема Виета (Алгебра 9 класс)'];
 
-    function renderPlayer() {
-      const course = COURSES[activeCourse];
-      const step = course.steps[currentStep];
+    function switchView(viewName) {
+      document.querySelectorAll('.view-pane').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('is-active'));
 
-      document.getElementById('player-course-title').innerText = course.title;
-      document.getElementById('player-step-label').innerText = `Шаг ${currentStep + 1} из ${course.steps.length}`;
+      const targetPane = document.getElementById('pane-' + viewName);
+      if (targetPane) targetPane.classList.add('active');
 
-      // Indicators
-      const indContainer = document.getElementById('step-indicators');
-      indContainer.innerHTML = '';
-      course.steps.forEach((_, i) => {
-        const pill = document.createElement('span');
-        pill.className = 'step-pill';
-        if (i === currentStep) {
-          pill.style.width = '24px';
-          pill.style.background = 'var(--primary)';
-        } else if (i < currentStep) {
-          pill.style.width = '8px';
-          pill.style.background = 'var(--success)';
-        } else {
-          pill.style.width = '8px';
-          pill.style.background = 'var(--border)';
-        }
-        indContainer.appendChild(pill);
-      });
+      const targetNav = document.getElementById('nav-btn-' + viewName);
+      if (targetNav) targetNav.classList.add('is-active');
 
-      // Theory & Question
-      document.getElementById('theory-text').innerText = step.theory;
-      document.getElementById('question-text').innerText = step.question;
-      document.getElementById('code-box').innerText = step.code;
-
-      // Options
-      const optContainer = document.getElementById('options-container');
-      optContainer.innerHTML = '';
-      selectedOption = null;
-      isChecked = false;
-
-      step.options.forEach((opt, idx) => {
-        const item = document.createElement('div');
-        item.className = 'option-item';
-        item.innerHTML = `<span><strong style="color:var(--muted); margin-right:8px;">${String.fromCharCode(65+idx)}.</strong>${opt}</span>`;
-        item.onclick = () => {
-          if (isChecked && selectedOption === step.correct) return;
-          selectedOption = idx;
-          document.querySelectorAll('.option-item').forEach((el, i) => {
-            el.className = 'option-item' + (i === idx ? ' selected' : '');
-          });
-          document.getElementById('ai-hint-box').className = 'ai-hint-box';
-        };
-        optContainer.appendChild(item);
-      });
-
-      // Reset button
-      const btn = document.getElementById('btn-submit');
-      btn.className = 'btn-main';
-      btn.innerText = 'Проверить';
-      btn.onclick = handleSubmitAnswer;
-      document.getElementById('ai-hint-box').className = 'ai-hint-box';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function selectCourse(cId) {
-      activeCourse = cId;
-      currentStep = 0;
-      document.querySelectorAll('.course-card').forEach(el => el.classList.remove('active'));
-      event.currentTarget.classList.add('active');
-      renderPlayer();
-    }
-
-    function handleSubmitAnswer() {
-      if (selectedOption === null) return;
-      const step = COURSES[activeCourse].steps[currentStep];
-      const optEls = document.querySelectorAll('.option-item');
-
-      isChecked = true;
-      if (selectedOption === step.correct) {
-        optEls[selectedOption].className = 'option-item correct';
-        document.getElementById('ai-hint-box').className = 'ai-hint-box';
-
-        // Add XP
-        xp += 50;
-        lessons += 1;
-        document.getElementById('metric-xp').innerText = xp.toLocaleString() + ' XP';
-        document.getElementById('metric-lessons').innerText = lessons;
-
-        // Change button to Next
-        const btn = document.getElementById('btn-submit');
-        btn.className = 'btn-main btn-success';
-        btn.innerHTML = '<span>Следующий шаг →</span>';
-        btn.onclick = handleNextStep;
-
-        showToast('+50 XP! Ответ абсолютно верен.');
-      } else {
-        optEls[selectedOption].className = 'option-item wrong';
-        document.getElementById('ai-hint-text').innerText = step.hint;
-        document.getElementById('ai-hint-box').className = 'ai-hint-box show';
-      }
-    }
-
-    function handleNextStep() {
-      const course = COURSES[activeCourse];
-      if (currentStep + 1 < course.steps.length) {
-        currentStep++;
-      } else {
-        showToast('Поздравляем! Курс успешно завершен.');
-        currentStep = 0;
-      }
-      renderPlayer();
-    }
-
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-
-      document.getElementById('pane-' + tabId).classList.add('active');
-      document.getElementById('tab-btn-' + tabId).classList.add('active');
-    }
-
-    function setAppTheme(t) {
-      document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
-      document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById('btn-theme-' + t).classList.add('active');
-    }
-
-    function openModal() {
-      document.getElementById('settings-modal').classList.add('open');
-    }
-    function closeModal() {
-      document.getElementById('settings-modal').classList.remove('open');
-    }
-    function handleBackdropClick(e) {
-      if (e.target.id === 'settings-modal') closeModal();
-    }
-    function logout() {
-      closeModal();
-      window.location.reload();
-    }
     function showToast(msg) {
-      const t = document.getElementById('toast');
-      t.innerText = msg;
-      t.className = 'toast show';
-      setTimeout(() => { t.className = 'toast'; }, 3000);
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3500);
     }
 
-    // Init
-    renderPlayer();
+    function renderLesson(data) {
+      document.getElementById('ment-module-title').innerText = data.title;
+      
+      const bulletsEl = document.getElementById('ment-theory-bullets');
+      bulletsEl.innerHTML = '';
+      data.bullets.forEach((b, idx) => {
+        bulletsEl.innerHTML += `<li><span class="dot">${idx + 1}</span><span>${b}</span></li>`;
+      });
+
+      document.getElementById('ment-code-box').innerText = data.code;
+      document.getElementById('ment-feedback-summary').innerText = data.summary;
+      document.getElementById('ment-feedback-tip').innerText = data.tip;
+
+      // Render Quiz
+      currentScore = 0;
+      updateScoreBadge(0, data.quiz.length);
+      const quizContainer = document.getElementById('quiz-container');
+      quizContainer.innerHTML = '';
+
+      data.quiz.forEach((qItem, qIdx) => {
+        let optsHtml = '';
+        qItem.opts.forEach((opt, oIdx) => {
+          optsHtml += `<button class="quiz-opt" onclick="checkAnswer(${qIdx}, ${oIdx}, ${qItem.correct}, this)"><span>${String.fromCharCode(65 + oIdx)}. ${opt}</span></button>`;
+        });
+
+        quizContainer.innerHTML += `
+          <div class="quiz-item" id="q-block-${qIdx}">
+            <div class="quiz-title">${qIdx + 1}. ${qItem.q}</div>
+            <div class="quiz-options">${optsHtml}</div>
+            <div class="quiz-explanation" id="q-exp-${qIdx}"><strong>Разбор:</strong> ${qItem.exp}</div>
+          </div>
+        `;
+      });
+    }
+
+    function checkAnswer(qIdx, selectedOpt, correctOpt, btn) {
+      const parent = btn.parentElement;
+      const allBtns = parent.querySelectorAll('.quiz-opt');
+      allBtns.forEach(b => b.style.pointerEvents = 'none');
+
+      const expEl = document.getElementById('q-exp-' + qIdx);
+      if (expEl) expEl.classList.add('visible');
+
+      if (selectedOpt === correctOpt) {
+        btn.classList.add('correct');
+        currentScore++;
+        showToast('Верно! +15 XP');
+      } else {
+        btn.classList.add('wrong');
+        allBtns[correctOpt].classList.add('correct');
+      }
+
+      const total = document.querySelectorAll('.quiz-item').length;
+      updateScoreBadge(currentScore, total);
+    }
+
+    function updateScoreBadge(score, total) {
+      document.getElementById('quiz-score-badge').innerText = `Баллы: ${score} / ${total} • +${score * 15} XP`;
+    }
+
+    function generateLesson() {
+      const input = document.getElementById('ment-search-input');
+      const val = input.value.trim();
+      if (!val) return;
+
+      currentTopic = val;
+      if (KNOWLEDGE_BASE[val]) {
+        renderLesson(KNOWLEDGE_BASE[val]);
+      } else {
+        // Dynamic fallback
+        renderLesson({
+          title: 'Суть темы: ' + val,
+          bullets: [
+            'Тема «' + val + '» является важным элементом программы для формирования прикладных навыков.',
+            'Ключевые понятия и закономерности направления «' + val + '» строятся на логической декомпозиции условий.',
+            'При решении задач рекомендуется выписывать формулы и проверять размерности величин.',
+            'Ment AI подготовил проверочный микро-тест для быстрой оценки усвоения материала.'
+          ],
+          code: '1. Анализ условия задачи по теме: ' + val + '\n2. Применение опорной формулы\n3. Обратная проверка ответа',
+          quiz: [
+            {
+              q: 'Что лежит в основе успешного решения задач по направлению ' + val + '?',
+              opts: ['Понимание сути и базовых формул', 'Случайный подбор', 'Отказ от проверки', 'Заучивание ответов'],
+              correct: 0,
+              exp: 'Осмысленное понимание формул гарантирует безошибочное решение.'
+            },
+            {
+              q: 'Как надежно проверить полученный результат?',
+              opts: ['Обратной подстановкой в исходное условие', 'Сразу сдать работу', 'Положить наугад', 'Стереть расчеты'],
+              correct: 0,
+              exp: 'Подстановка результата обратно в условие — золотое правило самопроверки.'
+            }
+          ],
+          summary: 'Ты успешно сгенерировал модуль по теме «' + val + '»! Базовые тезисы зафиксированы.',
+          tip: 'Повтори формулы перед началом контрольного среза.'
+        });
+      }
+
+      showToast(`Модуль «${val}» сгенерирован!`);
+    }
+
+    function pickChip(chipName) {
+      document.getElementById('ment-search-input').value = chipName;
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      event.target.classList.add('active');
+      generateLesson();
+    }
+
+    function startCourse(name) {
+      document.getElementById('ment-search-input').value = name;
+      switchView('ment');
+      generateLesson();
+    }
+
+    function saveCurrentNote() {
+      if (!savedNotesList.includes(currentTopic)) {
+        savedNotesList.push(currentTopic);
+        const ul = document.getElementById('profile-saved-list');
+        if (ul) {
+          ul.innerHTML += `<li><span class="dot">✓</span><span>${currentTopic}</span></li>`;
+        }
+        showToast(`Конспект «${currentTopic}» сохранен в профиль! +20 XP`);
+      } else {
+        showToast('Этот конспект уже сохранен в профиле.');
+      }
+    }
+
+    // Initial load
+    renderLesson(KNOWLEDGE_BASE['Теорема Виета']);
   </script>
 </body>
 </html>
