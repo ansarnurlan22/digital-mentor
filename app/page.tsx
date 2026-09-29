@@ -1173,7 +1173,7 @@ export default function DigitalMentorPlatform() {
                                       <span>{opt}</span>
                                     </div>
                                     {isThisCorrect && <Check className="w-4 h-4 text-[#10b981]" />}
-                                    {isThisWrong && <X className="w-4 h-4 text-red-500]" />}
+                                    {isThisWrong && <X className="w-4 h-4 text-red-500" />}
                                   </button>
                                 );
                               })}
