@@ -1,254 +1,463 @@
 -- ==============================================================================
--- DIGITAL MENTOR: 70/30 HYBRID AI + VOLUNTEERS DATABASE SCHEMA
--- Strict Minimalist Architecture: Profiles, Modules, Skill Nodes, Micro-Tickets, Certificates
+-- DIGITAL MENTOR: ПОЛНЫЙ PRODUCTION-READY SQL СКРИПТ
+-- Применять в: Supabase Dashboard → SQL Editor
+-- Версия: 2026-09-30 (v3.0 — добавлены courses, onboarding, admin lock)
 -- ==============================================================================
 
--- 1. Custom Enums & Types
-do $$ begin
-  if not exists (select 1 from pg_type where typname = 'user_role') then
-    create type public.user_role as enum ('student', 'mentor', 'admin');
-  end if;
-  if not exists (select 1 from pg_type where typname = 'ticket_status') then
-    create type public.ticket_status as enum ('open', 'in_progress', 'resolved', 'closed');
-  end if;
-end $$;
+-- ------------------------------------------------------------------------------
+-- 0. ENUM TYPES (idempotent)
+-- ------------------------------------------------------------------------------
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
+    CREATE TYPE public.user_role AS ENUM ('student', 'mentor', 'admin');
+  END IF;
+END $$;
 
--- 2. Profiles & Roles Table
-create table if not exists public.profiles (
-  id uuid references auth.users(id) on delete cascade primary key,
-  role public.user_role default 'student'::public.user_role not null,
-  full_name text not null,
-  avatar_url text,
-  xp int default 0 not null,
-  streak_days int default 0 not null,
-  volunteer_minutes int default 0 not null,
-  mentor_rating numeric(3, 2) default 5.00 not null,
-  created_at timestamptz default now() not null
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ticket_status') THEN
+    CREATE TYPE public.ticket_status AS ENUM ('open', 'in_progress', 'resolved', 'closed');
+  END IF;
+END $$;
+
+-- ------------------------------------------------------------------------------
+-- 1. PROFILES TABLE (с полями онбординга)
+-- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id                   UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+  full_name            TEXT NOT NULL DEFAULT '',
+  grade                TEXT NOT NULL DEFAULT '',
+  role                 public.user_role NOT NULL DEFAULT 'student',
+  onboarding_completed BOOLEAN NOT NULL DEFAULT FALSE,
+  avatar_url           TEXT,
+  xp                   INT NOT NULL DEFAULT 0,
+  streak_days          INT NOT NULL DEFAULT 0,
+  volunteer_minutes    INT NOT NULL DEFAULT 0,
+  mentor_rating        NUMERIC(3, 2) NOT NULL DEFAULT 5.00,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 3. Modules & Minimalist Nodes
-create table if not exists public.modules (
-  id uuid default gen_random_uuid() primary key,
-  title text not null,
-  slug text unique not null,
-  order_index int not null,
-  created_at timestamptz default now() not null
+-- Добавляем недостающие столбцы если таблица уже существует
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='profiles' AND column_name='grade') THEN
+    ALTER TABLE public.profiles ADD COLUMN grade TEXT NOT NULL DEFAULT '';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='profiles' AND column_name='onboarding_completed') THEN
+    ALTER TABLE public.profiles ADD COLUMN onboarding_completed BOOLEAN NOT NULL DEFAULT FALSE;
+  END IF;
+END $$;
+
+-- ------------------------------------------------------------------------------
+-- 2. COURSES TABLE (для менторов и админов)
+-- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.courses (
+  id          UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  mentor_id   UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  title       TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  category    TEXT NOT NULL DEFAULT 'Другое',
+  is_published BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-create table if not exists public.skill_nodes (
-  id uuid default gen_random_uuid() primary key,
-  module_id uuid references public.modules(id) on delete cascade not null,
-  title text not null,
-  node_type text check (node_type in ('interactive_step', 'capstone_boss')) not null,
-  order_index int not null,
-  problem_statement text,
-  initial_code text,
-  expected_solution text,
-  ai_rubric jsonb,
-  created_at timestamptz default now() not null
+-- Индекс для быстрого поиска курсов ментора
+CREATE INDEX IF NOT EXISTS idx_courses_mentor_id ON public.courses(mentor_id);
+CREATE INDEX IF NOT EXISTS idx_courses_category ON public.courses(category);
+
+-- ------------------------------------------------------------------------------
+-- 3. MODULES & SKILL NODES (учебные материалы)
+-- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.modules (
+  id          UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  title       TEXT NOT NULL,
+  slug        TEXT UNIQUE NOT NULL,
+  order_index INT NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 4. 70/30 Architecture: Micro-Tickets
-create table if not exists public.micro_tickets (
-  id uuid default gen_random_uuid() primary key,
-  student_id uuid references public.profiles(id) on delete cascade not null,
-  mentor_id uuid references public.profiles(id) on delete set null,
-  node_id uuid references public.skill_nodes(id) on delete cascade not null,
-  status public.ticket_status default 'open'::public.ticket_status not null,
-  code_context text,
-  student_query text not null,
-  mentor_answer text,
-  ai_summary text,
-  awarded_minutes int default 15 not null,
-  created_at timestamptz default now() not null,
-  resolved_at timestamptz
+CREATE TABLE IF NOT EXISTS public.skill_nodes (
+  id                 UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  module_id          UUID REFERENCES public.modules(id) ON DELETE CASCADE NOT NULL,
+  title              TEXT NOT NULL,
+  node_type          TEXT CHECK (node_type IN ('interactive_step', 'capstone_boss')) NOT NULL,
+  order_index        INT NOT NULL,
+  problem_statement  TEXT,
+  initial_code       TEXT,
+  expected_solution  TEXT,
+  ai_rubric          JSONB,
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 5. Volunteer Verification & Certificates
-create table if not exists public.certificates (
-  id uuid default gen_random_uuid() primary key,
-  mentor_id uuid references public.profiles(id) on delete cascade not null,
-  verification_token text unique not null,
-  total_hours numeric(5, 2) not null,
-  issued_at timestamptz default now() not null
+-- ------------------------------------------------------------------------------
+-- 4. MICRO-TICKETS (70/30 Hybrid Engine)
+-- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.micro_tickets (
+  id             UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  student_id     UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  mentor_id      UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  node_id        UUID REFERENCES public.skill_nodes(id) ON DELETE CASCADE NOT NULL,
+  status         public.ticket_status NOT NULL DEFAULT 'open',
+  code_context   TEXT,
+  student_query  TEXT NOT NULL,
+  mentor_answer  TEXT,
+  ai_summary     TEXT,
+  awarded_minutes INT NOT NULL DEFAULT 15,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  resolved_at    TIMESTAMPTZ
 );
 
--- Indexes for maximum query performance
-create index if not exists idx_profiles_role on public.profiles(role);
-create index if not exists idx_micro_tickets_status on public.micro_tickets(status);
-create index if not exists idx_micro_tickets_student on public.micro_tickets(student_id);
-create index if not exists idx_micro_tickets_mentor on public.micro_tickets(mentor_id);
-create index if not exists idx_certificates_token on public.certificates(verification_token);
+-- ------------------------------------------------------------------------------
+-- 5. CERTIFICATES
+-- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.certificates (
+  id                 UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  mentor_id          UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  verification_token TEXT UNIQUE NOT NULL,
+  total_hours        NUMERIC(5, 2) NOT NULL,
+  issued_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ------------------------------------------------------------------------------
+-- 6. INDEXES
+-- ------------------------------------------------------------------------------
+CREATE INDEX IF NOT EXISTS idx_profiles_role        ON public.profiles(role);
+CREATE INDEX IF NOT EXISTS idx_micro_tickets_status  ON public.micro_tickets(status);
+CREATE INDEX IF NOT EXISTS idx_micro_tickets_student ON public.micro_tickets(student_id);
+CREATE INDEX IF NOT EXISTS idx_micro_tickets_mentor  ON public.micro_tickets(mentor_id);
+CREATE INDEX IF NOT EXISTS idx_certificates_token   ON public.certificates(verification_token);
 
 -- ==============================================================================
--- 6. ROW LEVEL SECURITY (RLS) POLICIES
+-- 7. ROW LEVEL SECURITY — ВКЛЮЧАЕМ
 -- ==============================================================================
-alter table public.profiles enable row level security;
-alter table public.modules enable row level security;
-alter table public.skill_nodes enable row level security;
-alter table public.micro_tickets enable row level security;
-alter table public.certificates enable row level security;
-
--- PROFILES POLICIES
-create policy "Allow read all profiles" 
-  on public.profiles for select 
-  using (true);
-
-create policy "Users can update own profile" 
-  on public.profiles for update 
-  using (auth.uid() = id);
-
-create policy "Admins can update any profile" 
-  on public.profiles for all 
-  using (
-    exists (
-      select 1 from public.profiles 
-      where id = auth.uid() and role = 'admin'
-    )
-  );
-
--- MODULES & SKILL NODES POLICIES
-create policy "Allow read modules" 
-  on public.modules for select 
-  using (true);
-
-create policy "Allow read skill_nodes" 
-  on public.skill_nodes for select 
-  using (true);
-
-create policy "Admins can modify curriculum" 
-  on public.modules for all 
-  using (
-    exists (
-      select 1 from public.profiles 
-      where id = auth.uid() and role = 'admin'
-    )
-  );
-
-create policy "Admins can modify skill nodes" 
-  on public.skill_nodes for all 
-  using (
-    exists (
-      select 1 from public.profiles 
-      where id = auth.uid() and role = 'admin'
-    )
-  );
-
--- MICRO-TICKETS POLICIES (70/30 Hybrid Engine)
-create policy "Students can view own tickets" 
-  on public.micro_tickets for select 
-  using (
-    auth.uid() = student_id 
-    or exists (
-      select 1 from public.profiles 
-      where id = auth.uid() and role in ('mentor', 'admin')
-    )
-  );
-
-create policy "Students can create micro_tickets" 
-  on public.micro_tickets for insert 
-  with check (auth.uid() = student_id);
-
-create policy "Mentors and students can update their tickets" 
-  on public.micro_tickets for update 
-  using (
-    auth.uid() = student_id 
-    or auth.uid() = mentor_id 
-    or (
-      status = 'open' and exists (
-        select 1 from public.profiles 
-        where id = auth.uid() and role in ('mentor', 'admin')
-      )
-    )
-  );
-
--- CERTIFICATES POLICIES
-create policy "Public verification of certificates" 
-  on public.certificates for select 
-  using (true);
-
-create policy "Admins can manage certificates" 
-  on public.certificates for all 
-  using (
-    exists (
-      select 1 from public.profiles 
-      where id = auth.uid() and role = 'admin'
-    )
-  );
+ALTER TABLE public.profiles      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.courses       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.modules       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.skill_nodes   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.micro_tickets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.certificates  ENABLE ROW LEVEL SECURITY;
 
 -- ==============================================================================
--- 7. TRIGGERS & AUTOMATION
+-- 8. HELPER: is_admin() — избегаем рекурсии в RLS политиках
 -- ==============================================================================
-
--- A. Auto-create Profile upon Supabase auth.users signup
-create or replace function public.handle_new_user()
-returns trigger as $$
-begin
-  insert into public.profiles (id, full_name, avatar_url, role)
-  values (
-    new.id,
-    coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
-    new.raw_user_meta_data->>'avatar_url',
-    case 
-      when lower(new.email) in ('ansarnurlan2@gmail.com') then 'admin'::public.user_role
-      else 'student'::public.user_role
-    end
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+LANGUAGE SQL
+STABLE
+SECURITY DEFINER
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.profiles
+    WHERE id = auth.uid() AND role = 'admin'
   )
-  on conflict (id) do nothing;
-  return new;
-end;
-$$ language plpgsql security definer;
-
-drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute procedure public.handle_new_user();
-
--- B. Auto-award volunteer minutes & sync certificate when Micro-Ticket is resolved
-create or replace function public.handle_micro_ticket_resolution()
-returns trigger as $$
-declare
-  v_total_hours numeric(5, 2);
-  v_token text;
-begin
-  if (old.status is distinct from 'resolved' and new.status = 'resolved' and new.mentor_id is not null) then
-    -- 1. Начисляем волонтерские минуты ментору
-    update public.profiles
-    set volunteer_minutes = volunteer_minutes + coalesce(new.awarded_minutes, 15)
-    where id = new.mentor_id;
-
-    -- 2. Пересчитываем суммарные часы
-    select round((volunteer_minutes / 60.0)::numeric, 2)
-    into v_total_hours
-    from public.profiles
-    where id = new.mentor_id;
-
-    -- 3. Создаем или обновляем официальный сертификат верификации
-    v_token := 'DM-' || upper(substr(md5(new.mentor_id::text), 1, 8)) || '-' || to_char(now(), 'YYMM');
-    
-    insert into public.certificates (mentor_id, verification_token, total_hours, issued_at)
-    values (new.mentor_id, v_token, v_total_hours, now())
-    on conflict (verification_token) do update
-    set total_hours = excluded.total_hours, issued_at = now();
-  end if;
-  return new;
-end;
-$$ language plpgsql security definer;
-
-drop trigger if exists on_micro_ticket_resolved on public.micro_tickets;
-create trigger on_micro_ticket_resolved
-  after update on public.micro_tickets
-  for each row execute procedure public.handle_micro_ticket_resolution();
+  OR (
+    SELECT lower(email) = 'ansarnurlan2@gmail.com'
+    FROM auth.users
+    WHERE id = auth.uid()
+  );
+$$;
 
 -- ==============================================================================
--- 8. REALTIME SUBSCRIPTION CHANNELS
+-- 9. PROFILES RLS POLICIES
 -- ==============================================================================
-do $$ begin
-  alter publication supabase_realtime add table public.micro_tickets;
-exception when others then null;
-end $$;
 
-do $$ begin
-  alter publication supabase_realtime add table public.profiles;
-exception when others then null;
-end $$;
+-- Сброс старых политик
+DROP POLICY IF EXISTS "Allow read all profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Admins can update any profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can insert their own profile once" ON public.profiles;
+DROP POLICY IF EXISTS "Users can view their own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can update their profile except role" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_select" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_insert" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_update" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_admin_all" ON public.profiles;
+
+-- SELECT: любой авторизованный видит все профили (для отображения имён менторов)
+CREATE POLICY "profiles_select"
+  ON public.profiles FOR SELECT
+  USING (auth.uid() IS NOT NULL);
+
+-- INSERT: только сам пользователь создаёт свой профиль
+CREATE POLICY "profiles_insert"
+  ON public.profiles FOR INSERT
+  WITH CHECK (auth.uid() = id);
+
+-- UPDATE: сам себя или admin
+CREATE POLICY "profiles_update"
+  ON public.profiles FOR UPDATE
+  USING (auth.uid() = id OR public.is_admin());
+
+-- ALL (DELETE и прочее): только admin
+CREATE POLICY "profiles_admin_all"
+  ON public.profiles FOR ALL
+  USING (public.is_admin());
+
+-- ==============================================================================
+-- 10. COURSES RLS POLICIES
+-- ==============================================================================
+
+DROP POLICY IF EXISTS "courses_select" ON public.courses;
+DROP POLICY IF EXISTS "courses_insert" ON public.courses;
+DROP POLICY IF EXISTS "courses_update" ON public.courses;
+DROP POLICY IF EXISTS "courses_delete" ON public.courses;
+
+-- SELECT: все авторизованные пользователи видят курсы
+CREATE POLICY "courses_select"
+  ON public.courses FOR SELECT
+  USING (auth.uid() IS NOT NULL);
+
+-- INSERT: только mentor или admin
+CREATE POLICY "courses_insert"
+  ON public.courses FOR INSERT
+  WITH CHECK (
+    auth.uid() = mentor_id
+    AND EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role IN ('mentor', 'admin')
+    )
+  );
+
+-- UPDATE: только автор курса или admin
+CREATE POLICY "courses_update"
+  ON public.courses FOR UPDATE
+  USING (
+    auth.uid() = mentor_id
+    OR public.is_admin()
+  );
+
+-- DELETE: только автор курса или admin
+CREATE POLICY "courses_delete"
+  ON public.courses FOR DELETE
+  USING (
+    auth.uid() = mentor_id
+    OR public.is_admin()
+  );
+
+-- ==============================================================================
+-- 11. MODULES & SKILL NODES RLS
+-- ==============================================================================
+
+DROP POLICY IF EXISTS "Allow read modules" ON public.modules;
+DROP POLICY IF EXISTS "Admins can modify curriculum" ON public.modules;
+DROP POLICY IF EXISTS "Allow read skill_nodes" ON public.skill_nodes;
+DROP POLICY IF EXISTS "Admins can modify skill nodes" ON public.skill_nodes;
+
+CREATE POLICY "modules_select"   ON public.modules FOR SELECT USING (true);
+CREATE POLICY "modules_admin"    ON public.modules FOR ALL    USING (public.is_admin());
+CREATE POLICY "snodes_select"    ON public.skill_nodes FOR SELECT USING (true);
+CREATE POLICY "snodes_admin"     ON public.skill_nodes FOR ALL    USING (public.is_admin());
+
+-- ==============================================================================
+-- 12. MICRO-TICKETS RLS
+-- ==============================================================================
+
+DROP POLICY IF EXISTS "Students can view own tickets" ON public.micro_tickets;
+DROP POLICY IF EXISTS "Students can create micro_tickets" ON public.micro_tickets;
+DROP POLICY IF EXISTS "Mentors and students can update their tickets" ON public.micro_tickets;
+
+CREATE POLICY "tickets_select"
+  ON public.micro_tickets FOR SELECT
+  USING (
+    auth.uid() = student_id
+    OR auth.uid() = mentor_id
+    OR public.is_admin()
+  );
+
+CREATE POLICY "tickets_insert"
+  ON public.micro_tickets FOR INSERT
+  WITH CHECK (auth.uid() = student_id);
+
+CREATE POLICY "tickets_update"
+  ON public.micro_tickets FOR UPDATE
+  USING (
+    auth.uid() = student_id
+    OR auth.uid() = mentor_id
+    OR public.is_admin()
+  );
+
+-- ==============================================================================
+-- 13. CERTIFICATES RLS
+-- ==============================================================================
+
+DROP POLICY IF EXISTS "Public verification of certificates" ON public.certificates;
+DROP POLICY IF EXISTS "Admins can manage certificates" ON public.certificates;
+
+CREATE POLICY "certs_select" ON public.certificates FOR SELECT USING (true);
+CREATE POLICY "certs_admin"  ON public.certificates FOR ALL    USING (public.is_admin());
+
+-- ==============================================================================
+-- 14. TRIGGERS & FUNCTIONS
+-- ==============================================================================
+
+-- A. Auto-create profile on new auth.users (с определением admin для super-email)
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  INSERT INTO public.profiles (
+    id,
+    full_name,
+    grade,
+    avatar_url,
+    role,
+    onboarding_completed
+  )
+  VALUES (
+    NEW.id,
+    COALESCE(
+      NEW.raw_user_meta_data->>'full_name',
+      NEW.raw_user_meta_data->>'name',
+      SPLIT_PART(NEW.email, '@', 1)
+    ),
+    '',
+    NEW.raw_user_meta_data->>'avatar_url',
+    CASE
+      WHEN LOWER(NEW.email) = 'ansarnurlan2@gmail.com' THEN 'admin'::public.user_role
+      ELSE 'student'::public.user_role
+    END,
+    CASE
+      WHEN LOWER(NEW.email) = 'ansarnurlan2@gmail.com' THEN TRUE
+      ELSE FALSE
+    END
+  )
+  ON CONFLICT (id) DO NOTHING;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_new_user();
+
+-- B. updated_at автообновление для courses
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS courses_updated_at ON public.courses;
+CREATE TRIGGER courses_updated_at
+  BEFORE UPDATE ON public.courses
+  FOR EACH ROW
+  EXECUTE FUNCTION public.update_updated_at_column();
+
+-- C. Auto-award volunteer minutes when micro_ticket resolved
+CREATE OR REPLACE FUNCTION public.handle_micro_ticket_resolution()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_total_hours NUMERIC(5, 2);
+  v_token TEXT;
+BEGIN
+  IF (OLD.status IS DISTINCT FROM 'resolved' AND NEW.status = 'resolved' AND NEW.mentor_id IS NOT NULL) THEN
+    UPDATE public.profiles
+    SET volunteer_minutes = volunteer_minutes + COALESCE(NEW.awarded_minutes, 15)
+    WHERE id = NEW.mentor_id;
+
+    SELECT ROUND((volunteer_minutes / 60.0)::NUMERIC, 2)
+    INTO v_total_hours
+    FROM public.profiles
+    WHERE id = NEW.mentor_id;
+
+    v_token := 'DM-' || UPPER(SUBSTR(MD5(NEW.mentor_id::TEXT), 1, 8)) || '-' || TO_CHAR(NOW(), 'YYMM');
+
+    INSERT INTO public.certificates (mentor_id, verification_token, total_hours, issued_at)
+    VALUES (NEW.mentor_id, v_token, v_total_hours, NOW())
+    ON CONFLICT (verification_token) DO UPDATE
+    SET total_hours = EXCLUDED.total_hours, issued_at = NOW();
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS on_micro_ticket_resolved ON public.micro_tickets;
+CREATE TRIGGER on_micro_ticket_resolved
+  AFTER UPDATE ON public.micro_tickets
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_micro_ticket_resolution();
+
+-- ==============================================================================
+-- 15. ADMIN LOCK: Принудительно выставляем admin для ansarnurlan2@gmail.com
+-- ==============================================================================
+DO $$
+DECLARE
+  v_user_id UUID;
+BEGIN
+  -- Ищем пользователя в auth.users
+  SELECT id INTO v_user_id
+  FROM auth.users
+  WHERE LOWER(email) = 'ansarnurlan2@gmail.com'
+  LIMIT 1;
+
+  IF v_user_id IS NOT NULL THEN
+    -- Upsert профиля с admin-правами
+    INSERT INTO public.profiles (id, full_name, grade, role, onboarding_completed)
+    VALUES (
+      v_user_id,
+      'Ansarnurlan Admin',
+      'Admin',
+      'admin',
+      TRUE
+    )
+    ON CONFLICT (id) DO UPDATE
+    SET
+      role                 = 'admin',
+      onboarding_completed = TRUE;
+
+    RAISE NOTICE 'Admin role set for ansarnurlan2@gmail.com (user_id: %)', v_user_id;
+  ELSE
+    RAISE NOTICE 'User ansarnurlan2@gmail.com not found in auth.users yet. Will be set on first login via trigger.';
+  END IF;
+END $$;
+
+-- ==============================================================================
+-- 16. REALTIME
+-- ==============================================================================
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.micro_tickets;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.profiles;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.courses;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+-- ==============================================================================
+-- 17. SEED DATA (опционально — учебные модули)
+-- ==============================================================================
+INSERT INTO public.modules (id, title, slug, order_index) VALUES
+  ('11111111-1111-1111-1111-111111111111', 'SAT Math — Квадратные функции',   'sat-math-quadratic', 1),
+  ('22222222-2222-2222-2222-222222222222', 'Подготовка к СОР/СОЧ: Алгебра',    'sor-soch-algebra',   2),
+  ('33333333-3333-3333-3333-333333333333', 'Алгоритмы и Структуры данных',      'algorithms-ds',      3)
+ON CONFLICT (slug) DO NOTHING;
+
+-- ==============================================================================
+-- ГОТОВО ✅
+-- Применено:
+--   • Таблицы: profiles, courses, modules, skill_nodes, micro_tickets, certificates
+--   • Enum: user_role, ticket_status
+--   • RLS политики с is_admin() helper (без рекурсии)
+--   • Триггер: handle_new_user (admin lock для ansarnurlan2@gmail.com)
+--   • Триггер: volunteer minutes + certificate
+--   • Admin lock через SQL DO $$...$$
+--   • Realtime для micro_tickets, profiles, courses
+-- ==============================================================================

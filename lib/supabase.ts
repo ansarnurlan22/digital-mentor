@@ -1,12 +1,15 @@
-import { createClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://tltankihglovzfvveyif.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRsdGFua2loZ2xvdnpmdnZleWlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkxMzk4MDEsImV4cCI6MjEwNDcxNTgwMX0.yrmziZFnKC95DBDhYdS20CslpWV4l-BtzkWSV4WG0so';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-  },
-});
+/**
+ * Клиентский Supabase клиент (для 'use client' компонентов).
+ * Используется в app/page.tsx и других клиентских компонентах.
+ */
+export function createSupabaseBrowserClient() {
+  return createBrowserClient(supabaseUrl, supabaseAnonKey);
+}
+
+// Синглтон для обратной совместимости
+export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);

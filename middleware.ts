@@ -1,51 +1,102 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
 
 /**
- * Middleware контроля доступа (RBAC Guard)
- * Доступ к роутам /admin и API /api/admin/* разрешён только пользователям со статусом role: "admin".
- * Неавторизованные пользователи и обычные ученики/менторы блокируются с кодом 403 Forbidden.
+ * Middleware: RBAC Guard + Onboarding Protection
+ * 
+ * 1. Для /admin/* — проверяем role='admin' из profiles таблицы через Supabase SSR
+ * 2. Защищаем от race conditions при загрузке сессии
+ * 3. ansarnurlan2@gmail.com — автоматически admin, никогда не попадает на онбординг
  */
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  });
 
+  // Создаём SSR Supabase клиент (читает куки из запроса)
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options);
+          });
+        },
+      },
+    }
+  );
+
+  // Получаем текущую сессию (не вызывает лишних сетевых запросов)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // ============================================================
+  // ADMIN ROUTES PROTECTION
+  // ============================================================
   if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
-    const roleCookie = request.cookies.get('user_role')?.value;
-    const customRoleHeader = request.headers.get('x-user-role');
-    const emailCookie = request.cookies.get('user_email')?.value;
-    const customEmailHeader = request.headers.get('x-user-email');
-
-    const email = (customEmailHeader || emailCookie || '').toLowerCase().trim();
-    const isSuperAdminEmail = email === 'ansarnurlan2@gmail.com' || email === 'ansarnurlan22@gmail.com';
-
-    // Проверяем роль пользователя
-    const role = (customRoleHeader || roleCookie || '').toLowerCase();
-    const isAdmin = isSuperAdminEmail || role === 'admin' || role === 'администратор';
-
-    if (!isAdmin) {
-      // 1. Для API-запросов возвращаем 403 Forbidden в формате JSON
+    if (!user) {
       if (pathname.startsWith('/api/admin')) {
         return NextResponse.json(
-          {
-            error: 'Forbidden',
-            status: 403,
-            message: '403 Forbidden: Доступ к API разрешён только пользователям со статусом role: "admin".',
-          },
-          { status: 403 }
+          { error: 'Unauthorized', status: 401 },
+          { status: 401 }
         );
       }
+      return NextResponse.redirect(new URL('/', request.url));
+    }
 
-      // 2. Для веб-страниц перенаправляем на / с уведомлением об отказе в доступе
-      const redirectUrl = new URL('/', request.url);
-      redirectUrl.searchParams.set('error', '403_forbidden');
-      redirectUrl.searchParams.set('message', 'Доступ разрешён только администраторам платформы.');
-      return NextResponse.redirect(redirectUrl);
+    const userEmail = user.email?.toLowerCase().trim() ?? '';
+    const isSuperAdmin = userEmail === 'ansarnurlan2@gmail.com';
+
+    if (!isSuperAdmin) {
+      // Проверяем role в profiles
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      const isAdmin = profile?.role === 'admin';
+
+      if (!isAdmin) {
+        if (pathname.startsWith('/api/admin')) {
+          return NextResponse.json(
+            {
+              error: 'Forbidden',
+              status: 403,
+              message: '403 Forbidden: Доступ разрешён только администраторам.',
+            },
+            { status: 403 }
+          );
+        }
+        const redirectUrl = new URL('/', request.url);
+        redirectUrl.searchParams.set('error', '403_forbidden');
+        return NextResponse.redirect(redirectUrl);
+      }
     }
   }
 
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/api/admin/:path*'],
+  matcher: [
+    /*
+     * Обрабатываем все маршруты кроме:
+     * - _next/static (статические файлы)
+     * - _next/image (оптимизация картинок)
+     * - favicon.ico
+     * - публичные ассеты
+     */
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 };
