@@ -62,13 +62,10 @@ interface Course {
   lessons_count?: number;
 }
 
-interface LessonModule {
-  topic: string;
-  category: string;
-  tag: string;
-  theoryPoints: string[];
-  keyFormulaOrCode: { title: string; content: string; note: string };
-  quiz: QuizQuestion[];
+// AI-powered lesson response type (matches /api/tutor JSON response)
+interface TutorTheory {
+  keyPoints: string[];
+  summarySteps: string[];
 }
 
 interface QuizQuestion {
@@ -79,54 +76,30 @@ interface QuizQuestion {
   explanation: string;
 }
 
-// ============================================================================
-// Ment AI Knowledge Engine (on-demand)
-// ============================================================================
+interface TutorLessonResponse {
+  topic: string;
+  theory: TutorTheory;
+  quiz: QuizQuestion[];
+  category?: string;
+}
 
-function generateMentLesson(query: string): LessonModule {
-  const clean = query.trim();
-  return {
-    topic: clean,
-    category: 'Академический курс · Ment AI',
-    tag: 'Индивидуальный модуль',
-    theoryPoints: [
-      `Тема «${clean}» является ключевым элементом школьной программы.`,
-      `Фундаментальный принцип «${clean}» строится на последовательном анализе условий.`,
-      `Для решения задач по теме «${clean}» важно структурировать входные данные.`,
-      `Регулярная практика с Ment AI позволяет закрепить навык и сдать СОР/СОЧ на высший балл.`,
-    ],
-    keyFormulaOrCode: {
-      title: `Опорная модель: ${clean}`,
-      content: `1. Анализ условия задачи по теме «${clean}»\n2. Подстановка ключевых величин\n3. Верификация размерностей и граничных условий`,
-      note: 'Ment AI подготовил конспект для повторения.',
-    },
-    quiz: [
-      {
-        id: 1,
-        question: `Что является ключевой основой темы «${clean}»?`,
-        options: [
-          'Последовательное изучение базовых определений и формул',
-          'Случайный перебор вариантов',
-          'Игнорирование начальных условий',
-          'Заучивание ответов без понимания',
-        ],
-        correctIndex: 0,
-        explanation: 'Глубокое понимание формул гарантирует верное решение.',
-      },
-      {
-        id: 2,
-        question: `Как проверить результат по теме «${clean}»?`,
-        options: [
-          'Подставить результат обратно в условие',
-          'Сразу закрыть тест',
-          'Ориентироваться на интуицию',
-          'Стереть черновик',
-        ],
-        correctIndex: 0,
-        explanation: 'Обратная подстановка — самый надёжный способ.',
-      },
-    ],
-  };
+// Lesson — for Lessons/Schedule module
+interface Lesson {
+  id: string;
+  mentor_id: string;
+  mentor_name?: string;
+  title: string;
+  subject: string;
+  description: string;
+  lesson_date: string;
+  start_time: string;
+  end_time: string;
+  max_students: number;
+  meeting_link: string;
+  status: 'scheduled' | 'completed' | 'cancelled';
+  created_at: string;
+  enrolled?: boolean;
+  enrollments_count?: number;
 }
 
 // ============================================================================
@@ -559,6 +532,368 @@ function CoursesView({ profile }: CoursesViewProps) {
 }
 
 // ============================================================================
+// ScheduleView — Lessons / Schedule Module
+// ============================================================================
+
+interface ScheduleViewProps {
+  profile: UserProfile;
+  triggerToast: (msg: string) => void;
+}
+
+interface LessonFormData {
+  title: string;
+  subject: string;
+  description: string;
+  lesson_date: string;
+  start_time: string;
+  end_time: string;
+  max_students: number;
+  meeting_link: string;
+}
+
+function ScheduleView({ profile, triggerToast }: ScheduleViewProps) {
+  const isMentor = profile.role === 'mentor' || profile.role === 'admin';
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [filter, setFilter] = useState<'upcoming' | 'my' | 'all'>('upcoming');
+  const [formData, setFormData] = useState<LessonFormData>({
+    title: '',
+    subject: 'Математика',
+    description: '',
+    lesson_date: new Date().toISOString().split('T')[0],
+    start_time: '16:00',
+    end_time: '17:00',
+    max_students: 5,
+    meeting_link: '',
+  });
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const SUBJECTS = ['Математика', 'Физика', 'Химия', 'Биология', 'История Казахстана', 'Английский язык', 'Русский язык', 'Информатика', 'Другое'];
+
+  const fetchLessons = async () => {
+    setLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token ?? '';
+      const params = filter === 'upcoming' ? '?upcoming=true' : filter === 'my' && isMentor ? `?mentor_id=${profile.id}` : '';
+      const res = await fetch(`/api/lessons${params}`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setLessons(Array.isArray(data) ? data : []);
+      }
+    } catch (e) {
+      console.error('fetchLessons error', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchLessons(); }, [filter]);
+
+  const handleCreateLesson = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.title.trim()) { setFormError('Укажите название урока.'); return; }
+    if (!formData.lesson_date) { setFormError('Укажите дату.'); return; }
+    if (!formData.start_time || !formData.end_time) { setFormError('Укажите время начала и конца.'); return; }
+
+    setSaving(true);
+    setFormError(null);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token ?? '';
+
+      const res = await fetch('/api/lessons', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ ...formData, max_students: Number(formData.max_students) }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setFormError(data.error || 'Ошибка создания урока.');
+        return;
+      }
+
+      setShowForm(false);
+      setFormData({ title: '', subject: 'Математика', description: '', lesson_date: new Date().toISOString().split('T')[0], start_time: '16:00', end_time: '17:00', max_students: 5, meeting_link: '' });
+      triggerToast(`Урок «${data.title}» создан!`);
+      await fetchLessons();
+    } catch (err: any) {
+      setFormError('Ошибка сети.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const statusLabel: Record<string, { label: string; color: string }> = {
+    scheduled: { label: 'Запланирован', color: 'text-[#00A3FF] bg-[#00A3FF]/10 border-[#00A3FF]/30' },
+    completed: { label: 'Завершён', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' },
+    cancelled: { label: 'Отменён', color: 'text-red-400 bg-red-500/10 border-red-500/30' },
+  };
+
+  return (
+    <div className="space-y-6 animate-fadeIn max-w-5xl mx-auto">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Расписание занятий</h1>
+          <p className="text-xs text-slate-400 mt-1">Все онлайн-уроки платформы Digital Mentor.</p>
+        </div>
+        {isMentor && (
+          <button
+            onClick={() => setShowForm(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#0284c7] to-[#00A3FF] text-white font-bold text-sm hover:shadow-[0_0_16px_rgba(0,163,255,0.35)] transition-all"
+          >
+            <Plus className="w-4 h-4" />
+            Создать занятие
+          </button>
+        )}
+      </div>
+
+      {/* Filter tabs */}
+      <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+        {[
+          { key: 'upcoming', label: 'Предстоящие' },
+          ...(isMentor ? [{ key: 'my', label: 'Мои уроки' }] : []),
+          { key: 'all', label: 'Все уроки' },
+        ].map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setFilter(key as any)}
+            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-colors ${filter === key ? 'bg-[#00A3FF]/15 text-[#00A3FF] border border-[#00A3FF]/30' : 'text-slate-400 hover:text-white border border-transparent'}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Lessons list */}
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="w-8 h-8 border-2 border-[#00A3FF] border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : lessons.length === 0 ? (
+        <div className="bg-[#0F172A] border border-slate-800 rounded-2xl p-14 text-center space-y-4">
+          <div className="w-14 h-14 rounded-xl bg-slate-800 text-slate-400 mx-auto flex items-center justify-center">
+            <Calendar className="w-7 h-7" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-white">Нет занятий</h3>
+            <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
+              {isMentor ? 'Создайте первое занятие, нажав кнопку «Создать занятие» выше.' : 'Менторы ещё не добавили занятия. Загляните позже.'}
+            </p>
+          </div>
+          {isMentor && (
+            <button
+              onClick={() => setShowForm(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#00A3FF]/15 border border-[#00A3FF]/30 text-[#00A3FF] text-xs font-bold hover:bg-[#00A3FF]/25 transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Создать первое занятие
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {lessons.map((lesson) => {
+            const st = statusLabel[lesson.status] ?? statusLabel.scheduled;
+            const formattedDate = lesson.lesson_date
+              ? new Date(lesson.lesson_date + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', weekday: 'short' })
+              : '';
+            return (
+              <div key={lesson.id} className="bg-[#0F172A] border border-slate-800 rounded-2xl p-5 space-y-3 hover:border-slate-700 transition-colors">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-white text-sm leading-snug truncate">{lesson.title}</h3>
+                    <p className="text-xs text-slate-400 mt-0.5">{lesson.subject}</p>
+                  </div>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${st.color} flex-shrink-0`}>{st.label}</span>
+                </div>
+
+                {lesson.description && (
+                  <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">{lesson.description}</p>
+                )}
+
+                <div className="grid grid-cols-2 gap-2 text-xs text-slate-300">
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                    <span>{formattedDate}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-slate-500" />
+                    <span>{lesson.start_time} – {lesson.end_time}</span>
+                  </div>
+                  {lesson.mentor_name && (
+                    <div className="flex items-center gap-1.5">
+                      <GraduationCap className="w-3.5 h-3.5 text-slate-500" />
+                      <span className="truncate">{lesson.mentor_name}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-slate-500" />
+                    <span>До {lesson.max_students} уч.</span>
+                  </div>
+                </div>
+
+                {lesson.meeting_link && (
+                  <a
+                    href={lesson.meeting_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-xs text-[#00A3FF] font-semibold hover:underline"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    Ссылка на встречу
+                    <ArrowRight className="w-3 h-3" />
+                  </a>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Create Lesson Modal */}
+      {showForm && (
+        <div className="fixed inset-0 z-[999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-[#0B132B] border border-white/10 rounded-2xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-5 my-8">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-white">Создать занятие</h2>
+              <button onClick={() => setShowForm(false)} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {formError && (
+              <div className="p-3 rounded-lg bg-red-500/15 border border-red-500/40 text-red-300 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{formError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleCreateLesson} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-300">Тема урока *</label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))}
+                  placeholder="Напр: Квадратные уравнения — дискриминант"
+                  className="w-full bg-[#070D1E] border border-slate-800 text-white rounded-lg p-3 focus:border-[#00A3FF] outline-none text-sm"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-300">Предмет</label>
+                  <select
+                    value={formData.subject}
+                    onChange={(e) => setFormData((p) => ({ ...p, subject: e.target.value }))}
+                    className="w-full bg-[#070D1E] border border-slate-800 text-white rounded-lg p-3 focus:border-[#00A3FF] outline-none text-sm cursor-pointer"
+                  >
+                    {SUBJECTS.map((s) => <option key={s} value={s} className="bg-[#0B132B]">{s}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-300">Макс. студентов</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={50}
+                    value={formData.max_students}
+                    onChange={(e) => setFormData((p) => ({ ...p, max_students: parseInt(e.target.value) || 1 }))}
+                    className="w-full bg-[#070D1E] border border-slate-800 text-white rounded-lg p-3 focus:border-[#00A3FF] outline-none text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-300">Дата проведения *</label>
+                <input
+                  type="date"
+                  value={formData.lesson_date}
+                  onChange={(e) => setFormData((p) => ({ ...p, lesson_date: e.target.value }))}
+                  className="w-full bg-[#070D1E] border border-slate-800 text-white rounded-lg p-3 focus:border-[#00A3FF] outline-none text-sm"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-300">Начало *</label>
+                  <input
+                    type="time"
+                    value={formData.start_time}
+                    onChange={(e) => setFormData((p) => ({ ...p, start_time: e.target.value }))}
+                    className="w-full bg-[#070D1E] border border-slate-800 text-white rounded-lg p-3 focus:border-[#00A3FF] outline-none text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-300">Конец *</label>
+                  <input
+                    type="time"
+                    value={formData.end_time}
+                    onChange={(e) => setFormData((p) => ({ ...p, end_time: e.target.value }))}
+                    className="w-full bg-[#070D1E] border border-slate-800 text-white rounded-lg p-3 focus:border-[#00A3FF] outline-none text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-300">Ссылка на встречу (Google Meet / Zoom)</label>
+                <input
+                  type="url"
+                  value={formData.meeting_link}
+                  onChange={(e) => setFormData((p) => ({ ...p, meeting_link: e.target.value }))}
+                  placeholder="https://meet.google.com/..."
+                  className="w-full bg-[#070D1E] border border-slate-800 text-white rounded-lg p-3 focus:border-[#00A3FF] outline-none text-sm"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-300">Описание (опционально)</label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
+                  placeholder="Что будем проходить на занятии..."
+                  rows={3}
+                  className="w-full bg-[#070D1E] border border-slate-800 text-white rounded-lg p-3 focus:border-[#00A3FF] outline-none text-sm resize-none"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  className="flex-1 py-3 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-sm font-semibold transition-colors"
+                >
+                  Отмена
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#0284c7] to-[#00A3FF] disabled:opacity-50 text-white font-bold text-sm flex items-center justify-center gap-2"
+                >
+                  {saving ? <><RefreshCw className="w-4 h-4 animate-spin" />Сохранение...</> : 'Создать занятие'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
 // Main Application Component
 // ============================================================================
 
@@ -581,7 +916,9 @@ export default function DigitalMentorApp() {
 
   // Ment AI State
   const [mentTopicInput, setMentTopicInput] = useState<string>('Теорема Виета');
-  const [currentLesson, setCurrentLesson] = useState<LessonModule | null>(null);
+  const [mentSubject, setMentSubject] = useState<string>('Математика');
+  const [currentLesson, setCurrentLesson] = useState<TutorLessonResponse | null>(null);
+  const [mentError, setMentError] = useState<string | null>(null);
   const [userQuizAnswers, setUserQuizAnswers] = useState<Record<number, number>>({});
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [savedNotes, setSavedNotes] = useState<string[]>([]);
@@ -812,19 +1149,43 @@ export default function DigitalMentorApp() {
   };
 
   // -----------------------------------------------------------------------
-  // Ment AI
+  // Ment AI — Real Gemini API call
   // -----------------------------------------------------------------------
-  const handleGenerateLesson = (topic: string) => {
+  const handleGenerateLesson = async (topic: string) => {
     const trimmed = topic.trim();
     if (!trimmed) return;
     setIsGenerating(true);
+    setMentError(null);
     setUserQuizAnswers({});
-    setTimeout(() => {
-      setCurrentLesson(generateMentLesson(trimmed));
+    setCurrentView('ment-ai');
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token ?? '';
+
+      const res = await fetch('/api/tutor', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ topic: trimmed, subject: mentSubject, grade: userProfile?.grade || '9 класс' }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        setMentError(data.error || 'Ошибка генерации урока. Попробуйте ещё раз.');
+        return;
+      }
+
+      setCurrentLesson(data as TutorLessonResponse);
+      triggerToast(`Урок «${trimmed}» готов!`);
+    } catch (err: any) {
+      setMentError('Сеть недоступна или сервис AI временно не работает.');
+    } finally {
       setIsGenerating(false);
-      setCurrentView('ment-ai');
-      triggerToast(`Урок «${trimmed}» сгенерирован!`);
-    }, 400);
+    }
   };
 
   const handleSaveNote = () => {
@@ -1183,82 +1544,121 @@ export default function DigitalMentorApp() {
 
             {/* MENT AI */}
             {currentView === 'ment-ai' && (
-              <div className="space-y-8 animate-fadeIn max-w-4xl mx-auto">
+              <div className="space-y-6 animate-fadeIn max-w-4xl mx-auto">
+                {/* Header */}
                 <div className="flex flex-col gap-2">
                   <div className="inline-flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-widest text-[#00A3FF]">
                     <Sparkles className="w-3.5 h-3.5" />
-                    <span>MENT AI 24/7 · ON-DEMAND ENGINE</span>
+                    <span>MENT AI · РЕАЛЬНЫЙ АКАДЕМИЧЕСКИЙ КОНТЕНТ</span>
                   </div>
-                  <h1 className="text-3xl font-extrabold text-white">Генератор уроков и микро-тестов</h1>
-                  <p className="text-sm text-slate-400">Введите любую школьную тему для получения теории и теста.</p>
+                  <h1 className="text-3xl font-extrabold text-white">Генератор уроков и тестов</h1>
+                  <p className="text-sm text-slate-400">Введите тему — Gemini AI сгенерирует реальную теорию с формулами и 4 практических задания.</p>
                 </div>
 
-                <div className="bg-[#0F172A] border border-slate-800 rounded-2xl p-5 shadow-2xl">
-                  <form
-                    onSubmit={(e) => { e.preventDefault(); handleGenerateLesson(mentTopicInput); }}
-                    className="flex flex-col sm:flex-row gap-3"
-                  >
-                    <div className="relative flex-1">
+                {/* Search bar */}
+                <div className="bg-[#0F172A] border border-slate-800 rounded-2xl p-5 shadow-2xl space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="sm:col-span-2 relative">
                       <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
                       <input
                         type="text"
                         value={mentTopicInput}
                         onChange={(e) => setMentTopicInput(e.target.value)}
-                        placeholder="Теорема Виета, Закон Ома, Циклы for..."
-                        className="w-full pl-11 pr-4 py-3 bg-[#080E1E] border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#00A3FF]"
+                        onKeyDown={(e) => e.key === 'Enter' && handleGenerateLesson(mentTopicInput)}
+                        placeholder="Дискриминант, Закон Ома, Фотосинтез, Причастие..."
+                        className="w-full pl-11 pr-4 py-3 bg-[#080E1E] border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#00A3FF] transition-colors"
                       />
                     </div>
-                    <button
-                      type="submit"
-                      disabled={isGenerating || !mentTopicInput.trim()}
-                      className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#0284c7] to-[#00A3FF] disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-2 whitespace-nowrap"
+                    <select
+                      value={mentSubject}
+                      onChange={(e) => setMentSubject(e.target.value)}
+                      className="bg-[#080E1E] border border-slate-700/80 text-white rounded-xl px-4 py-3 text-sm focus:border-[#00A3FF] outline-none cursor-pointer"
                     >
-                      {isGenerating
-                        ? <><RefreshCw className="w-4 h-4 animate-spin" /><span>Синтез...</span></>
-                        : <><Sparkles className="w-4 h-4" /><span>Сгенерировать урок</span></>
-                      }
-                    </button>
-                  </form>
+                      {['Математика', 'Физика', 'Химия', 'Биология', 'История Казахстана', 'Английский язык', 'Русский язык', 'Информатика', 'Другое'].map((s) => (
+                        <option key={s} value={s} className="bg-[#0B132B]">{s}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    onClick={() => handleGenerateLesson(mentTopicInput)}
+                    disabled={isGenerating || !mentTopicInput.trim()}
+                    className="w-full py-3 rounded-xl bg-gradient-to-r from-[#0284c7] to-[#00A3FF] disabled:opacity-50 text-white font-bold text-sm flex items-center justify-center gap-2 transition-all hover:shadow-[0_0_20px_rgba(0,163,255,0.4)]"
+                  >
+                    {isGenerating
+                      ? <><RefreshCw className="w-4 h-4 animate-spin" /><span>Gemini AI генерирует урок...</span></>
+                      : <><Sparkles className="w-4 h-4" /><span>Сгенерировать урок с реальным содержанием</span></>
+                    }
+                  </button>
                 </div>
 
+                {/* Error */}
+                {mentError && (
+                  <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold">Ошибка генерации</p>
+                      <p className="text-xs text-red-400 mt-1">{mentError}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Lesson content */}
                 {currentLesson && (
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                      <span className="text-xs font-bold text-[#00A3FF] px-3 py-1 rounded-full bg-[#00A3FF]/15 border border-[#00A3FF]/30">
-                        {currentLesson.category}
-                      </span>
+                  <div className="space-y-5">
+                    {/* Topic header */}
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                      <div>
+                        <h2 className="text-xl font-bold text-white">{currentLesson.topic}</h2>
+                        <span className="text-xs text-[#00A3FF] font-semibold">{mentSubject} · Ment AI</span>
+                      </div>
                       <button
                         onClick={handleSaveNote}
-                        className="px-3.5 py-1.5 rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1.5"
+                        className="px-3.5 py-1.5 rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1.5 transition-colors"
                       >
                         <Bookmark className="w-3.5 h-3.5 text-[#00A3FF]" />
-                        <span>Сохранить конспект</span>
+                        <span>Сохранить</span>
                       </button>
                     </div>
 
+                    {/* Theory — Key Points */}
                     <div className="bg-[#0F172A] border border-slate-800 rounded-2xl p-6 space-y-4">
-                      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#00A3FF]">
-                        <span className="w-5 h-5 rounded bg-[#00A3FF]/15 border border-[#00A3FF]/30 flex items-center justify-center text-[10px]">1</span>
-                        <span>Выжимка теории</span>
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-lg bg-[#00A3FF]/15 border border-[#00A3FF]/30 flex items-center justify-center text-[#00A3FF] text-xs font-bold">1</span>
+                        <span className="text-xs font-extrabold uppercase tracking-wider text-[#00A3FF]">Теория и ключевые факты</span>
                       </div>
-                      <h3 className="text-lg font-bold text-white">{currentLesson.topic}</h3>
-                      <ul className="space-y-2">
-                        {currentLesson.theoryPoints.map((pt, i) => (
-                          <li key={i} className="text-xs text-slate-300 flex items-start gap-2.5 leading-relaxed">
-                            <span className="w-4 h-4 rounded bg-[#080E1E] border border-slate-700 text-[#00A3FF] font-bold text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">{i + 1}</span>
-                            <span>{pt}</span>
-                          </li>
+                      <div className="space-y-3">
+                        {currentLesson.theory.keyPoints.map((point, i) => (
+                          <div key={i} className="flex items-start gap-3">
+                            <span className="w-5 h-5 rounded-md bg-[#080E1E] border border-slate-700 text-[#00A3FF] font-bold text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">{i + 1}</span>
+                            <p className="text-sm text-slate-200 leading-relaxed">{point}</p>
+                          </div>
                         ))}
-                      </ul>
-                      <div className="p-3 bg-[#080E1E] border border-slate-800 rounded-xl font-mono text-xs text-slate-200 whitespace-pre-wrap">
-                        {currentLesson.keyFormulaOrCode.content}
                       </div>
                     </div>
 
-                    <div className="bg-[#0F172A] border border-slate-800 rounded-2xl p-6 space-y-4">
-                      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#00A3FF]">
-                        <span className="w-5 h-5 rounded bg-[#00A3FF]/15 border border-[#00A3FF]/30 flex items-center justify-center text-[10px]">2</span>
-                        <span>Интерактивный микро-тест</span>
+                    {/* Theory — Summary Steps */}
+                    {currentLesson.theory.summarySteps?.length > 0 && (
+                      <div className="bg-[#0F172A] border border-slate-800 rounded-2xl p-6 space-y-4">
+                        <div className="flex items-center gap-2">
+                          <span className="w-6 h-6 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xs font-bold">2</span>
+                          <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-400">Алгоритм решения по шагам</span>
+                        </div>
+                        <ol className="space-y-2">
+                          {currentLesson.theory.summarySteps.map((step, i) => (
+                            <li key={i} className="flex items-start gap-3">
+                              <span className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-bold text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">{i + 1}</span>
+                              <p className="text-sm text-slate-300 leading-relaxed">{step}</p>
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
+                    )}
+
+                    {/* Quiz */}
+                    <div className="bg-[#0F172A] border border-slate-800 rounded-2xl p-6 space-y-5">
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-lg bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400 text-xs font-bold">3</span>
+                        <span className="text-xs font-extrabold uppercase tracking-wider text-purple-400">Интерактивный тест ({currentLesson.quiz.length} вопроса)</span>
                       </div>
                       <div className="space-y-4">
                         {currentLesson.quiz.map((q, qIndex) => {
@@ -1267,37 +1667,56 @@ export default function DigitalMentorApp() {
                           const isCorrect = answered && ans === q.correctIndex;
 
                           return (
-                            <div key={q.id} className="bg-[#080E1E] border border-slate-800 rounded-xl p-4 space-y-3">
-                              <div className="text-xs font-semibold text-white">{qIndex + 1}. {q.question}</div>
+                            <div key={q.id} className={`bg-[#080E1E] rounded-xl p-4 space-y-3 border transition-colors ${answered ? (isCorrect ? 'border-emerald-500/40' : 'border-red-500/30') : 'border-slate-800'}`}>
+                              <div className="flex items-start gap-2">
+                                <span className="w-5 h-5 rounded bg-purple-500/15 text-purple-400 text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{qIndex + 1}</span>
+                                <p className="text-sm font-semibold text-white leading-relaxed">{q.question}</p>
+                              </div>
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 {q.options.map((opt, optIndex) => {
-                                  let style = 'bg-[#0F172A] border-slate-800 text-slate-300 hover:border-slate-700';
+                                  let style = 'bg-[#0F172A] border-slate-800 text-slate-300 hover:border-slate-600 hover:bg-slate-800/50';
                                   if (answered) {
-                                    if (optIndex === q.correctIndex) style = 'bg-emerald-500/15 border-emerald-500 text-emerald-300 font-bold';
+                                    if (optIndex === q.correctIndex) style = 'bg-emerald-500/15 border-emerald-500 text-emerald-200 font-semibold';
                                     else if (ans === optIndex) style = 'bg-red-500/15 border-red-500 text-red-300';
-                                  } else if (ans === optIndex) style = 'bg-[#00A3FF]/15 border-[#00A3FF] text-[#00A3FF]';
-
+                                    else style = 'bg-[#0F172A] border-slate-800 text-slate-500 opacity-60';
+                                  }
                                   return (
                                     <button
                                       key={optIndex}
-                                      onClick={() => setUserQuizAnswers((prev) => ({ ...prev, [q.id]: optIndex }))}
-                                      className={`p-2.5 rounded-lg border text-left text-xs cursor-pointer flex items-center justify-between ${style}`}
+                                      onClick={() => !answered && setUserQuizAnswers((prev) => ({ ...prev, [q.id]: optIndex }))}
+                                      disabled={answered}
+                                      className={`p-3 rounded-xl border text-left text-xs cursor-pointer flex items-center justify-between transition-all ${style}`}
                                     >
                                       <span>{opt}</span>
-                                      {answered && optIndex === q.correctIndex && <Check className="w-3.5 h-3.5 text-emerald-400" />}
+                                      {answered && optIndex === q.correctIndex && <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />}
                                     </button>
                                   );
                                 })}
                               </div>
                               {answered && (
-                                <div className="text-[11px] text-slate-400 p-2.5 bg-[#060A14] rounded-lg border border-slate-900">
-                                  <strong>Разбор:</strong> {q.explanation}
+                                <div className={`p-3 rounded-xl border text-xs leading-relaxed ${isCorrect ? 'bg-emerald-500/8 border-emerald-500/20 text-emerald-300' : 'bg-red-500/8 border-red-500/20 text-red-300'}`}>
+                                  <span className="font-bold">{isCorrect ? '✓ Верно! ' : '✗ Неверно. '}</span>
+                                  {q.explanation}
                                 </div>
                               )}
                             </div>
                           );
                         })}
                       </div>
+                      {/* Score */}
+                      {Object.keys(userQuizAnswers).length === currentLesson.quiz.length && (
+                        <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
+                          <span className="text-sm font-bold text-white">
+                            Результат: {currentLesson.quiz.filter(q => userQuizAnswers[q.id] === q.correctIndex).length} / {currentLesson.quiz.length}
+                          </span>
+                          <button
+                            onClick={() => setUserQuizAnswers({})}
+                            className="text-xs text-[#00A3FF] hover:underline flex items-center gap-1"
+                          >
+                            <RefreshCw className="w-3 h-3" /> Пройти снова
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -1309,25 +1728,9 @@ export default function DigitalMentorApp() {
               <CoursesView profile={userProfile} />
             )}
 
-            {/* SCHEDULE */}
-            {currentView === 'schedule' && (
-              <div className="space-y-6 animate-fadeIn max-w-4xl mx-auto">
-                <div>
-                  <h1 className="text-2xl font-bold text-white">Расписание онлайн-занятий</h1>
-                  <p className="text-xs text-slate-400 mt-1">Календарь предстоящих онлайн-сессий.</p>
-                </div>
-                <div className="bg-[#0F172A] border border-slate-800 rounded-2xl p-10 text-center space-y-4">
-                  <div className="w-12 h-12 rounded-xl bg-slate-800 text-slate-400 mx-auto flex items-center justify-center">
-                    <Calendar className="w-6 h-6" />
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="text-base font-bold text-white">Расписание пусто</h3>
-                    <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                      На этой неделе нет запланированных сессий. Новые занятия появятся после подтверждения ментором.
-                    </p>
-                  </div>
-                </div>
-              </div>
+            {/* SCHEDULE / LESSONS */}
+            {currentView === 'schedule' && userProfile && (
+              <ScheduleView profile={userProfile} triggerToast={triggerToast} />
             )}
 
             {/* PROFILE */}
