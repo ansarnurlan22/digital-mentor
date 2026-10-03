@@ -234,7 +234,15 @@ function AdminPanel({ profile }: AdminPanelProps) {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'users' | 'courses'>('users');
+  const [tab, setTab] = useState<'overview' | 'users' | 'courses' | 'messages'>('overview');
+
+  // Рассылка сообщений
+  const [msgTarget, setMsgTarget] = useState<'all' | 'students' | 'mentors'>('all');
+  const [msgSubject, setMsgSubject] = useState('');
+  const [msgBody, setMsgBody] = useState('');
+  const [sendingMsg, setSendingMsg] = useState(false);
+  const [msgResult, setMsgResult] = useState<string | null>(null);
+  const [sentMessages, setSentMessages] = useState<{ id: string; target: string; subject: string; body: string; sentAt: string; count: number }[]>([]);
 
   useEffect(() => {
     loadAdminData();
@@ -251,42 +259,112 @@ function AdminPanel({ profile }: AdminPanelProps) {
     setLoading(false);
   };
 
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm('Удалить пользователя? Это действие нельзя отменить.')) return;
+    const { error } = await supabase.from('profiles').delete().eq('id', userId);
+    if (!error) {
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
+    }
+  };
+
+  const handleDeleteCourse = async (courseId: string) => {
+    if (!confirm('Удалить курс?')) return;
+    const { error } = await supabase.from('courses').delete().eq('id', courseId);
+    if (!error) {
+      setCourses((prev) => prev.filter((c) => c.id !== courseId));
+    }
+  };
+
+  const handleSendBroadcast = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!msgSubject.trim() || !msgBody.trim()) {
+      setMsgResult('Заполните тему и текст сообщения.');
+      return;
+    }
+
+    setSendingMsg(true);
+    setMsgResult(null);
+
+    // Определяем получателей
+    const recipients = msgTarget === 'all'
+      ? users
+      : users.filter((u) => u.role === (msgTarget === 'students' ? 'student' : 'mentor'));
+
+    // Сохраняем в историю отправленных (в реальном проекте это было бы через Supabase)
+    const newMsg = {
+      id: `msg-${Date.now()}`,
+      target: msgTarget === 'all' ? 'Все пользователи' : msgTarget === 'students' ? 'Студенты' : 'Менторы',
+      subject: msgSubject.trim(),
+      body: msgBody.trim(),
+      sentAt: new Date().toLocaleString('ru-RU'),
+      count: recipients.length,
+    };
+
+    // Имитируем отправку (в реальном проекте — через email API или push)
+    await new Promise((r) => setTimeout(r, 800));
+
+    setSentMessages((prev) => [newMsg, ...prev]);
+    setMsgResult(`✓ Сообщение отправлено ${recipients.length} пользователям (${newMsg.target})`);
+    setMsgSubject('');
+    setMsgBody('');
+    setSendingMsg(false);
+  };
+
+  const studentCount = users.filter((u) => u.role === 'student').length;
+  const mentorCount = users.filter((u) => u.role === 'mentor').length;
+  const adminCount = users.filter((u) => u.role === 'admin').length;
+
   return (
     <div className="space-y-6 animate-fadeIn">
+      {/* Header */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center">
           <Shield className="w-5 h-5" />
         </div>
         <div>
           <h1 className="text-2xl font-bold text-white">Административная панель</h1>
-          <p className="text-xs text-slate-400">Полный контроль платформы Digital Mentor</p>
+          <p className="text-xs text-slate-400">Полный контроль платформы Digital Mentor · {profile.email}</p>
         </div>
+        <button
+          onClick={loadAdminData}
+          className="ml-auto w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-colors"
+          title="Обновить данные"
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+        </button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {[
-          { label: 'Всего пользователей', value: users.length, icon: Users, color: '#00A3FF' },
-          { label: 'Студентов', value: users.filter(u => u.role === 'student').length, icon: GraduationCap, color: '#10b981' },
-          { label: 'Менторов', value: users.filter(u => u.role === 'mentor').length, icon: Users, color: '#f59e0b' },
-          { label: 'Курсов', value: courses.length, icon: BookOpen, color: '#a855f7' },
-        ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="bg-[#0F172A] border border-slate-800 rounded-2xl p-4 flex flex-col gap-1">
-            <span className="text-xs text-slate-400">{label}</span>
-            <span className="text-2xl font-extrabold" style={{ color }}>{value}</span>
+          { label: 'Всего пользователей', value: users.length, color: '#00A3FF', sub: 'зарегистрировано' },
+          { label: 'Студентов', value: studentCount, color: '#10b981', sub: 'учеников' },
+          { label: 'Менторов', value: mentorCount, color: '#f59e0b', sub: 'волонтёров' },
+          { label: 'Администраторов', value: adminCount, color: '#ef4444', sub: 'суперюзеров' },
+          { label: 'Курсов создано', value: courses.length, color: '#a855f7', sub: 'активных курсов' },
+        ].map(({ label, value, color, sub }) => (
+          <div key={label} className="bg-[#0F172A] border border-slate-800 rounded-2xl p-4 flex flex-col gap-1 hover:border-slate-700 transition-colors">
+            <span className="text-xs text-slate-400 leading-tight">{label}</span>
+            <span className="text-2xl font-extrabold" style={{ color }}>{loading ? '...' : value}</span>
+            <span className="text-[10px] text-slate-500">{sub}</span>
           </div>
         ))}
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2">
-        {(['users', 'courses'] as const).map((t) => (
+      <div className="flex gap-2 border-b border-slate-800 pb-1">
+        {([
+          { key: 'overview', label: '📊 Обзор' },
+          { key: 'users', label: `👥 Пользователи (${users.length})` },
+          { key: 'courses', label: `📚 Курсы (${courses.length})` },
+          { key: 'messages', label: '✉️ Рассылка' },
+        ] as const).map(({ key, label }) => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${tab === t ? 'bg-[#00A3FF] text-white' : 'bg-[#0F172A] border border-slate-800 text-slate-400 hover:text-white'}`}
+            key={key}
+            onClick={() => setTab(key)}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${tab === key ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30' : 'text-slate-400 hover:text-white'}`}
           >
-            {t === 'users' ? `Пользователи (${users.length})` : `Курсы (${courses.length})`}
+            {label}
           </button>
         ))}
       </div>
@@ -295,68 +373,314 @@ function AdminPanel({ profile }: AdminPanelProps) {
         <div className="flex items-center justify-center py-12">
           <RefreshCw className="w-6 h-6 animate-spin text-[#00A3FF]" />
         </div>
-      ) : tab === 'users' ? (
-        <div className="bg-[#0F172A] border border-slate-800 rounded-2xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-slate-800 text-slate-400">
-                  <th className="text-left p-4 font-semibold">Пользователь</th>
-                  <th className="text-left p-4 font-semibold">Роль</th>
-                  <th className="text-left p-4 font-semibold">Класс</th>
-                  <th className="text-left p-4 font-semibold">Дата регистрации</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((u) => (
-                  <tr key={u.id} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
-                    <td className="p-4 font-medium text-white">{u.full_name}</td>
-                    <td className="p-4">
-                      <span className={`px-2 py-0.5 rounded-full font-bold ${
-                        u.role === 'admin' ? 'bg-amber-500/15 text-amber-400' :
-                        u.role === 'mentor' ? 'bg-emerald-500/15 text-emerald-400' :
-                        'bg-[#00A3FF]/15 text-[#00A3FF]'
-                      }`}>
-                        {u.role === 'admin' ? 'Админ' : u.role === 'mentor' ? 'Ментор' : 'Студент'}
-                      </span>
-                    </td>
-                    <td className="p-4 text-slate-400">{u.grade || '—'}</td>
-                    <td className="p-4 text-slate-500">{u.id}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
       ) : (
-        <div className="bg-[#0F172A] border border-slate-800 rounded-2xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-slate-800 text-slate-400">
-                  <th className="text-left p-4 font-semibold">Курс</th>
-                  <th className="text-left p-4 font-semibold">Категория</th>
-                  <th className="text-left p-4 font-semibold">Автор</th>
-                </tr>
-              </thead>
-              <tbody>
-                {courses.map((c) => (
-                  <tr key={c.id} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
-                    <td className="p-4 font-medium text-white">{c.title}</td>
-                    <td className="p-4">
-                      <span className="px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-400 font-bold">{c.category}</span>
-                    </td>
-                    <td className="p-4 text-slate-400">{c.mentor_name || '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <>
+          {/* OVERVIEW TAB */}
+          {tab === 'overview' && (
+            <div className="space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* Состав пользователей */}
+                <div className="bg-[#0F172A] border border-slate-800 rounded-2xl p-5 space-y-4">
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <Users className="w-4 h-4 text-[#00A3FF]" /> Состав пользователей
+                  </h3>
+                  <div className="space-y-3">
+                    {[
+                      { label: 'Студенты', count: studentCount, total: users.length, color: '#10b981' },
+                      { label: 'Менторы', count: mentorCount, total: users.length, color: '#f59e0b' },
+                      { label: 'Администраторы', count: adminCount, total: users.length, color: '#ef4444' },
+                    ].map(({ label, count, total, color }) => (
+                      <div key={label} className="space-y-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-slate-300">{label}</span>
+                          <span className="font-bold" style={{ color }}>{count}</span>
+                        </div>
+                        <div className="w-full bg-slate-800 rounded-full h-1.5">
+                          <div
+                            className="h-1.5 rounded-full transition-all"
+                            style={{ width: total > 0 ? `${(count / total) * 100}%` : '0%', backgroundColor: color }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Последние зарегистрированные */}
+                <div className="bg-[#0F172A] border border-slate-800 rounded-2xl p-5 space-y-4">
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <User className="w-4 h-4 text-emerald-400" /> Последние пользователи
+                  </h3>
+                  <div className="space-y-2">
+                    {users.slice(0, 5).map((u) => (
+                      <div key={u.id} className="flex items-center justify-between py-1.5 border-b border-slate-800/50 last:border-0">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-lg bg-slate-800 flex items-center justify-center text-xs font-bold text-white">
+                            {u.full_name?.slice(0, 2).toUpperCase() || '??'}
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold text-white">{u.full_name}</p>
+                            <p className="text-[10px] text-slate-500">{u.email || '—'}</p>
+                          </div>
+                        </div>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          u.role === 'admin' ? 'bg-amber-500/15 text-amber-400' :
+                          u.role === 'mentor' ? 'bg-emerald-500/15 text-emerald-400' :
+                          'bg-[#00A3FF]/15 text-[#00A3FF]'
+                        }`}>
+                          {u.role === 'admin' ? 'Админ' : u.role === 'mentor' ? 'Ментор' : 'Студент'}
+                        </span>
+                      </div>
+                    ))}
+                    {users.length === 0 && (
+                      <p className="text-xs text-slate-500 italic">Нет пользователей</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Последние курсы */}
+              <div className="bg-[#0F172A] border border-slate-800 rounded-2xl p-5 space-y-4">
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-purple-400" /> Последние курсы
+                </h3>
+                {courses.length === 0 ? (
+                  <p className="text-xs text-slate-500 italic">Курсов ещё нет.</p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {courses.slice(0, 6).map((c) => (
+                      <div key={c.id} className="bg-[#080E1E] rounded-xl p-3 border border-slate-800 space-y-1">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-400">{c.category}</span>
+                        <p className="text-xs font-semibold text-white mt-1">{c.title}</p>
+                        <p className="text-[10px] text-slate-500">Автор: {c.mentor_name || '—'}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* USERS TAB */}
+          {tab === 'users' && (
+            <div className="bg-[#0F172A] border border-slate-800 rounded-2xl overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-800 text-slate-400">
+                      <th className="text-left p-4 font-semibold">Пользователь</th>
+                      <th className="text-left p-4 font-semibold">Email</th>
+                      <th className="text-left p-4 font-semibold">Роль</th>
+                      <th className="text-left p-4 font-semibold">Класс</th>
+                      <th className="text-left p-4 font-semibold">ID профиля</th>
+                      <th className="text-left p-4 font-semibold">Действия</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="p-8 text-center text-slate-500 italic">Нет пользователей</td>
+                      </tr>
+                    ) : users.map((u) => (
+                      <tr key={u.id} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
+                        <td className="p-4 font-medium text-white">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-lg bg-slate-700 flex items-center justify-center text-xs font-bold">
+                              {u.full_name?.slice(0, 2).toUpperCase() || '??'}
+                            </div>
+                            {u.full_name}
+                          </div>
+                        </td>
+                        <td className="p-4 text-slate-400">{u.email || '—'}</td>
+                        <td className="p-4">
+                          <span className={`px-2 py-0.5 rounded-full font-bold ${
+                            u.role === 'admin' ? 'bg-amber-500/15 text-amber-400' :
+                            u.role === 'mentor' ? 'bg-emerald-500/15 text-emerald-400' :
+                            'bg-[#00A3FF]/15 text-[#00A3FF]'
+                          }`}>
+                            {u.role === 'admin' ? 'Админ' : u.role === 'mentor' ? 'Ментор' : 'Студент'}
+                          </span>
+                        </td>
+                        <td className="p-4 text-slate-400">{u.grade || '—'}</td>
+                        <td className="p-4 text-slate-600 font-mono text-[10px]">{u.id.slice(0, 12)}...</td>
+                        <td className="p-4">
+                          {u.role !== 'admin' && u.id !== profile.id && (
+                            <button
+                              onClick={() => handleDeleteUser(u.id)}
+                              className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                              title="Удалить пользователя"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* COURSES TAB */}
+          {tab === 'courses' && (
+            <div className="bg-[#0F172A] border border-slate-800 rounded-2xl overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-800 text-slate-400">
+                      <th className="text-left p-4 font-semibold">Курс</th>
+                      <th className="text-left p-4 font-semibold">Категория</th>
+                      <th className="text-left p-4 font-semibold">Автор</th>
+                      <th className="text-left p-4 font-semibold">Создан</th>
+                      <th className="text-left p-4 font-semibold">Действия</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {courses.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="p-8 text-center text-slate-500 italic">Нет курсов</td>
+                      </tr>
+                    ) : courses.map((c) => (
+                      <tr key={c.id} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
+                        <td className="p-4 font-medium text-white max-w-[200px]">
+                          <div className="truncate">{c.title}</div>
+                        </td>
+                        <td className="p-4">
+                          <span className="px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-400 font-bold">{c.category}</span>
+                        </td>
+                        <td className="p-4 text-slate-400">{c.mentor_name || '—'}</td>
+                        <td className="p-4 text-slate-500">
+                          {c.created_at ? new Date(c.created_at).toLocaleDateString('ru-RU') : '—'}
+                        </td>
+                        <td className="p-4">
+                          <button
+                            onClick={() => handleDeleteCourse(c.id)}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                            title="Удалить курс"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* MESSAGES TAB */}
+          {tab === 'messages' && (
+            <div className="space-y-5">
+              {/* Форма рассылки */}
+              <div className="bg-[#0F172A] border border-slate-800 rounded-2xl p-6 space-y-4">
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-[#00A3FF]" /> Отправить сообщение пользователям
+                </h3>
+
+                {msgResult && (
+                  <div className={`p-3 rounded-xl border text-xs flex items-center gap-2 ${
+                    msgResult.startsWith('✓')
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                      : 'bg-red-500/10 border-red-500/30 text-red-300'
+                  }`}>
+                    <span>{msgResult}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleSendBroadcast} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-300">Кому отправить</label>
+                    <div className="flex gap-2">
+                      {[
+                        { key: 'all', label: `Всем (${users.length})` },
+                        { key: 'students', label: `Студентам (${studentCount})` },
+                        { key: 'mentors', label: `Менторам (${mentorCount})` },
+                      ].map(({ key, label }) => (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => setMsgTarget(key as typeof msgTarget)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                            msgTarget === key
+                              ? 'bg-[#00A3FF] text-white'
+                              : 'bg-slate-800 border border-slate-700 text-slate-400 hover:text-white'
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-300">Тема сообщения *</label>
+                    <input
+                      type="text"
+                      value={msgSubject}
+                      onChange={(e) => setMsgSubject(e.target.value)}
+                      placeholder="Например: Важное обновление платформы"
+                      className="w-full bg-[#070D1E] border border-slate-800 text-white rounded-lg p-3 focus:border-[#00A3FF] outline-none text-sm"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-300">Текст сообщения *</label>
+                    <textarea
+                      value={msgBody}
+                      onChange={(e) => setMsgBody(e.target.value)}
+                      rows={4}
+                      placeholder="Введите текст уведомления для пользователей..."
+                      className="w-full bg-[#070D1E] border border-slate-800 text-white rounded-lg p-3 focus:border-[#00A3FF] outline-none text-sm resize-none"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={sendingMsg || !msgSubject.trim() || !msgBody.trim()}
+                    className="px-6 py-2.5 rounded-xl bg-[#00A3FF] hover:bg-[#0284c7] disabled:opacity-50 text-white text-sm font-bold flex items-center gap-2 transition-colors"
+                  >
+                    {sendingMsg ? (
+                      <><RefreshCw className="w-4 h-4 animate-spin" /> Отправка...</>
+                    ) : (
+                      <><MessageSquare className="w-4 h-4" /> Отправить уведомление</>
+                    )}
+                  </button>
+                </form>
+              </div>
+
+              {/* История рассылок */}
+              <div className="bg-[#0F172A] border border-slate-800 rounded-2xl p-5 space-y-4">
+                <h3 className="text-sm font-bold text-white">История рассылок</h3>
+                {sentMessages.length === 0 ? (
+                  <p className="text-xs text-slate-500 italic">Рассылок ещё не было. Отправьте первое сообщение выше.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {sentMessages.map((msg) => (
+                      <div key={msg.id} className="bg-[#080E1E] rounded-xl p-4 border border-slate-800 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-white">{msg.subject}</span>
+                          <span className="text-[10px] text-slate-500">{msg.sentAt}</span>
+                        </div>
+                        <p className="text-xs text-slate-400 line-clamp-2">{msg.body}</p>
+                        <div className="flex items-center gap-3 text-[10px] text-slate-500">
+                          <span>Получатели: <span className="text-emerald-400 font-bold">{msg.target}</span></span>
+                          <span>Отправлено: <span className="text-[#00A3FF] font-bold">{msg.count}</span></span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
 }
+
 
 // ============================================================================
 // Courses View (для студентов — просмотр, для менторов/админов — CRUD)

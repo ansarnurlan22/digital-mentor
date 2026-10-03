@@ -10,54 +10,116 @@ export async function POST(req: Request) {
 
     if (!apiKey) {
       return NextResponse.json({
-        content: 'Привет! Я академический напарник Digital Mentor. Задавай вопросы по текущей задаче, и мы разберем логику шаг за шагом.',
+        content: 'Привет! Я Academic Mentor AI. К сожалению, ключ API не настроен. Пожалуйста, обратитесь к администратору.',
       });
     }
 
-    const systemPrompt = `Ты — Socrates AI, встроенный напарник платформы Digital Mentor (70% ИИ / 30% Волонтеры).
-Твоя цель — направлять ученика через наводящие вопросы и строгие математические интуиции.
-Правила:
-1. Никаких длинных лекций. Ответы плотные, лаконичные, в стиле Linear/Vercel (до 3-4 предложений).
-2. Никогда не пиши готовый финальный код за ученика.
-3. Если ученик застрял 3+ раза, напомни ему, что он может вызвать ментора-волонтера (кнопка "Позвать ментора", которая передаст контекст человеку).
-Контекст задачи: ${context?.nodeTitle || 'Практика'} (${context?.nodeType || 'step'})
-Код ученика:
-${context?.userCode || 'Нет кода'}`;
+    const studentName = context?.studentName || 'ученик';
+    const subject = context?.subject || 'школьный предмет';
+    const grade = context?.studentGrade || '9 класс';
 
-    const formattedContents = [
+    const systemPrompt = `Ты — «Digital Mentor AI», академический напарник ученика на образовательной платформе Digital Mentor (Казахстан).
+
+КОНТЕКСТ УЧЕНИКА:
+- Имя: ${studentName}
+- Предмет: ${subject}
+- Класс: ${grade}
+
+ТВОЯ ГЛАВНАЯ ЦЕЛЬ:
+Помогать ${studentName} глубоко понять материал по предмету «${subject}», используя Сократовский метод — направляя к пониманию через точные объяснения и вопросы, НЕ давая готовые ответы к задачам.
+
+ОБЯЗАТЕЛЬНЫЕ ПРАВИЛА:
+1. ВСЕГДА отвечай конкретно на вопрос ученика — объясняй суть темы, что это такое, как работает.
+2. НИКОГДА не давай финальный готовый числовой ответ к задаче — веди пошагово.
+3. Структура ответа на каждый вопрос:
+   a) Кратко объясни принцип/формулу/правило (2-4 предложения с реальным содержанием)
+   b) Задай ОДИН направляющий вопрос к следующему шагу
+4. Математические формулы: инлайн $x^2 - 4 = 0$, блочные $$D = b^2 - 4ac$$
+5. Тон: дружелюбный, поддерживающий, краткий
+6. Язык: ТОЛЬКО русский
+7. Если ученик пишет «не понимаю» — начни объяснение с самых основ с простым примером
+8. Отвечай РАЗНООБРАЗНО — каждый ответ должен быть уникальным под конкретный вопрос
+
+ЗАПРЕЩЕНО:
+- Отвечать одним и тем же шаблоном на разные вопросы
+- Игнорировать конкретику вопроса ученика
+- Писать только общие слова без реального объяснения темы`;
+
+    // Формируем историю чата: системный промпт + история + текущий вопрос
+    const chatHistory = [
       { role: 'user', parts: [{ text: systemPrompt }] },
-      ...(messages || []).map((m: any) => ({
-        role: m.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: m.content || '' }],
-      })),
+      {
+        role: 'model',
+        parts: [{ text: `Понял! Готов помогать ${studentName} по предмету «${subject}» (${grade}) в стиле Сократовского диалога. Буду объяснять темы и задавать направляющие вопросы.` }],
+      },
     ];
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
-    const res = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: formattedContents,
-        generationConfig: {
-          temperature: 0.3,
-          maxOutputTokens: 600,
-        },
-      }),
-    });
-
-    if (!res.ok) {
-      throw new Error(`Gemini API error: ${res.status}`);
+    // Добавляем историю диалога (кроме последнего сообщения)
+    const msgList = messages || [];
+    const historyMessages = msgList.slice(0, -1);
+    for (const m of historyMessages) {
+      if (m.content && m.content.trim()) {
+        chatHistory.push({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: m.content }],
+        });
+      }
     }
 
-    const data = await res.json();
-    const answer = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Давай разберем текущий шаг. Какая часть формулы вызывает сомнение?';
+    // Текущий вопрос ученика
+    const lastMsg = msgList[msgList.length - 1];
+    const userQuestion = lastMsg?.content || context?.userCode || '';
+    if (userQuestion.trim()) {
+      chatHistory.push({
+        role: 'user',
+        parts: [{ text: userQuestion }],
+      });
+    }
 
-    return NextResponse.json({ content: answer });
+    const models = ['gemini-2.0-flash-exp', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+    let lastError: string = '';
+
+    for (const model of models) {
+      try {
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const res = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: chatHistory,
+            generationConfig: {
+              temperature: 0.75,
+              maxOutputTokens: 900,
+            },
+          }),
+        });
+
+        if (!res.ok) {
+          const errText = await res.text();
+          lastError = `${model}: ${res.status} ${errText}`;
+          continue;
+        }
+
+        const data = await res.json();
+        const answer = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (answer) {
+          return NextResponse.json({ content: answer });
+        }
+        lastError = `${model}: пустой ответ`;
+      } catch (e: unknown) {
+        lastError = `${model}: ${e instanceof Error ? e.message : String(e)}`;
+      }
+    }
+
+    console.error('[tutor-stream] All models failed:', lastError);
+    return NextResponse.json({
+      content: 'Сервис AI временно недоступен. Попробуй задать вопрос ещё раз через несколько секунд.',
+    });
   } catch (error: unknown) {
-    console.error('Tutor stream error:', error);
+    console.error('[tutor-stream] Unexpected error:', error);
     return NextResponse.json(
-      { content: 'Кажется, возникла задержка связи с ИИ-тьютором. Проверь свой код на соответствие приоритету математических операций.' },
+      { content: 'Кажется, возникла задержка связи с AI. Попробуй отправить вопрос ещё раз.' },
       { status: 200 }
     );
   }

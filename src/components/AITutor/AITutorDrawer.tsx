@@ -84,30 +84,14 @@ export const AITutorDrawer: React.FC<AITutorDrawerProps> = ({
     }
   };
 
-  // Имитация потокового ответа (SSE / Typewriter Effect) в Сократовском стиле
-  const simulateAssistantStreaming = (userText: string) => {
+  // Реальный вызов Gemini API через /api/ai/tutor-stream
+  const callRealGeminiAPI = async (userText: string) => {
     setIsTyping(true);
-
-    // Логика ответов по Сократовскому методу (направлять вопросами, не давать ответ)
-    let replyText = '';
-    const lower = userText.toLowerCase();
-
-    if (lower.includes('реши') || lower.includes('ответ') || lower.includes('сколько будет')) {
-      replyText = `Я не даю готовые числовые ответы — ведь на контрольной или ЕНТ ментора рядом не будет! 😉\n\nДавай решим вместе по шагам. **Шаг 1:** С чего мы всегда начинаем? Какое здесь ограничение на ОДЗ или какую базовую формулу мы можем применить к левой части?`;
-    } else if (lower.includes('лог') || lower.includes('log')) {
-      replyText = `Отличный вопрос по логарифмам! 📐\n\nВспомним главное свойство: сумма логарифмов с одинаковым основанием $\\log_a(u) + \\log_a(v)$ равна логарифму произведения $\\log_a(u \\cdot v)$.\n\nЧто у тебя стоит в основании и чему равны аргументы?`;
-    } else if (lower.includes('производн') || lower.includes('дифференц')) {
-      replyText = `Разбираем производные! 📈\n\nВспомни базовое правило: $(x^n)' = n \\cdot x^{n-1}$.\nЕсли у нас сложная функция $f(g(x))$, её производная равна произведению: $f'(g(x)) \\cdot g'(x)$.\n\nКакая именно функция вызывает сложность?`;
-    } else if (lower.includes('тригоном') || lower.includes('синус') || lower.includes('косинус')) {
-      replyText = `Тригонометрия требует аккуратности с формулами! 🎯\n\nЧаще всего задачу упрощает переход к одной функции через основное тождество $\\sin^2(x) + \\cos^2(x) = 1$ или формулы двойного угла $\\sin(2x) = 2\\sin(x)\\cos(x)$.\n\nВ твоем примере есть одинаковые углы или разные?`;
-    } else {
-      replyText = `Хороший вопрос, **${profile.name}**! Давай разберем эту мысль.\n\nЧто из условия задачи нам уже известно, и к какому виду или формуле мы хотим прийти? Назови первый шаг, как ты его видишь.`;
-    }
 
     const messageId = 'ai-' + Date.now();
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    // Создаем пустое потоковое сообщение
+    // Создаём сообщение с индикатором загрузки
     setMessages((prev) => [
       ...prev,
       {
@@ -119,38 +103,78 @@ export const AITutorDrawer: React.FC<AITutorDrawerProps> = ({
       },
     ]);
 
-    // Посимвольный typewriter
-    let currentIdx = 0;
-    const interval = setInterval(() => {
-      currentIdx += 3;
-      if (currentIdx >= replyText.length) {
-        clearInterval(interval);
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === messageId
-              ? {
-                  ...msg,
-                  content: replyText,
-                  isStreaming: false,
-                  quickReplies: ['Дай ещё подсказку', 'Я понял, идём дальше', 'Покажи формулу'],
-                }
-              : msg
-          )
-        );
-        setIsTyping(false);
-      } else {
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === messageId
-              ? {
-                  ...msg,
-                  content: replyText.slice(0, currentIdx),
-                }
-              : msg
-          )
-        );
-      }
-    }, 25);
+    try {
+      // Формируем историю чата для контекста
+      const chatHistory = messages
+        .filter((m) => m.sender === 'user' || (m.sender === 'assistant' && m.content))
+        .map((m) => ({
+          role: m.sender === 'user' ? 'user' : 'assistant',
+          content: m.content,
+        }));
+
+      // Добавляем текущее сообщение пользователя
+      chatHistory.push({ role: 'user', content: userText });
+
+      const res = await fetch('/api/ai/tutor-stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: chatHistory,
+          context: {
+            nodeTitle: `${profile.subject} — вопрос ученика`,
+            nodeType: 'tutor',
+            userCode: userText,
+            studentName: profile.name,
+            studentGrade: profile.grade,
+            subject: profile.subject,
+          },
+        }),
+      });
+
+      const data = await res.json();
+      const replyText = data.content || 'Давай разберём эту тему. Что именно вызывает затруднение?';
+
+      // Typewriter эффект для ответа
+      let currentIdx = 0;
+      const interval = setInterval(() => {
+        currentIdx += 4;
+        if (currentIdx >= replyText.length) {
+          clearInterval(interval);
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === messageId
+                ? {
+                    ...msg,
+                    content: replyText,
+                    isStreaming: false,
+                    quickReplies: ['Дай ещё подсказку', 'Я понял, идём дальше', 'Покажи формулу'],
+                  }
+                : msg
+            )
+          );
+          setIsTyping(false);
+        } else {
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === messageId
+                ? { ...msg, content: replyText.slice(0, currentIdx) }
+                : msg
+            )
+          );
+        }
+      }, 20);
+    } catch (err) {
+      console.error('[AITutor] API error:', err);
+      const fallback = `Произошла ошибка связи. Попробуй ещё раз или переформулируй вопрос, **${profile.name}**.`;
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === messageId
+            ? { ...msg, content: fallback, isStreaming: false }
+            : msg
+        )
+      );
+      setIsTyping(false);
+    }
   };
 
   const handleSendMessage = (textToSend?: string) => {
@@ -171,9 +195,9 @@ export const AITutorDrawer: React.FC<AITutorDrawerProps> = ({
       textareaRef.current.style.height = 'auto';
     }
 
-    // Имитация ответа
+    // Вызываем реальный Gemini API
     setTimeout(() => {
-      simulateAssistantStreaming(text);
+      callRealGeminiAPI(text);
     }, 400);
   };
 
